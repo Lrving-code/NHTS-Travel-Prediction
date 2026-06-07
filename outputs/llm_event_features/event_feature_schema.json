@@ -1,0 +1,52 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "confidence": {
+      "maximum": 1,
+      "minimum": 0,
+      "type": "number"
+    },
+    "online_delivery_substitution_likelihood": {
+      "maximum": 1,
+      "minimum": 0,
+      "type": "number"
+    },
+    "post_pandemic_recovery_sensitivity": {
+      "maximum": 1,
+      "minimum": 0,
+      "type": "number"
+    },
+    "primary_event_mechanism": {
+      "type": "string"
+    },
+    "remote_work_substitution_likelihood": {
+      "maximum": 1,
+      "minimum": 0,
+      "type": "number"
+    },
+    "short_explanation": {
+      "type": "string"
+    },
+    "transit_avoidance_likelihood": {
+      "maximum": 1,
+      "minimum": 0,
+      "type": "number"
+    },
+    "trip_suppression_risk": {
+      "maximum": 1,
+      "minimum": 0,
+      "type": "number"
+    }
+  },
+  "required": [
+    "trip_suppression_risk",
+    "remote_work_substitution_likelihood",
+    "transit_avoidance_likelihood",
+    "online_delivery_substitution_likelihood",
+    "post_pandemic_recovery_sensitivity",
+    "primary_event_mechanism",
+    "short_explanation",
+    "confidence"
+  ],
+  "type": "object"
+}
