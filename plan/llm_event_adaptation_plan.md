@@ -1,7 +1,7 @@
 # Task Plan: LLM Event Adaptation Experiments
 
 ## Goal
-Test whether LLM-derived pandemic event semantics can reduce the 2022 overprediction bias of historical household travel-demand models.
+Test whether LLM-derived pandemic event semantics can reduce the 2022 overprediction bias of historical household travel-demand models without using 2022 trip-count labels for training or calibration.
 
 ## Phase 0: Current Baseline State
 
@@ -124,7 +124,69 @@ Why cohort-level first:
 - easier to audit
 - easier to describe in a paper
 
-## Phase 4: Residual Adaptation Design
+## Phase 4: Label-Free Event-Prior Adaptation Design
+
+Use the historical tabular model as the routine mobility predictor.
+
+Main zero-label setting:
+
+1. Train `f_tabular` on 2001, 2009, and 2017 labels.
+2. Generate 2022 cohort-level LLM event priors without exposing `CNTTDHH`, sample weights, household IDs, or aggregate target statistics.
+3. Compute a fixed event-pressure score from LLM priors.
+4. Apply a pre-declared multiplicative correction:
+
+```text
+y_hat = f_tabular(X) * clip(1 - alpha * h(z_llm), min_factor, 1)
+```
+
+5. Use 2022 `CNTTDHH` only for final evaluation.
+
+Current implemented script:
+
+- `src/run_label_free_llm_adaptation.py`
+
+Current best zero-label sensitivity result:
+
+- `llm_trip_suppression_a1p25`
+- Weighted MAE: `2.4820`
+- Weighted RMSE: `3.6601`
+- Weighted bias: `-0.5404`
+- Weighted R2: `0.2244`
+- Weighted MAE reduction vs historical baseline: `42.78%`
+- Absolute weighted-bias reduction vs historical baseline: `85.01%`
+
+Best bias/R2 tradeoff:
+
+- `gated_trip_suppression_a1_d0p15`
+- Weighted MAE: `2.5023`
+- Weighted RMSE: `3.6038`
+- Weighted bias: `-0.0230`
+- Weighted R2: `0.2480`
+- The gate uses only the distance between cohort-specific `trip_suppression_risk` and the global mean, so it does not require 2022 labels.
+
+Strict controls:
+
+- `global_trip_suppression_a1p25`: weighted MAE `2.5223`
+- `random_trip_suppression_a1p25`: weighted MAE `2.6466 +/- 0.0141`
+- `llm_trip_suppression_a1p25` improves weighted MAE by `1.60%` vs global mean and `6.22%` vs random shuffle.
+- `gated_trip_suppression_a1_d0p15` gives the strongest bias/R2 tradeoff: weighted MAE `2.5023`, weighted bias `-0.0230`, weighted R2 `0.2480`.
+- The gated rule is label-free because it uses only the distance between cohort-specific `trip_suppression_risk` and the global weighted mean, with a fixed threshold.
+
+Interpretation:
+
+- The strongest current signal is the single LLM score `trip_suppression_risk`.
+- Broad composite event pressure is less reliable and should not be overclaimed.
+- A large share of the gain comes from label-free event-level downscaling; cohort-specific LLM assignment adds a smaller but measurable increment for the trip-suppression score.
+- No-label gating can reduce overcorrection and is a better candidate when weighted bias/R2 are prioritized over the single lowest MAE row.
+- Gated trip-suppression correction is the strongest option when the objective is near-zero bias and higher weighted R2 rather than absolute minimum MAE.
+
+Subgroup diagnostics:
+
+- Output: `outputs/label_free_llm_adaptation/label_free_subgroup_diagnostics.md`
+- LLM ranking beats global downscaling most clearly in selected low-income, household-size, worker-count, vehicle-count, and region groups.
+- Global downscaling still beats LLM ranking in some groups, so the next model should be gated rather than uniformly applying cohort-specific LLM scores.
+
+## Phase 4b: Supplementary Residual Adaptation Design
 
 Use the historical tabular model as the routine mobility predictor.
 
@@ -152,6 +214,11 @@ y_hat_final = f_tabular(X) + g_residual(X, z_llm)
 
 Use CUDA XGBoost for residual modeling when possible.
 
+Status:
+
+- Implemented in `src/run_llm_residual_adaptation.py`.
+- This uses 2022 calibration labels, so it is an upper-bound/semi-supervised diagnostic rather than the main forecasting-style result.
+
 ## Phase 5: Baselines and Ablations
 
 Required comparisons:
@@ -160,12 +227,11 @@ Required comparisons:
 |---|---|
 | Historical XGBoost | routine tabular baseline |
 | Historical XGBoost + year | best current baseline |
-| Target-mean calibration | simple non-LLM correction |
-| Covariate reweighting | traditional domain adaptation |
-| Hand-coded pandemic features | human-designed semantic baseline |
-| Random event features | negative control |
-| LLM event features | proposed method |
-| LLM event features without rationales | test whether structured reasoning helps |
+| Historical mean trend shift | label-free historical trend baseline |
+| Global event pressure | tests whether only global downscaling matters |
+| Random event pressure | negative control for cohort assignment |
+| LLM event pressure | proposed label-free method |
+| 2022 calibration residual models | supplementary upper-bound diagnostic |
 
 Primary metrics:
 
@@ -200,8 +266,11 @@ Key question:
 
 Robustness:
 
-- multiple 2022 calibration/test splits
-- different calibration fractions: 5%, 10%, 20%
+- pre-declared alpha sensitivity grid
+- random-pressure seeds
+- global-pressure controls
+- multiple 2022 calibration/test splits only for supplementary residual experiments
+- different calibration fractions: 5%, 10%, 20% only for supplementary residual experiments
 - cohort-level vs household-level LLM features
 - different LLMs if available
 
@@ -220,18 +289,21 @@ Implemented files:
 - `src/generate_llm_event_features.py`
 - `src/llm_event_generation.py`
 - `src/validate_llm_event_features.py`
-
-Planned files:
-
+- `src/run_label_free_llm_adaptation.py`
 - `src/run_llm_residual_adaptation.py`
-- `outputs/llm_event_features/`
+
+Generated result files:
+
+- `outputs/label_free_llm_adaptation/label_free_llm_adaptation_results.md`
+- `outputs/label_free_llm_adaptation/label_free_llm_adaptation_metrics.csv`
+- `outputs/label_free_llm_adaptation/label_free_event_pressure_summary.csv`
 - `outputs/llm_residual_adaptation/`
 
 ## Expected Paper Claim
 
 If successful:
 
-LLM event features reduce 2022 weighted bias and improve subgroup robustness relative to historical XGBoost, target-mean calibration, and traditional reweighting.
+LLM event priors reduce 2022 weighted bias in a zero-label setting. The current strongest claim is that `trip_suppression_risk` provides an effective event-level correction, with modest cohort-specific signal beyond global and random controls.
 
 If not successful:
 
@@ -239,15 +311,7 @@ The negative result is still useful: it would show that generic LLM semantic pri
 
 ## Next Concrete Step
 
-Implement and test the LLM output validator and normalized feature-table builder before calling an LLM. The request/model strategy is recorded in `plan/llm_request_strategy.md`.
-
-Execution order:
-
-1. Validate controlled sample outputs locally.
-2. Add provider-agnostic request runner with dry-run cost estimation.
-3. Select 20-50 representative cohorts for pilot.
-4. Run low-concurrency pilot only after the validator passes.
-5. Audit pilot outputs before any full 1,327-cohort run.
+Draft the Results section and method description around the label-free LLM trip-suppression correction, global/random controls, and gated tradeoff.
 
 Current implementation status:
 
@@ -257,4 +321,5 @@ Current implementation status:
 - Twenty-cohort pilot passed and validated: 20 valid, 0 invalid.
 - Full 1,327-cohort LLM event-feature generation completed with `gpt-5.5-low`, `max_concurrency=15`.
 - Full validation result: 1,327 valid, 0 invalid.
-- Next step is joining full cohort features back to household rows and implementing residual adaptation.
+- Label-free LLM event-prior adaptation implemented and run on CUDA.
+- Supplementary 2022 calibration residual adaptation implemented and run on CUDA.
