@@ -74,7 +74,7 @@ predicted trips by mode = predicted total trips * predicted mode share
 - `outputs/final_project/presentation_speaker_notes_zh.md`
 - `outputs/final_project/method_comparison_report_zh.md`
 - `outputs/final_project/method_comparison_report.md`
-- `outputs/final_project/figures/paper_style/`
+- `outputs/final_project/figures/presentation_figures/`
 
 主实验：
 
@@ -110,7 +110,7 @@ src/
   run_household_baseline.py
   run_label_free_llm_adaptation.py
   run_mode_composition_extension.py
-  generate_paper_style_figures.py
+  generate_presentation_figures.py
   run_robustness_checks.py
   generate_final_project_assets.py
   build_optimized_presentation.py
@@ -158,7 +158,7 @@ python src\run_mode_composition_extension.py --device cuda
 优化汇报材料：
 
 ```powershell
-python src\generate_paper_style_figures.py
+python src\generate_presentation_figures.py
 python src\run_robustness_checks.py
 python src\build_template_presentation.py
 python src\build_optimized_presentation.py
@@ -187,7 +187,7 @@ data/raw/nhts_2022/csv/tripv2pub.csv
 
 - 主实验不使用 2022 `CNTTDHH` 标签训练或校准，2022 标签只用于最终 evaluation。
 - 汇报主口径使用固定 `gated_trip_suppression_a1_d0p15` no-label rule；`llm_trip_suppression_a1p25` 是 best-MAE sensitivity row，不应表述为严格无标签参数选择的主方法。
-- 对抗性审计显示 global event pressure 是很强的 baseline；应把贡献表述为 event-level label-free adaptation，cohort-specific LLM ranking 是增量证据，不是唯一或主导来源。
+- 稳健性检验显示 global event pressure 是很强的 baseline；应把贡献表述为 event-level label-free adaptation，cohort-specific LLM ranking 是增量证据，不是唯一或主导来源。
 - mode-composition 是探索性扩展：总体 weighted TV 改善较小，最清楚的结果是 transit-share weighted MAE 改善。
 - `TRPTRANS` 编码在 2017 和 2022 不能直接按数字对齐，mode-composition 扩展使用 year-specific official codebook mapping。
 - `outputs/share_package/` 是本地分享包目录，默认 git ignored。

@@ -21,7 +21,7 @@ This report checks whether the main project results hold under stricter controls
 | LLM cohort-specific ranking is the dominant reason for improvement. | Overclaim | best LLM-specific row improves over global rule only 1.60%; permutation p=0.0020. | Say the dominant signal is event-level downscaling; cohort-specific LLM ranking adds incremental evidence. |
 | Pure LLM can replace the historical household model. | Rejected | LLM-only pressure wMAE 2.7175, worse than hybrid 2.5023. | Frame LLM as semantic adapter, not standalone predictor. |
 | Mode composition is strongly solved by the method. | Overclaim | weighted TV 0.2008 -> 0.1985, only 1.13% improvement. | Report it as exploratory; emphasize transit MAE 0.0325 -> 0.0269. |
-| No target-year label leakage in LLM inputs. | Supported with caveat | cohort profile and validated LLM feature files exclude HOUSEID, CNTTDHH, and WTHHFIN. | Also disclose that GPT-5.5 has retrospective world knowledge; prospective deployment needs frozen event context. |
+| LLM inputs exclude target-year labels. | Supported with caveat | cohort profile and validated LLM feature files exclude HOUSEID, CNTTDHH, and WTHHFIN. | Also disclose that GPT-5.5 has retrospective world knowledge; prospective deployment needs frozen event context. |
 
 ## Presentation Framing Fixes
 

@@ -201,7 +201,7 @@ def build_claim_audit(
             "revision": f"Report it as exploratory; emphasize transit MAE {transit_base:.4f} -> {transit_llm:.4f}.",
         },
         {
-            "claim": "No target-year label leakage in LLM inputs.",
+            "claim": "LLM inputs exclude target-year labels.",
             "verdict": "Supported with caveat",
             "evidence": "cohort profile and validated LLM feature files exclude HOUSEID, CNTTDHH, and WTHHFIN.",
             "revision": "Also disclose that GPT-5.5 has retrospective world knowledge; prospective deployment needs frozen event context.",

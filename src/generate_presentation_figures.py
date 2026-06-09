@@ -1,4 +1,4 @@
-"""Generate paper-style analysis figures for the final presentation."""
+"""Generate presentation analysis figures for the final deck."""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ FINAL_DIR = PROJECT_ROOT / "outputs" / "final_project"
 MODE_DIR = PROJECT_ROOT / "outputs" / "mode_composition_extension"
 MODEL_DIR = PROJECT_ROOT / "outputs" / "models" / "final_label_free_2022"
 SUBGROUP_DIR = PROJECT_ROOT / "outputs" / "label_free_llm_adaptation"
-OUTPUT_DIR = FINAL_DIR / "figures" / "paper_style"
+OUTPUT_DIR = FINAL_DIR / "figures" / "presentation_figures"
 
 TARGET = "CNTTDHH"
 WEIGHT = "WTHHFIN"
@@ -98,7 +98,7 @@ def plot_mae_bias_tradeoff() -> Path:
     ax.axvline(0, color="#94a3b8", linewidth=1)
     ax.set_xlabel("|weighted bias|, trips / household")
     ax.set_ylabel("weighted MAE, trips / household")
-    ax.set_title("Accuracy-bias tradeoff across adaptation strategies", fontsize=12, fontweight="bold")
+    ax.set_title("Trip-count error and bias after event correction", fontsize=12, fontweight="bold")
     ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.35)
     return_path = OUTPUT_DIR / "mae_bias_tradeoff.png"
     save_fig(return_path)
@@ -122,7 +122,7 @@ def plot_error_distribution(pred: pd.DataFrame) -> Path:
     plt.axvline(0, color="#0f172a", linewidth=1, alpha=0.65)
     plt.xlabel("prediction error = predicted - observed trips")
     plt.ylabel("weighted density")
-    plt.title("Error distribution reveals the post-pandemic over-prediction shift", fontsize=12, fontweight="bold")
+    plt.title("Historical prediction overestimates post-pandemic trips", fontsize=12, fontweight="bold")
     plt.legend(frameon=False, fontsize=8)
     plt.grid(True, linestyle="--", linewidth=0.5, alpha=0.35)
     return_path = OUTPUT_DIR / "error_distribution.png"
@@ -146,7 +146,7 @@ def plot_tolerance_curve(pred: pd.DataFrame) -> Path:
         plt.plot(tolerance, values, marker="o", linewidth=2.2, label=label, color=color)
     plt.xlabel("allowed absolute error, trips")
     plt.ylabel("weighted household coverage")
-    plt.title("Practical household accuracy under different tolerance levels", fontsize=12, fontweight="bold")
+    plt.title("Household coverage under trip-count error tolerance", fontsize=12, fontweight="bold")
     plt.ylim(0, 1.0)
     plt.legend(frameon=False, fontsize=8)
     plt.grid(True, linestyle="--", linewidth=0.5, alpha=0.35)
@@ -175,7 +175,7 @@ def plot_pressure_quintile_gain(pred: pd.DataFrame) -> Path:
     ax = sns.barplot(data=result, x="bin", y="weighted_mae", hue="method", palette=PALETTE)
     ax.set_xlabel("LLM trip-suppression pressure quintile")
     ax.set_ylabel("weighted MAE")
-    ax.set_title("Adaptation gains persist across event-pressure strata", fontsize=12, fontweight="bold")
+    ax.set_title("Event correction reduces error across pressure groups", fontsize=12, fontweight="bold")
     ax.legend(frameon=False, fontsize=8)
     ax.grid(axis="y", linestyle="--", linewidth=0.5, alpha=0.35)
     return_path = OUTPUT_DIR / "pressure_quintile_gain.png"
@@ -212,7 +212,7 @@ def plot_event_prior_heatmap(pred: pd.DataFrame) -> Path:
     corr.columns = labels
     plt.figure(figsize=(7.0, 5.3))
     sns.heatmap(corr, vmin=-1, vmax=1, cmap="vlag", square=True, annot=True, fmt=".2f", annot_kws={"fontsize": 6})
-    plt.title("Spearman structure of LLM event priors and correction behavior", fontsize=12, fontweight="bold")
+    plt.title("LLM event priors align with correction behavior", fontsize=12, fontweight="bold")
     return_path = OUTPUT_DIR / "event_prior_heatmap.png"
     save_fig(return_path)
     return return_path
@@ -228,7 +228,7 @@ def plot_subgroup_gain() -> Path:
     ax = sns.barplot(data=frame, y="label", x="llm_vs_historical_mae_delta", color="#198754")
     ax.set_xlabel("weighted MAE reduction vs historical XGBoost")
     ax.set_ylabel("")
-    ax.set_title("Largest subgroup gains from event-aware adaptation", fontsize=12, fontweight="bold")
+    ax.set_title("Household groups with larger error reduction", fontsize=12, fontweight="bold")
     ax.grid(axis="x", linestyle="--", linewidth=0.5, alpha=0.35)
     return_path = OUTPUT_DIR / "subgroup_gain_top.png"
     save_fig(return_path)
@@ -256,7 +256,7 @@ def plot_mode_component_mae() -> Path:
     )
     ax.set_xlabel("household mode-share component")
     ax.set_ylabel("weighted share MAE")
-    ax.set_title("Mode-composition gains concentrate on public-transit behavior", fontsize=12, fontweight="bold")
+    ax.set_title("Transit share benefits most from event prior", fontsize=12, fontweight="bold")
     ax.legend(frameon=False, fontsize=8)
     ax.grid(axis="y", linestyle="--", linewidth=0.5, alpha=0.35)
     return_path = OUTPUT_DIR / "mode_component_mae.png"
@@ -277,7 +277,7 @@ def main() -> None:
         plot_subgroup_gain(),
         plot_mode_component_mae(),
     ]
-    LOGGER.info("Generated %d paper-style figures in %s", len(paths), OUTPUT_DIR)
+    LOGGER.info("Generated %d presentation figures in %s", len(paths), OUTPUT_DIR)
 
 
 if __name__ == "__main__":
