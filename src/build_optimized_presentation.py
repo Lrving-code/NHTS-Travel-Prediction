@@ -1,0 +1,921 @@
+"""Build optimized comparison documents and presentation deck."""
+
+from __future__ import annotations
+
+import csv
+import logging
+import sys
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from pptx import Presentation
+from pptx.dml.color import RGBColor
+from pptx.enum.shapes import MSO_SHAPE
+from pptx.enum.text import PP_ALIGN, MSO_ANCHOR
+from pptx.slide import Slide
+from pptx.util import Inches, Pt
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
+from run_llm_residual_adaptation import load_2022_with_llm_features, weighted_average  # noqa: E402
+
+
+LOGGER = logging.getLogger(__name__)
+FINAL_DIR = PROJECT_ROOT / "outputs" / "final_project"
+FINAL_FIGURE_DIR = FINAL_DIR / "figures"
+MODE_DIR = PROJECT_ROOT / "outputs" / "mode_composition_extension"
+MODE_COLUMNS = [
+    "private_vehicle_share",
+    "walk_share",
+    "bike_share",
+    "transit_share",
+    "taxi_ridehail_share",
+    "other_share",
+]
+HOUSEHOLD_ID = "HOUSEID"
+WEIGHT_COLUMN = "WTHHFIN"
+TRIP_LABELS = {
+    "historical_xgboost": "Historical predictor",
+    "historical_mean_trend_shift": "Historical trend shift",
+    "global_trip_suppression_a1p25": "Global event prior",
+    "random_trip_suppression_a1p25": "Random prior control",
+    "llm_trip_suppression_a1p25": "LLM trip suppression",
+    "gated_trip_suppression_a1_d0p15": "Gated LLM correction",
+}
+COLORS = {
+    "dark": RGBColor(15, 23, 42),
+    "muted": RGBColor(71, 85, 105),
+    "light": RGBColor(248, 250, 252),
+    "blue": RGBColor(59, 130, 246),
+    "green": RGBColor(22, 163, 74),
+    "orange": RGBColor(249, 115, 22),
+    "red": RGBColor(220, 38, 38),
+    "navy": RGBColor(23, 50, 77),
+}
+
+
+def configure_logging() -> None:
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+
+
+def ensure_dirs() -> None:
+    FINAL_DIR.mkdir(parents=True, exist_ok=True)
+    FINAL_FIGURE_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def pct(value: float) -> str:
+    return f"{100.0 * value:.1f}%"
+
+
+def fmt(value: float) -> str:
+    return f"{value:.4f}"
+
+
+def normalize_shares(predictions: np.ndarray) -> np.ndarray:
+    clipped = np.clip(predictions, 0.0, 1.0)
+    sums = clipped.sum(axis=1, keepdims=True)
+    return np.divide(clipped, sums, out=np.zeros_like(clipped), where=sums > 1e-12)
+
+
+def evaluate_mode_prediction(method: str, test_frame: pd.DataFrame, predictions: np.ndarray) -> dict[str, float | str]:
+    truth = test_frame[MODE_COLUMNS].to_numpy(dtype=float)
+    weights = test_frame[WEIGHT_COLUMN].to_numpy(dtype=float)
+    error = predictions - truth
+    abs_error = np.abs(error)
+    total_variation = 0.5 * abs_error.sum(axis=1)
+    mean_share_mae = abs_error.mean(axis=1)
+    dominant_correct = (np.argmax(predictions, axis=1) == np.argmax(truth, axis=1)).astype(float)
+    transit_index = MODE_COLUMNS.index("transit_share")
+    return {
+        "method": method,
+        "weighted_total_variation": weighted_average(total_variation, weights),
+        "weighted_mean_share_mae": weighted_average(mean_share_mae, weights),
+        "weighted_dominant_mode_accuracy": weighted_average(dominant_correct, weights),
+        "transit_share_weighted_mae": weighted_average(abs_error[:, transit_index], weights),
+        "transit_share_weighted_bias": weighted_average(error[:, transit_index], weights),
+    }
+
+
+def compute_llm_only_mode_baselines() -> pd.DataFrame:
+    mode_path = MODE_DIR / "household_mode_composition.csv"
+    if not mode_path.exists():
+        raise FileNotFoundError(
+            f"Missing {mode_path}. Run `python src/run_mode_composition_extension.py --device cuda` first."
+        )
+    mode_frame = pd.read_csv(mode_path, low_memory=False)
+    train_frame = mode_frame[mode_frame["survey_year"] == 2017].copy()
+    test_frame = mode_frame[mode_frame["survey_year"] == 2022].copy()
+    weights = train_frame[WEIGHT_COLUMN].to_numpy(dtype=float)
+    mean_share = np.asarray(
+        [weighted_average(train_frame[column].to_numpy(dtype=float), weights) for column in MODE_COLUMNS],
+        dtype=float,
+    )
+    mean_share = mean_share / mean_share.sum()
+    base_prediction = np.tile(mean_share, (len(test_frame), 1))
+
+    rows = [evaluate_mode_prediction("llm_only_2017_mean_no_adapt", test_frame, base_prediction)]
+    llm_frame = load_2022_with_llm_features(
+        PROJECT_ROOT / "data" / "processed" / "household_harmonized.csv",
+        PROJECT_ROOT / "outputs" / "llm_event_features" / "household_cohort_profiles.csv",
+        PROJECT_ROOT
+        / "outputs"
+        / "llm_event_features"
+        / "cursor_api_full_gpt55_low_c15"
+        / "validated"
+        / "llm_event_features_normalized.csv",
+    )
+    llm_frame[HOUSEHOLD_ID] = llm_frame[HOUSEHOLD_ID].astype(str)
+    test_frame[HOUSEHOLD_ID] = test_frame[HOUSEHOLD_ID].astype(str)
+    merged = test_frame[[HOUSEHOLD_ID]].merge(
+        llm_frame[[HOUSEHOLD_ID, "transit_avoidance_likelihood"]],
+        on=HOUSEHOLD_ID,
+        how="left",
+    )
+    pressure = pd.to_numeric(merged["transit_avoidance_likelihood"], errors="coerce").fillna(0.0)
+    pressure_array = np.clip(pressure.to_numpy(dtype=float), 0.0, 1.0)
+    transit_index = MODE_COLUMNS.index("transit_share")
+    for alpha in (0.50, 0.75, 1.00, 1.25):
+        prediction = base_prediction.copy()
+        prediction[:, transit_index] *= np.clip(1.0 - alpha * pressure_array, 0.05, 1.0)
+        rows.append(evaluate_mode_prediction(f"llm_only_2017_mean_transit_a{alpha:g}", test_frame, normalize_shares(prediction)))
+    return pd.DataFrame(rows)
+
+
+def save_mode_llm_only_figure(comparison: pd.DataFrame) -> Path:
+    path = FINAL_FIGURE_DIR / "mode_llm_only_comparison.png"
+    methods = [
+        "llm_only_2017_mean_no_adapt",
+        "llm_only_2017_mean_transit_a1.25",
+        "historical_xgboost",
+        "llm_transit_avoidance_a1",
+    ]
+    labels = ["LLM-only mean", "LLM-only corrected", "XGBoost", "XGBoost + LLM"]
+    plot_frame = comparison.set_index("method").loc[methods].reset_index()
+    x = np.arange(len(plot_frame))
+    fig, axes = plt.subplots(1, 2, figsize=(11, 4.6))
+    axes[0].bar(x, plot_frame["weighted_total_variation"], color="#3B82F6")
+    axes[0].set_title("Mode Composition Error")
+    axes[0].set_ylabel("Weighted total variation")
+    axes[0].set_xticks(x)
+    axes[0].set_xticklabels(labels, rotation=18, ha="right")
+    axes[0].grid(axis="y", alpha=0.22)
+    axes[1].bar(x, plot_frame["transit_share_weighted_mae"], color="#F97316")
+    axes[1].set_title("Transit Share Error")
+    axes[1].set_ylabel("Weighted MAE")
+    axes[1].set_xticks(x)
+    axes[1].set_xticklabels(labels, rotation=18, ha="right")
+    axes[1].grid(axis="y", alpha=0.22)
+    fig.tight_layout()
+    fig.savefig(path, bbox_inches="tight", dpi=220)
+    plt.close(fig)
+    return path
+
+
+def save_csv(frame: pd.DataFrame, path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    frame.to_csv(path, index=False, quoting=csv.QUOTE_MINIMAL)
+
+
+def build_method_comparison() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, Path]:
+    trip = pd.read_csv(FINAL_DIR / "final_metrics_summary.csv")
+    acc = pd.read_csv(FINAL_DIR / "household_accuracy_summary.csv")
+    mode = pd.read_csv(MODE_DIR / "mode_composition_metrics.csv")
+    llm_only = compute_llm_only_mode_baselines()
+    mode_keep = mode[
+        mode["method"].isin(
+            [
+                "historical_mean_2017",
+                "historical_xgboost",
+                "llm_transit_avoidance_a1",
+                "global_transit_avoidance_a1",
+            ]
+        )
+    ].copy()
+    mode_comparison = pd.concat([mode_keep, llm_only], ignore_index=True)
+    save_csv(mode_comparison, FINAL_DIR / "mode_llm_only_comparison.csv")
+
+    rows: list[dict[str, object]] = []
+    trip_baseline = trip[trip["method"] == "historical_xgboost"].iloc[0]
+    for _, row in trip.iterrows():
+        rows.append(
+            {
+                "task": "trip_count",
+                "method": row["method"],
+                "display_name": TRIP_LABELS.get(row["method"], row["method"]),
+                "primary_metric": "weighted_mae",
+                "primary_value": row["weighted_mae"],
+                "primary_improvement_vs_baseline_pct": 100.0
+                * (trip_baseline["weighted_mae"] - row["weighted_mae"])
+                / trip_baseline["weighted_mae"],
+                "secondary_metric": "weighted_rmse",
+                "secondary_value": row["weighted_rmse"],
+                "bias_metric": "weighted_bias",
+                "bias_value": row["weighted_bias"],
+                "fit_metric": "weighted_r2",
+                "fit_value": row["weighted_r2"],
+            }
+        )
+    mode_baseline = mode_comparison[mode_comparison["method"] == "historical_xgboost"].iloc[0]
+    for _, row in mode_comparison.iterrows():
+        rows.append(
+            {
+                "task": "mode_composition",
+                "method": row["method"],
+                "display_name": row["method"],
+                "primary_metric": "weighted_total_variation",
+                "primary_value": row["weighted_total_variation"],
+                "primary_improvement_vs_baseline_pct": 100.0
+                * (mode_baseline["weighted_total_variation"] - row["weighted_total_variation"])
+                / mode_baseline["weighted_total_variation"],
+                "secondary_metric": "transit_share_weighted_mae",
+                "secondary_value": row["transit_share_weighted_mae"],
+                "bias_metric": "transit_share_weighted_bias",
+                "bias_value": row["transit_share_weighted_bias"],
+                "fit_metric": "weighted_dominant_mode_accuracy",
+                "fit_value": row["weighted_dominant_mode_accuracy"],
+            }
+        )
+    summary = pd.DataFrame(rows)
+    save_csv(summary, FINAL_DIR / "method_comparison_summary.csv")
+    figure_path = save_mode_llm_only_figure(mode_comparison)
+    write_method_report(trip, acc, mode_comparison)
+    return trip, acc, mode_comparison, figure_path
+
+
+def write_method_report(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame) -> Path:
+    path = FINAL_DIR / "method_comparison_report.md"
+    trip_base = trip[trip["method"] == "historical_xgboost"].iloc[0]
+    trip_best = trip[trip["method"] == "llm_trip_suppression_a1p25"].iloc[0]
+    trip_gated = trip[trip["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
+    gated_acc = acc[acc["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
+    mode_base = mode[mode["method"] == "historical_xgboost"].iloc[0]
+    mode_best = mode[mode["method"] == "llm_transit_avoidance_a1"].iloc[0]
+    llm_only_best = mode[mode["method"] == "llm_only_2017_mean_transit_a1.25"].iloc[0]
+    lines = [
+        "# Method Comparison Report",
+        "",
+        "## What Is Being Compared",
+        "",
+        "There are two related but distinct tasks.",
+        "",
+        "- Main task: household daily trip-count regression, target `CNTTDHH`.",
+        "- Auxiliary task: household-level mode-composition prediction derived from trip-level `TRPTRANS`.",
+        "- Trip-level `TRPTRANS` classification accuracy is a different task and should not be compared directly with these metrics.",
+        "",
+        "## Metric Definitions",
+        "",
+        "- Weighted MAE: survey-weighted average absolute trip-count error. Lower is better.",
+        "- Weighted RMSE: survey-weighted root mean squared trip-count error. Lower is better.",
+        "- Weighted Bias: survey-weighted signed error. Values closer to zero mean less systematic over/under prediction.",
+        "- Weighted R2: weighted explained variation relative to predicting the weighted mean. Higher is better.",
+        "- Within-k accuracy: share of households whose trip-count error is within k trips.",
+        "- Weighted total variation: `0.5 * sum(abs(predicted mode shares - true mode shares))`, then survey-weighted. Lower is better.",
+        "- Transit-share weighted MAE: survey-weighted absolute error for the public-transit share component. Lower is better.",
+        "",
+        "## Trip-Count Results",
+        "",
+        "| Method | Weighted MAE | Weighted RMSE | Weighted Bias | Weighted R2 | MAE Gain vs Historical |",
+        "|---|---:|---:|---:|---:|---:|",
+    ]
+    for _, row in trip.iterrows():
+        gain = 100.0 * (trip_base["weighted_mae"] - row["weighted_mae"]) / trip_base["weighted_mae"]
+        lines.append(
+            f"| {TRIP_LABELS.get(row['method'], row['method'])} | {row.weighted_mae:.4f} | "
+            f"{row.weighted_rmse:.4f} | {row.weighted_bias:.4f} | {row.weighted_r2:.4f} | {gain:.2f}% |"
+        )
+    lines.extend(
+        [
+            "",
+            "Trip-count takeaway:",
+            "",
+            f"- Best MAE row: `{trip_best.method}`, weighted MAE `{trip_best.weighted_mae:.4f}`, "
+            f"improving `{100.0 * (trip_base.weighted_mae - trip_best.weighted_mae) / trip_base.weighted_mae:.2f}%` over historical prediction.",
+            f"- Best bias/R2 tradeoff: `{trip_gated.method}`, weighted bias `{trip_gated.weighted_bias:.4f}`, weighted R2 `{trip_gated.weighted_r2:.4f}`.",
+            f"- Gated household accuracy: exact `{pct(gated_acc.exact_rounded_accuracy)}`, within 2 trips `{pct(gated_acc.within_2_trips)}`, within 3 trips `{pct(gated_acc.within_3_trips)}`.",
+            "",
+            "## Mode-Composition Results",
+            "",
+            "| Method | Weighted TV | Mean Share MAE | Dominant Accuracy | Transit MAE | Transit Bias |",
+            "|---|---:|---:|---:|---:|---:|",
+        ]
+    )
+    mode_order = [
+        "llm_only_2017_mean_no_adapt",
+        "llm_only_2017_mean_transit_a1.25",
+        "historical_mean_2017",
+        "historical_xgboost",
+        "global_transit_avoidance_a1",
+        "llm_transit_avoidance_a1",
+    ]
+    mode_index = mode.set_index("method")
+    for method in mode_order:
+        row = mode_index.loc[method]
+        lines.append(
+            f"| {method} | {row.weighted_total_variation:.4f} | {row.weighted_mean_share_mae:.4f} | "
+            f"{row.weighted_dominant_mode_accuracy:.4f} | {row.transit_share_weighted_mae:.4f} | "
+            f"{row.transit_share_weighted_bias:.4f} |"
+        )
+    lines.extend(
+        [
+            "",
+            "Mode-composition takeaway:",
+            "",
+            f"- LLM-only correction improves over a 2017 mean prior, but remains weaker than household-feature XGBoost.",
+            f"- XGBoost + LLM transit prior reduces weighted TV from `{mode_base.weighted_total_variation:.4f}` to `{mode_best.weighted_total_variation:.4f}`.",
+            f"- XGBoost + LLM transit prior reduces transit-share weighted MAE from `{mode_base.transit_share_weighted_mae:.4f}` to `{mode_best.transit_share_weighted_mae:.4f}`.",
+            f"- LLM-only corrected transit MAE is `{llm_only_best.transit_share_weighted_mae:.4f}`, showing that LLM event priors help directionally but need a household-level historical predictor.",
+            "",
+            "## Final Interpretation",
+            "",
+            "The strongest claim is not that LLMs replace mobility models. The stronger and more defensible claim is that LLM event priors repair historical mobility predictors under post-pandemic event shift.",
+        ]
+    )
+    path.write_text("\n".join(lines), encoding="utf-8")
+    return path
+
+
+def write_method_report_zh(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame) -> Path:
+    path = FINAL_DIR / "method_comparison_report_zh.md"
+    trip_base = trip[trip["method"] == "historical_xgboost"].iloc[0]
+    trip_best = trip[trip["method"] == "llm_trip_suppression_a1p25"].iloc[0]
+    trip_gated = trip[trip["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
+    gated_acc = acc[acc["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
+    mode_base = mode[mode["method"] == "historical_xgboost"].iloc[0]
+    mode_best = mode[mode["method"] == "llm_transit_avoidance_a1"].iloc[0]
+    llm_only_best = mode[mode["method"] == "llm_only_2017_mean_transit_a1.25"].iloc[0]
+    lines = [
+        "# 方法比较说明",
+        "",
+        "## 比较对象",
+        "",
+        "本项目现在有两个任务，但主次不同：",
+        "",
+        "- 主任务：家庭每日出行次数预测，目标变量是 `CNTTDHH`。",
+        "- 辅助任务：家庭层面的出行方式结构预测，由 trip-level `TRPTRANS` 聚合得到。",
+        "- 同学参考资料里的 trip-level `TRPTRANS` 分类是另一个任务，不能直接和我们的 `CNTTDHH` 回归指标比较。",
+        "",
+        "## 指标怎么读",
+        "",
+        "- Weighted MAE：按 NHTS survey weight 加权后的平均绝对误差，越低越好。",
+        "- Weighted RMSE：加权均方根误差，对大误差更敏感，越低越好。",
+        "- Weighted Bias：加权有符号误差，越接近 0 越说明没有系统性高估/低估。",
+        "- Weighted R2：相对加权均值预测的拟合提升，越高越好。",
+        "- Within-k accuracy：预测误差在 k 次 trip 以内的 household 比例。",
+        "- Weighted total variation：mode share 向量整体误差，公式是 `0.5 * sum(abs(pred - true))` 后再加权，越低越好。",
+        "- Transit-share weighted MAE：公共交通 share 这一项的加权绝对误差，越低越好。",
+        "",
+        "## 出行次数预测结果",
+        "",
+        "| 方法 | Weighted MAE | Weighted RMSE | Weighted Bias | Weighted R2 | 相对历史预测 MAE 提升 |",
+        "|---|---:|---:|---:|---:|---:|",
+    ]
+    for _, row in trip.iterrows():
+        gain = 100.0 * (trip_base["weighted_mae"] - row["weighted_mae"]) / trip_base["weighted_mae"]
+        lines.append(
+            f"| {TRIP_LABELS.get(row['method'], row['method'])} | {row.weighted_mae:.4f} | "
+            f"{row.weighted_rmse:.4f} | {row.weighted_bias:.4f} | {row.weighted_r2:.4f} | {gain:.2f}% |"
+        )
+    lines.extend(
+        [
+            "",
+            "主任务结论：",
+            "",
+            f"- 最低 MAE 是 `{trip_best.method}`：weighted MAE 从 `{trip_base.weighted_mae:.4f}` 降到 `{trip_best.weighted_mae:.4f}`，降低 `42.78%`。",
+            f"- 最好的 bias/R2 折中是 `{trip_gated.method}`：weighted bias `{trip_gated.weighted_bias:.4f}`，weighted R2 `{trip_gated.weighted_r2:.4f}`。",
+            f"- 家庭颗粒度上，gated correction exact hit `{pct(gated_acc.exact_rounded_accuracy)}`，within 2 trips `{pct(gated_acc.within_2_trips)}`，within 3 trips `{pct(gated_acc.within_3_trips)}`。",
+            "",
+            "## 出行方式结构结果",
+            "",
+            "| 方法 | Weighted TV | Mean Share MAE | Dominant Accuracy | Transit MAE | Transit Bias |",
+            "|---|---:|---:|---:|---:|---:|",
+        ]
+    )
+    mode_order = [
+        "llm_only_2017_mean_no_adapt",
+        "llm_only_2017_mean_transit_a1.25",
+        "historical_mean_2017",
+        "historical_xgboost",
+        "global_transit_avoidance_a1",
+        "llm_transit_avoidance_a1",
+    ]
+    mode_index = mode.set_index("method")
+    for method in mode_order:
+        row = mode_index.loc[method]
+        lines.append(
+            f"| {method} | {row.weighted_total_variation:.4f} | {row.weighted_mean_share_mae:.4f} | "
+            f"{row.weighted_dominant_mode_accuracy:.4f} | {row.transit_share_weighted_mae:.4f} | "
+            f"{row.transit_share_weighted_bias:.4f} |"
+        )
+    lines.extend(
+        [
+            "",
+            "辅助任务结论：",
+            "",
+            f"- 纯 LLM-style correction 相比 2017 mean prior 有改善，但仍弱于 XGBoost。",
+            f"- XGBoost + LLM transit prior 把 weighted TV 从 `{mode_base.weighted_total_variation:.4f}` 降到 `{mode_best.weighted_total_variation:.4f}`，总体提升较小。",
+            f"- 但公共交通这一项改善明显：transit-share weighted MAE 从 `{mode_base.transit_share_weighted_mae:.4f}` 降到 `{mode_best.transit_share_weighted_mae:.4f}`。",
+            f"- LLM-only corrected transit MAE 是 `{llm_only_best.transit_share_weighted_mae:.4f}`，说明 LLM 知道方向，但需要历史预测器提供 household-specific baseline。",
+            "",
+            "## 最终口径",
+            "",
+            "不要把这个项目讲成“LLM 替代传统模型”。更准确的说法是：历史预测器学习 routine mobility，LLM 提供疫情事件先验，两者结合后能在不使用 2022 标签训练的前提下修正 post-pandemic distribution shift。",
+        ]
+    )
+    path.write_text("\n".join(lines), encoding="utf-8")
+    return path
+
+
+def set_plot_style() -> None:
+    plt.rcParams.update({"font.size": 10, "axes.spines.top": False, "axes.spines.right": False})
+
+
+def set_text(paragraph, size: int, color: RGBColor = COLORS["dark"], bold: bool = False) -> None:
+    paragraph.font.name = "Microsoft YaHei"
+    paragraph.font.size = Pt(size)
+    paragraph.font.color.rgb = color
+    paragraph.font.bold = bold
+
+
+def add_title(slide: Slide, title: str, subtitle: str | None = None) -> None:
+    box = slide.shapes.add_textbox(Inches(0.55), Inches(0.28), Inches(12.2), Inches(0.55))
+    frame = box.text_frame
+    frame.text = title
+    set_text(frame.paragraphs[0], 27, COLORS["dark"], True)
+    if subtitle:
+        sub = slide.shapes.add_textbox(Inches(0.58), Inches(0.86), Inches(12.0), Inches(0.38))
+        sub.text_frame.text = subtitle
+        set_text(sub.text_frame.paragraphs[0], 13, COLORS["muted"], False)
+
+
+def add_footer(slide: Slide, index: int) -> None:
+    box = slide.shapes.add_textbox(Inches(0.55), Inches(7.08), Inches(12.0), Inches(0.22))
+    frame = box.text_frame
+    frame.text = f"NHTS LLM Event Adaptation | {index}"
+    set_text(frame.paragraphs[0], 9, RGBColor(100, 116, 139), False)
+
+
+def add_bullets(slide: Slide, bullets: list[str], left: float, top: float, width: float, height: float, size: int = 18) -> None:
+    box = slide.shapes.add_textbox(Inches(left), Inches(top), Inches(width), Inches(height))
+    frame = box.text_frame
+    frame.word_wrap = True
+    frame.clear()
+    for index, text in enumerate(bullets):
+        paragraph = frame.paragraphs[0] if index == 0 else frame.add_paragraph()
+        paragraph.text = text
+        paragraph.level = 0
+        paragraph.space_after = Pt(8)
+        set_text(paragraph, size)
+
+
+def add_metric_card(slide: Slide, x: float, y: float, title: str, value: str, note: str, color: RGBColor) -> None:
+    shape = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(x), Inches(y), Inches(2.85), Inches(1.22))
+    shape.fill.solid()
+    shape.fill.fore_color.rgb = RGBColor(248, 250, 252)
+    shape.line.color.rgb = color
+    shape.line.width = Pt(1.2)
+    frame = shape.text_frame
+    frame.vertical_anchor = MSO_ANCHOR.MIDDLE
+    frame.clear()
+    p1 = frame.paragraphs[0]
+    p1.text = title
+    set_text(p1, 10, COLORS["muted"], False)
+    p2 = frame.add_paragraph()
+    p2.text = value
+    set_text(p2, 23, color, True)
+    p3 = frame.add_paragraph()
+    p3.text = note
+    set_text(p3, 8, RGBColor(100, 116, 139), False)
+
+
+def add_table(slide: Slide, rows: list[list[str]], left: float, top: float, width: float, height: float, font_size: int = 10) -> None:
+    table_shape = slide.shapes.add_table(len(rows), len(rows[0]), Inches(left), Inches(top), Inches(width), Inches(height))
+    table = table_shape.table
+    for row_idx, row in enumerate(rows):
+        for col_idx, value in enumerate(row):
+            cell = table.cell(row_idx, col_idx)
+            cell.text = value
+            cell.margin_left = Inches(0.04)
+            cell.margin_right = Inches(0.04)
+            paragraph = cell.text_frame.paragraphs[0]
+            paragraph.alignment = PP_ALIGN.CENTER if col_idx > 0 else PP_ALIGN.LEFT
+            set_text(paragraph, font_size, COLORS["dark"], row_idx == 0)
+            if row_idx == 0:
+                cell.fill.solid()
+                cell.fill.fore_color.rgb = RGBColor(226, 232, 240)
+
+
+def add_picture(slide: Slide, path: Path, left: float, top: float, width: float) -> None:
+    slide.shapes.add_picture(str(path), Inches(left), Inches(top), width=Inches(width))
+
+
+def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_only_figure: Path) -> Path:
+    ppt_path = FINAL_DIR / "NHTS_LLM_Event_Adaptation_Optimized_Presentation.pptx"
+    prs = Presentation()
+    prs.slide_width = Inches(13.333)
+    prs.slide_height = Inches(7.5)
+    blank = prs.slide_layouts[6]
+
+    def base_slide(title: str, subtitle: str | None = None) -> Slide:
+        slide = prs.slides.add_slide(blank)
+        slide.background.fill.solid()
+        slide.background.fill.fore_color.rgb = RGBColor(255, 255, 255)
+        add_title(slide, title, subtitle)
+        add_footer(slide, len(prs.slides))
+        return slide
+
+    trip_base = trip[trip["method"] == "historical_xgboost"].iloc[0]
+    trip_best = trip[trip["method"] == "llm_trip_suppression_a1p25"].iloc[0]
+    trip_gated = trip[trip["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
+    gated_acc = acc[acc["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
+    mode_base = mode[mode["method"] == "historical_xgboost"].iloc[0]
+    mode_best = mode[mode["method"] == "llm_transit_avoidance_a1"].iloc[0]
+    llm_only_best = mode[mode["method"] == "llm_only_2017_mean_transit_a1.25"].iloc[0]
+
+    slide = prs.slides.add_slide(blank)
+    slide.background.fill.solid()
+    slide.background.fill.fore_color.rgb = COLORS["dark"]
+    title = slide.shapes.add_textbox(Inches(0.75), Inches(1.05), Inches(11.6), Inches(1.25))
+    title.text_frame.text = "Label-Free LLM Event Adaptation"
+    set_text(title.text_frame.paragraphs[0], 42, RGBColor(255, 255, 255), True)
+    subtitle = slide.shapes.add_textbox(Inches(0.78), Inches(2.38), Inches(11.5), Inches(0.75))
+    subtitle.text_frame.text = "Predicting post-pandemic household mobility without 2022 training labels"
+    set_text(subtitle.text_frame.paragraphs[0], 21, RGBColor(203, 213, 225), False)
+    add_metric_card(slide, 0.85, 4.45, "Trip-count MAE", "-42.8%", "LLM prior vs historical", COLORS["blue"])
+    add_metric_card(slide, 3.95, 4.45, "Bias", "-99.4%", "gated correction absolute bias", COLORS["green"])
+    add_metric_card(slide, 7.05, 4.45, "LLM calls", "-83.2%", "cohort prompting", COLORS["orange"])
+    add_footer(slide, 1)
+
+    slide = base_slide("What this project predicts", "Two related tasks, two different metric families")
+    add_table(
+        slide,
+        [
+            ["Task", "Target", "Granularity", "Metric family", "Role in story"],
+            ["Trip generation", "CNTTDHH", "Household", "MAE / RMSE / Bias / R2", "Main claim"],
+            ["Mode composition", "Mode shares", "Household", "TV / share MAE / dominant mode", "Auxiliary evidence"],
+            ["Trip-level mode", "TRPTRANS", "Trip", "Accuracy / F1", "Different task"],
+        ],
+        0.75,
+        1.45,
+        11.8,
+        2.2,
+        12,
+    )
+    add_bullets(
+        slide,
+        [
+            "We do not compare regression MAE with trip-level classification accuracy.",
+            "The main contribution is label-free adaptation under a 2022 event shift.",
+        ],
+        1.0,
+        4.25,
+        10.8,
+        1.2,
+        19,
+    )
+
+    slide = base_slide("Experimental guardrail", "2022 labels are evaluation-only in the main setting")
+    add_picture(slide, FINAL_FIGURE_DIR / "method_workflow.png", 0.8, 1.35, 11.7)
+    add_bullets(
+        slide,
+        ["LLM sees cohort attributes and pandemic-response context, not 2022 trip-count labels."],
+        1.15,
+        6.05,
+        10.6,
+        0.4,
+        16,
+    )
+
+    slide = base_slide("Trip-count methods", "What each row means")
+    add_table(
+        slide,
+        [
+            ["Method", "Uses 2022 labels?", "LLM?", "Purpose"],
+            ["Historical predictor", "No", "No", "Routine mobility baseline"],
+            ["Historical trend shift", "No", "No", "Mean-trend control"],
+            ["Global event prior", "No", "Only global mean", "Event-level downscaling control"],
+            ["Random prior control", "No", "Shuffled scores", "Negative control"],
+            ["LLM trip suppression", "No", "Cohort-specific", "Best MAE"],
+            ["Gated LLM correction", "No", "Cohort-specific when confident", "Best bias/R2 tradeoff"],
+        ],
+        0.65,
+        1.3,
+        12.1,
+        4.25,
+        10,
+    )
+
+    slide = base_slide("Trip-count comparison", "Weighted metrics on 2022 households")
+    trip_rows = [["Method", "MAE", "RMSE", "Bias", "R2", "MAE gain"]]
+    for method in [
+        "historical_xgboost",
+        "global_trip_suppression_a1p25",
+        "random_trip_suppression_a1p25",
+        "llm_trip_suppression_a1p25",
+        "gated_trip_suppression_a1_d0p15",
+    ]:
+        row = trip[trip["method"] == method].iloc[0]
+        gain = 100.0 * (trip_base["weighted_mae"] - row["weighted_mae"]) / trip_base["weighted_mae"]
+        trip_rows.append(
+            [
+                TRIP_LABELS[method],
+                f"{row.weighted_mae:.3f}",
+                f"{row.weighted_rmse:.3f}",
+                f"{row.weighted_bias:.3f}",
+                f"{row.weighted_r2:.3f}",
+                f"{gain:.1f}%",
+            ]
+        )
+    add_table(slide, trip_rows, 0.65, 1.25, 12.1, 3.6, 11)
+    add_bullets(
+        slide,
+        [
+            f"Best MAE: {trip_best.weighted_mae:.3f}, a 42.8% reduction.",
+            f"Best bias/R2: gated correction bias {trip_gated.weighted_bias:.3f}, R2 {trip_gated.weighted_r2:.3f}.",
+        ],
+        0.95,
+        5.35,
+        11.2,
+        0.9,
+        18,
+    )
+
+    slide = base_slide("Trip-count error drops sharply", "LLM event priors repair the 2022 overprediction")
+    add_picture(slide, FINAL_FIGURE_DIR / "metric_comparison.png", 0.8, 1.2, 11.9)
+
+    slide = base_slide("Bias and household-level interpretation", "Accuracy bands make the regression result tangible")
+    add_picture(slide, FINAL_FIGURE_DIR / "bias_r2_tradeoff.png", 0.75, 1.25, 6.0)
+    add_picture(slide, FINAL_FIGURE_DIR / "household_tolerance_accuracy.png", 6.9, 1.25, 5.85)
+    add_bullets(
+        slide,
+        [
+            f"Gated MAE: {gated_acc.unweighted_mae:.2f} trips per household.",
+            f"Within 2 trips: {pct(gated_acc.within_2_trips)}; within 3 trips: {pct(gated_acc.within_3_trips)}.",
+        ],
+        1.1,
+        6.2,
+        10.8,
+        0.5,
+        15,
+    )
+
+    slide = base_slide("Mode-composition extension", "What changed besides trip counts?")
+    add_table(
+        slide,
+        [
+            ["Component", "Definition"],
+            ["Private vehicle", "Car / van / SUV / pickup / motorcycle / rental vehicle"],
+            ["Walk / bike", "Non-motorized travel modes"],
+            ["Transit", "Public bus / rail / ferry / paratransit categories"],
+            ["Taxi / ridehail", "Taxi, limo, Uber/Lyft-style services"],
+            ["Other", "School bus, airplane, other specified modes"],
+        ],
+        0.75,
+        1.3,
+        11.8,
+        3.45,
+        11,
+    )
+    add_bullets(
+        slide,
+        ["2017 and 2022 TRPTRANS codes are mapped with year-specific official codebooks."],
+        1.0,
+        5.4,
+        11.0,
+        0.6,
+        18,
+    )
+
+    slide = base_slide("Mode distribution shift", "2022 has fewer trips and lower transit share")
+    add_picture(slide, MODE_DIR / "figures" / "mode_distribution_shift.png", 0.9, 1.25, 11.45)
+
+    slide = base_slide("Mode-composition method comparison", "LLM helps the transit component, but the effect is auxiliary")
+    add_picture(slide, MODE_DIR / "figures" / "mode_metric_comparison.png", 0.85, 1.25, 11.6)
+    add_bullets(
+        slide,
+        [
+            f"Transit-share weighted MAE: {mode_base.transit_share_weighted_mae:.4f} -> {mode_best.transit_share_weighted_mae:.4f}.",
+            "Overall mode-composition gain is small, so this belongs as supporting evidence.",
+        ],
+        1.05,
+        6.15,
+        10.7,
+        0.5,
+        15,
+    )
+
+    slide = base_slide("Pure LLM-style baseline", "LLM direction alone helps, but it does not replace household predictors")
+    add_picture(slide, llm_only_figure, 0.9, 1.25, 11.55)
+    add_bullets(
+        slide,
+        [
+            f"LLM-only corrected transit MAE: {llm_only_best.transit_share_weighted_mae:.4f}.",
+            f"XGBoost + LLM transit MAE: {mode_best.transit_share_weighted_mae:.4f}.",
+        ],
+        1.05,
+        6.15,
+        10.7,
+        0.5,
+        15,
+    )
+
+    slide = base_slide("Metric guide", "How to read the numbers")
+    add_table(
+        slide,
+        [
+            ["Metric", "Task", "Meaning"],
+            ["Weighted MAE", "Trip count", "Average absolute trip-count error"],
+            ["Weighted Bias", "Trip count", "Systematic over/under prediction"],
+            ["Within-k", "Trip count", "Households within k trips"],
+            ["Weighted TV", "Mode composition", "Whole share-vector error"],
+            ["Transit-share MAE", "Mode composition", "Public-transit share error"],
+        ],
+        0.75,
+        1.35,
+        11.8,
+        3.4,
+        12,
+    )
+    add_bullets(
+        slide,
+        ["Lower is better for errors; bias closer to zero is better; R2 and accuracy are higher-is-better."],
+        1.0,
+        5.3,
+        11.0,
+        0.7,
+        18,
+    )
+
+    slide = base_slide("What the LLM contributes", "Event semantics, not direct numerical prediction")
+    add_bullets(
+        slide,
+        [
+            "The historical predictor learns routine household mobility from NHTS.",
+            "The LLM supplies post-pandemic event priors: trip suppression, remote work, transit avoidance, delivery substitution, recovery sensitivity.",
+            "Global controls show that broad event downscaling is strong.",
+            "Random controls and subgroup diagnostics show that cohort-specific LLM ranking adds smaller but measurable signal.",
+        ],
+        0.95,
+        1.45,
+        11.1,
+        4.7,
+        22,
+    )
+
+    slide = base_slide("Caveats", "What we should not overclaim")
+    add_bullets(
+        slide,
+        [
+            "Do not claim that LLM directly predicts household trip counts.",
+            "Do not compare trip-count MAE with trip-level mode-classification accuracy.",
+            "Mode composition is an auxiliary extension; the main validated result is CNTTDHH adaptation.",
+            "Future work should add external event context, stronger LLM priors, and prospective validation.",
+        ],
+        0.95,
+        1.45,
+        11.1,
+        4.7,
+        23,
+    )
+
+    slide = base_slide("Final takeaway", "A defensible story for the course project")
+    add_metric_card(slide, 1.0, 1.55, "Trip-count error", "-42.8%", "weighted MAE reduction", COLORS["blue"])
+    add_metric_card(slide, 4.2, 1.55, "Bias", "-99.4%", "gated absolute bias reduction", COLORS["green"])
+    add_metric_card(slide, 7.4, 1.55, "Transit-share error", "-17.4%", "auxiliary mode result", COLORS["orange"])
+    add_bullets(
+        slide,
+        [
+            "LLMs are most useful here as event-prior generators.",
+            "The best model is not pure LLM and not pure historical prediction; it is a label-free hybrid adapter.",
+        ],
+        1.0,
+        4.0,
+        11.0,
+        1.4,
+        24,
+    )
+
+    prs.save(ppt_path)
+    return ppt_path
+
+
+def write_speaker_notes(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
+    path = FINAL_DIR / "presentation_speaker_notes.md"
+    trip_base = trip[trip["method"] == "historical_xgboost"].iloc[0]
+    trip_best = trip[trip["method"] == "llm_trip_suppression_a1p25"].iloc[0]
+    mode_base = mode[mode["method"] == "historical_xgboost"].iloc[0]
+    mode_best = mode[mode["method"] == "llm_transit_avoidance_a1"].iloc[0]
+    lines = [
+        "# Presentation Speaker Notes",
+        "",
+        "## Core Message",
+        "We predict 2022 household mobility under post-pandemic distribution shift. The main result is a label-free LLM event-prior correction for household trip counts.",
+        "",
+        "## One-Minute Version",
+        f"Historical prediction overestimates 2022 trips. LLM trip-suppression priors reduce weighted MAE from `{trip_base.weighted_mae:.4f}` to `{trip_best.weighted_mae:.4f}`. "
+        "The LLM is not used as a direct trip-count predictor; it provides pandemic-event semantics that modify a historical routine-mobility predictor.",
+        "",
+        "## Metric Language",
+        "- Weighted MAE/RMSE are survey-weighted trip-count errors.",
+        "- Weighted bias tells whether we systematically overpredict or underpredict.",
+        "- Within-k accuracy is used only to make regression error intuitive.",
+        "- Weighted total variation is the whole mode-share vector error.",
+        "- Transit-share weighted MAE is the public-transit component error.",
+        "",
+        "## Mode Extension",
+        f"Mode composition is supporting evidence. XGBoost + LLM reduces transit-share weighted MAE from `{mode_base.transit_share_weighted_mae:.4f}` to `{mode_best.transit_share_weighted_mae:.4f}`, but the overall mode-composition improvement is small.",
+        "",
+        "## Questions To Expect",
+        "- Why not compare with your classmate's accuracy? Because that is trip-level classification, while our main task is household-level regression.",
+        "- Is this pure LLM? No. Pure LLM-like correction is weaker than XGBoost + LLM.",
+        "- Did 2022 labels enter training? Not in the main label-free setting; 2022 targets are used for evaluation.",
+    ]
+    path.write_text("\n".join(lines), encoding="utf-8")
+    return path
+
+
+def write_speaker_notes_zh(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
+    path = FINAL_DIR / "presentation_speaker_notes_zh.md"
+    trip_base = trip[trip["method"] == "historical_xgboost"].iloc[0]
+    trip_best = trip[trip["method"] == "llm_trip_suppression_a1p25"].iloc[0]
+    mode_base = mode[mode["method"] == "historical_xgboost"].iloc[0]
+    mode_best = mode[mode["method"] == "llm_transit_avoidance_a1"].iloc[0]
+    lines = [
+        "# 中文汇报讲稿",
+        "",
+        "## 核心信息",
+        "",
+        "我们研究的是 2022 年疫情后分布变化下的 household mobility prediction。主任务是预测一个家庭在 travel day 的总出行次数 `CNTTDHH`。",
+        "",
+        "## 一分钟版本",
+        "",
+        f"传统历史预测器会明显高估 2022 年家庭出行次数。加入 LLM trip-suppression event prior 后，weighted MAE 从 `{trip_base.weighted_mae:.4f}` 降到 `{trip_best.weighted_mae:.4f}`。这里 LLM 不是直接预测 trip count，而是提供疫情事件语义先验，再去修正历史 routine-mobility predictor。",
+        "",
+        "## 指标解释",
+        "",
+        "- Weighted MAE/RMSE：加权后的出行次数误差。",
+        "- Weighted Bias：系统性高估或低估，越接近 0 越好。",
+        "- Within-k accuracy：预测误差在 k 次 trip 以内的 household 比例。",
+        "- Weighted total variation：家庭 mode-share 向量整体误差。",
+        "- Transit-share weighted MAE：公共交通占比这一项的误差。",
+        "",
+        "## Mode Extension 怎么讲",
+        "",
+        f"出行方式结构是辅助实验。XGBoost + LLM 把 transit-share weighted MAE 从 `{mode_base.transit_share_weighted_mae:.4f}` 降到 `{mode_best.transit_share_weighted_mae:.4f}`，说明 LLM 的 transit avoidance prior 对公共交通这一项有帮助。但总体 mode composition 改善不大，所以它应该作为 backup 或 supplementary evidence。",
+        "",
+        "## 可能被问到的问题",
+        "",
+        "- 为什么不能和同学的 accuracy 直接比？因为同学那版更像 trip-level `TRPTRANS` 分类，我们主任务是 household-level `CNTTDHH` 回归。",
+        "- 这是 pure LLM 吗？不是。纯 LLM-style correction 比 XGBoost + LLM 弱，说明 LLM 适合作为 event-prior adapter。",
+        "- 有没有用 2022 标签训练？主实验没有。2022 `CNTTDHH` 只在最终 evaluation 中使用。",
+    ]
+    path.write_text("\n".join(lines), encoding="utf-8")
+    return path
+
+
+def write_storyboard() -> Path:
+    path = PROJECT_ROOT / "plan" / "optimized_presentation_storyboard.md"
+    lines = [
+        "# Optimized Presentation Storyboard",
+        "",
+        "1. Title: label-free LLM event adaptation.",
+        "2. Task map: trip count vs mode composition vs trip-level mode classification.",
+        "3. Experimental guardrail: no 2022 labels in main training/adaptation.",
+        "4. Trip-count methods: historical, global, random, LLM, gated.",
+        "5. Trip-count metric table.",
+        "6. Trip-count error plot.",
+        "7. Bias and household accuracy.",
+        "8. Mode-composition extension scope.",
+        "9. Mode distribution shift.",
+        "10. Mode-composition method comparison.",
+        "11. Pure LLM-style baseline.",
+        "12. Metric guide.",
+        "13. LLM contribution.",
+        "14. Caveats.",
+        "15. Final takeaway.",
+    ]
+    path.write_text("\n".join(lines), encoding="utf-8")
+    return path
+
+
+def main() -> None:
+    configure_logging()
+    ensure_dirs()
+    set_plot_style()
+    trip, acc, mode, figure_path = build_method_comparison()
+    write_method_report_zh(trip, acc, mode)
+    ppt_path = create_deck(trip, acc, mode, figure_path)
+    notes_path = write_speaker_notes(trip, mode)
+    write_speaker_notes_zh(trip, mode)
+    storyboard_path = write_storyboard()
+    LOGGER.info("Wrote optimized PPT: %s", ppt_path)
+    LOGGER.info("Wrote speaker notes: %s", notes_path)
+    LOGGER.info("Wrote storyboard: %s", storyboard_path)
+
+
+if __name__ == "__main__":
+    main()
