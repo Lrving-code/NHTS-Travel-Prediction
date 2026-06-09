@@ -17,6 +17,7 @@
 | random_trip_suppression_a1p25 | 5 | 2.6466 +/- 0.0141 | 3.8807 | -0.6368 +/- 0.0164 | 0.1280 | 0.1018 |
 | llm_recovery_pressure_a1p25 | 1 | 2.6482 | 3.7306 | 0.1996 | 0.1942 | 0.1968 |
 | random_trip_suppression_a1 | 5 | 2.6615 +/- 0.0097 | 3.7417 | 0.2103 +/- 0.0132 | 0.1894 | 0.1906 |
+| llm_only_trip_suppression_a1p25 | 1 | 2.7175 | 3.9876 | -0.3732 | 0.0794 | 0.0626 |
 | gated_trip_suppression_a0p75_d0p15 | 1 | 2.7458 | 3.7153 | 0.8840 | 0.2008 | 0.2195 |
 | global_recovery_pressure_a1 | 1 | 2.7647 | 3.7323 | 0.8855 | 0.1935 | 0.2189 |
 | gated_trip_suppression_a0p75_d0p1 | 1 | 2.7872 | 3.7531 | 1.0040 | 0.1845 | 0.2053 |
@@ -27,6 +28,7 @@
 | llm_trip_suppression_a0p75 | 1 | 2.8251 | 3.7867 | 1.1169 | 0.1698 | 0.1965 |
 | random_trip_suppression_a0p75 | 5 | 2.8700 +/- 0.0103 | 3.8449 | 1.0590 +/- 0.0099 | 0.1441 | 0.1803 |
 | llm_confidence_pressure_a1p25 | 1 | 2.9782 | 3.9296 | 1.3231 | 0.1060 | 0.1532 |
+| llm_only_trip_suppression_a1 | 1 | 2.9927 | 4.0232 | 0.5984 | 0.0629 | 0.0480 |
 | global_recovery_pressure_a0p75 | 1 | 3.0559 | 3.9773 | 1.5654 | 0.0841 | 0.1428 |
 | llm_recovery_pressure_a0p75 | 1 | 3.0776 | 4.0161 | 1.5618 | 0.0662 | 0.1244 |
 | random_recovery_pressure_a0p75 | 5 | 3.0847 +/- 0.0121 | 4.0177 | 1.5954 +/- 0.0051 | 0.0654 | 0.1276 |
@@ -39,6 +41,7 @@
 | global_recovery_pressure_a0p5 | 1 | 3.4255 | 4.3404 | 2.2453 | -0.0907 | 0.0060 |
 | llm_confidence_pressure_a0p75 | 1 | 3.4314 | 4.3572 | 2.2359 | -0.0992 | -0.0036 |
 | llm_recovery_pressure_a0p5 | 1 | 3.4326 | 4.3589 | 2.2429 | -0.1000 | -0.0049 |
+| llm_only_trip_suppression_a0p75 | 1 | 3.4627 | 4.2995 | 1.5737 | -0.0703 | -0.0804 |
 | gated_trip_suppression_a0p25_d0p15 | 1 | 3.7026 | 4.6308 | 2.6981 | -0.2416 | -0.1220 |
 | llm_confidence_pressure_a0p5 | 1 | 3.7105 | 4.6423 | 2.6923 | -0.2477 | -0.1241 |
 | gated_trip_suppression_a0p25_d0p1 | 1 | 3.7264 | 4.6592 | 2.7381 | -0.2568 | -0.1362 |
@@ -48,8 +51,11 @@
 | global_recovery_pressure_a0p25 | 1 | 3.8594 | 4.7947 | 2.9253 | -0.3310 | -0.1914 |
 | llm_recovery_pressure_a0p25 | 1 | 3.8617 | 4.8007 | 2.9241 | -0.3343 | -0.1961 |
 | llm_confidence_pressure_a0p25 | 1 | 4.0150 | 4.9644 | 3.1488 | -0.4269 | -0.2727 |
+| llm_only_trip_suppression_a0p5 | 1 | 4.0705 | 4.7758 | 2.5490 | -0.3205 | -0.3229 |
 | historical_mean_trend_shift | 1 | 4.1504 | 5.1463 | 3.3485 | -0.5334 | -0.3565 |
 | historical_xgboost | 1 | 4.3377 | 5.3169 | 3.6052 | -0.6367 | -0.4494 |
+| llm_only_trip_suppression_a0p25 | 1 | 4.7628 | 5.3992 | 3.5242 | -0.6878 | -0.6796 |
+| historical_mean_only | 1 | 5.5116 | 6.1251 | 4.4995 | -1.1722 | -1.1503 |
 
 ## Key Takeaways
 

@@ -1,10 +1,10 @@
-# NHTS Travel Prediction
+# Pandemic-Aware Household Travel Behavior Prediction
 
-本项目研究 2022 年疫情后分布变化下的 NHTS household mobility prediction。主线任务是预测家庭每日出行次数 `CNTTDHH`，并验证 LLM 生成的疫情事件先验能否在不使用 2022 目标标签训练/校准的情况下，修正历史出行预测器的系统性偏差。
+本项目研究 2022 年疫情后分布变化下的 NHTS household travel behavior prediction。核心思路是用历史 NHTS 学习 routine mobility，再用 LLM 生成的疫情事件先验修正 post-pandemic shift。项目以家庭为单位，同时预测出行强度和出行方式结构。
 
 ## 当前结论
 
-主任务是 household-level trip-count regression：
+行为目标 1 是 household-level trip-count regression：
 
 - Historical predictor weighted MAE: `4.3377`
 - Primary fixed no-label gated correction weighted MAE: `2.5023`
@@ -13,14 +13,15 @@
 - Primary gated weighted MAE reduction: `42.31%`
 - Best-MAE sensitivity row weighted MAE: `2.4820`
 - Best-MAE sensitivity reduction: `42.78%`
+- LLM-only pressure weighted MAE: `2.7175`
 - Gated household accuracy: exact `17.7%`, within 2 trips `54.5%`, within 3 trips `71.2%`
 
-辅助任务是 household-level mode composition：
+行为目标 2 是 household-level mode composition：
 
 - Historical XGBoost weighted total variation: `0.2008`
 - XGBoost + LLM transit prior weighted total variation: `0.1985`
 - Transit-share weighted MAE: `0.0325 -> 0.0269`
-- 该任务作为 supplementary / backup evidence；主贡献仍是 `CNTTDHH` 的 label-free event adaptation。
+- 该目标用于补充“怎么出行”的方式结构维度，和 `CNTTDHH` 一起构成 household travel behavior prediction。
 
 ## 方法一句话
 
@@ -32,21 +33,36 @@
 
 注意：LLM 不是直接预测 household trip count，也不是替代 XGBoost。LLM 的角色是 event-prior adapter。
 
-## 与参考资料/同学版本的区别
+## 学术问题与贡献
 
-同学参考资料更接近 trip-level `TRPTRANS` mode classification：
+本项目把 2022 NHTS 预测定义为 **event-driven temporal adaptation** 问题，而不是普通 cross-year prediction。核心观察是：历史模型能学习家庭属性和 routine mobility 的关系，但 2022 疫情恢复期引入了 remote work、transit avoidance、online delivery substitution 等事件机制，这些机制没有被传统 household covariates 充分表示。
 
-- 输入：一条 trip 的距离、时长、目的、车辆/个人/地区信息
-- 输出：这条 trip 的交通方式
-- 指标：accuracy / F1 等分类指标
+研究问题：
 
-本项目主线是 household-level `CNTTDHH` regression：
+- **RQ1**：历史 household travel model 在 2022 post-pandemic shift 下会出现多大系统性偏差？
+- **RQ2**：不使用 2022 `CNTTDHH` 标签训练/校准时，LLM 生成的 event priors 能否修正这种偏差？
+- **RQ3**：LLM 的作用是替代历史模型，还是作为 event-semantic adapter 与历史模型互补？
 
-- 输入：家庭和地区属性
-- 输出：这个家庭 travel day 总出行次数
-- 指标：MAE / RMSE / Bias / R2 / within-k accuracy
+方法贡献：
 
-所以两者不能直接比较 accuracy 或 MAE。可以作为互补模块：我们预测出行强度，mode-composition 扩展预测出行方式结构。
+- 提出一个 label-free hybrid adaptation 结构：`routine predictor + LLM event prior + fixed correction rule`。
+- 将 LLM 限定为结构化事件先验生成器，而不是直接数值预测器，降低 hallucination 和 target leakage 风险。
+- 使用 cohort-level prompting，把 7,893 个家庭压缩为 1,327 个 cohort 请求，降低请求成本并提高可审计性。
+- 对比 historical mean、ordinary historical XGBoost、historical trend shift、global event rule、random pressure、LLM-only pressure 和 hybrid LLM adapter，说明 hybrid 设计的必要性。
+
+## 整体任务设计
+
+本项目按家庭颗粒度组织成一个两阶段预测框架：
+
+- **Trip generation**：预测家庭 travel day 总出行次数 `CNTTDHH`。
+- **Mode composition**：把 trip-level `TRPTRANS` 聚合为家庭层面的 mode-share 向量，预测 private vehicle、walk、bike、transit、taxi/ridehail、other 的占比。
+- **Mode-specific trip count**：把前两步组合为各方式出行次数：
+
+```text
+predicted trips by mode = predicted total trips * predicted mode share
+```
+
+因此仓库对外表述为一个整体：预测疫情后家庭层面的完整出行行为，包括“出行多少次”和“用什么方式出行”。
 
 ## 主要输出
 
@@ -64,7 +80,7 @@
 - `outputs/final_project/household_accuracy_summary.csv`
 - `outputs/final_project/figures/`
 
-辅助实验：
+出行方式结构实验：
 
 - `outputs/mode_composition_extension/mode_composition_report.md`
 - `outputs/mode_composition_extension/mode_composition_metrics.csv`
@@ -120,7 +136,7 @@ python src\export_final_repro_artifacts.py --device cuda
 
 该脚本会在 `outputs/models/final_label_free_2022/` 保存 historical routine model、feature list、2022 prediction CSV、metrics、metadata、数据 hash 和环境信息。该目录默认不提交到 git。
 
-mode-composition 辅助实验：
+mode-composition 实验：
 
 ```powershell
 python src\run_mode_composition_extension.py --device cuda
@@ -155,5 +171,4 @@ data/raw/nhts_2022/csv/tripv2pub.csv
 - 汇报主口径使用固定 `gated_trip_suppression_a1_d0p15` no-label rule；`llm_trip_suppression_a1p25` 是 best-MAE sensitivity row，不应表述为严格无标签参数选择的主方法。
 - `TRPTRANS` 编码在 2017 和 2022 不能直接按数字对齐，mode-composition 扩展使用 year-specific official codebook mapping。
 - `outputs/share_package/` 是本地分享包目录，默认 git ignored。
-- `refs/` 是本地参考资料目录，默认 git ignored。
 - 不要提交 `.env`、API key、原始 LLM JSONL 请求日志或原始 NHTS 大文件。

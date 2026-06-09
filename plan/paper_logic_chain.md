@@ -2,7 +2,19 @@
 
 ## One-Sentence Contribution
 
-We study post-pandemic household travel demand prediction as an event-driven temporal adaptation problem and propose using LLM-derived event semantics to correct the systematic bias of historical tabular models under rare societal shocks.
+We study post-pandemic household travel behavior prediction as an event-driven temporal adaptation problem and show that LLM-derived event priors can correct the systematic failure of routine-mobility predictors under rare societal shocks without using target-year trip-count labels.
+
+## Paper Story
+
+The core story is a separation of roles:
+
+- Historical household predictors estimate **routine mobility** from stable socioeconomic and built-environment covariates.
+- The 2022 pandemic recovery wave introduces **event mechanisms** such as remote work substitution, transit avoidance, online delivery substitution, and uneven activity recovery.
+- These mechanisms are not fully observed in standard household covariates, so ordinary historical transfer overpredicts 2022 travel.
+- A pure LLM-style pressure baseline captures the direction of the shock but lacks a calibrated household-specific baseline.
+- The proposed hybrid model uses the historical predictor for household heterogeneity and the LLM for event semantics.
+
+This gives the paper a clean methodological claim: LLMs are not used as direct numerical predictors; they are used as label-free semantic adapters under event-driven temporal shift.
 
 ## Working Title
 

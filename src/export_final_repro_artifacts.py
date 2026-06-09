@@ -22,6 +22,7 @@ from run_label_free_llm_adaptation import (
     add_event_pressure,
     apply_multiplicative_pressure,
     evaluate_full_2022,
+    make_historical_mean_prediction,
     make_delta_gated_pressure,
     make_global_pressure,
 )
@@ -97,6 +98,7 @@ def package_versions() -> dict[str, str]:
 
 
 def make_predictions(
+    full_frame: pd.DataFrame,
     frame_2022: pd.DataFrame,
     primary_alpha: float,
     primary_delta_threshold: float,
@@ -108,8 +110,16 @@ def make_predictions(
     trip_pressure = frame_2022["llm_trip_suppression_pressure"].to_numpy(dtype=float)
     global_pressure = make_global_pressure(trip_pressure, weights)
     gated_pressure = make_delta_gated_pressure(trip_pressure, global_pressure, primary_delta_threshold)
+    historical_mean_prediction = make_historical_mean_prediction(full_frame, len(frame_2022))
     return {
+        "historical_mean_only": historical_mean_prediction,
         "historical_xgboost": base_prediction,
+        "llm_only_trip_suppression_a1p25": apply_multiplicative_pressure(
+            historical_mean_prediction,
+            trip_pressure,
+            sensitivity_alpha,
+            min_factor,
+        ),
         "global_trip_suppression_a1p25": apply_multiplicative_pressure(
             base_prediction,
             global_pressure,
@@ -235,6 +245,7 @@ def main() -> None:
     frame_2022["base_prediction"] = np.maximum(history_model.predict(frame_2022[feature_columns]), 0.0)
     frame_2022 = add_event_pressure(frame_2022)
     predictions = make_predictions(
+        full_frame=full_frame,
         frame_2022=frame_2022,
         primary_alpha=args.primary_alpha,
         primary_delta_threshold=args.primary_delta_threshold,

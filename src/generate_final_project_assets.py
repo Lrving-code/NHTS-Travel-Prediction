@@ -28,6 +28,7 @@ from run_label_free_llm_adaptation import (  # noqa: E402
     add_event_pressure,
     apply_multiplicative_pressure,
     load_2022_with_llm_features,
+    make_historical_mean_prediction,
     make_delta_gated_pressure,
     make_global_pressure,
 )
@@ -40,16 +41,20 @@ FIGURE_DIR = OUTPUT_DIR / "figures"
 LABEL_FREE_DIR = PROJECT_ROOT / "outputs" / "label_free_llm_adaptation"
 
 SELECTED_METHODS = [
+    "historical_mean_only",
     "historical_xgboost",
     "historical_mean_trend_shift",
+    "llm_only_trip_suppression_a1p25",
     "global_trip_suppression_a1p25",
     "random_trip_suppression_a1p25",
     "llm_trip_suppression_a1p25",
     "gated_trip_suppression_a1_d0p15",
 ]
 PLOT_LABELS = {
+    "historical_mean_only": "Historical mean",
     "historical_xgboost": "Historical predictor",
     "historical_mean_trend_shift": "Historical trend shift",
+    "llm_only_trip_suppression_a1p25": "LLM-only pressure",
     "global_trip_suppression_a1p25": "Global event prior",
     "random_trip_suppression_a1p25": "Random prior control",
     "llm_trip_suppression_a1p25": "LLM trip suppression",
@@ -161,9 +166,13 @@ def load_2022_predictions() -> tuple[pd.DataFrame, dict[str, np.ndarray]]:
     trip_pressure = frame["llm_trip_suppression_pressure"].to_numpy(dtype=float)
     global_pressure = make_global_pressure(trip_pressure, weights)
     gated_pressure = make_delta_gated_pressure(trip_pressure, global_pressure, 0.15)
+    historical_mean_prediction = make_historical_mean_prediction(full_frame, len(frame))
 
     predictions = {
         "historical_xgboost": base_prediction,
+        "llm_only_trip_suppression_a1p25": apply_multiplicative_pressure(
+            historical_mean_prediction, trip_pressure, 1.25, 0.05
+        ),
         "llm_trip_suppression_a1p25": apply_multiplicative_pressure(
             base_prediction, trip_pressure, 1.25, 0.05
         ),
@@ -395,9 +404,17 @@ def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: di
         "",
         "## Core Claim",
         "",
-        "This project predicts 2022 household daily trip counts under post-pandemic distribution shift. "
-        "The main contribution is a label-free LLM event-prior correction: 2022 trip-count labels are used "
-        "only for final evaluation.",
+        "This project formulates 2022 NHTS household travel prediction as event-driven temporal adaptation. "
+        "Historical models learn routine mobility, but the post-pandemic wave contains event mechanisms such as "
+        "remote work substitution, transit avoidance, online delivery substitution, and uneven recovery. "
+        "The main contribution is a label-free hybrid adapter: LLM-derived event priors correct a historical "
+        "routine-mobility predictor, while 2022 trip-count labels are used only for final evaluation.",
+        "",
+        "## Research Questions",
+        "",
+        "- RQ1: How severely do historical household travel models overpredict 2022 post-pandemic trip generation?",
+        "- RQ2: Can event priors reduce this bias without using 2022 `CNTTDHH` labels for training or calibration?",
+        "- RQ3: Does the LLM replace historical prediction, or is the stronger design a hybrid of routine mobility and event semantics?",
         "",
         "## Main Result",
         "",
@@ -423,6 +440,8 @@ def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: di
             f"- Primary absolute weighted bias drops by `{gated.abs_weighted_bias_reduction_pct:.2f}%`.",
             f"- Best-MAE sensitivity row: `{best_mae.method}` reaches weighted MAE `{best_mae.weighted_mae:.4f}` "
             f"({best_mae.weighted_mae_reduction_pct:.2f}% reduction).",
+            "- LLM-only pressure improves over naive historical baselines but remains weaker than the hybrid adapter, "
+            "supporting the design choice that LLMs provide event semantics rather than standalone household predictions.",
             "",
             "## Household-Level Accuracy",
             "",

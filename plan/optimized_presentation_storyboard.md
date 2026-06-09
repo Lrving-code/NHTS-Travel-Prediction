@@ -1,7 +1,7 @@
 # Optimized Presentation Storyboard
 
 1. Title: label-free LLM event adaptation.
-2. Task map: trip count vs mode composition vs trip-level mode classification.
+2. Task map: trip count, mode composition, and derived mode-specific trip counts.
 3. Experimental guardrail: no 2022 labels in main training/adaptation.
 4. Trip-count methods: historical, global, random, LLM, gated.
 5. Trip-count metric table.

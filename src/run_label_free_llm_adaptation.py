@@ -150,6 +150,15 @@ def add_historical_mean_trend_prediction(frame: pd.DataFrame, frame_2022: pd.Dat
     return np.maximum(shifted, 0.0)
 
 
+def make_historical_mean_prediction(frame: pd.DataFrame, rows: int) -> np.ndarray:
+    history = frame[frame["survey_year"].isin((2001, 2009, 2017))]
+    mean_value = weighted_average(
+        history[TARGET_COLUMN].to_numpy(dtype=float),
+        history[WEIGHT_COLUMN].to_numpy(dtype=float),
+    )
+    return np.full(rows, mean_value, dtype=float)
+
+
 def evaluate_full_2022(
     frame_2022: pd.DataFrame,
     method: str,
@@ -211,6 +220,8 @@ def build_metric_rows(
     global_suppression_pressure = make_global_pressure(suppression_pressure, weights)
 
     rows.append(evaluate_full_2022(frame_2022, "historical_xgboost", base_prediction, 0, device))
+    historical_mean_prediction = make_historical_mean_prediction(full_frame, len(frame_2022))
+    rows.append(evaluate_full_2022(frame_2022, "historical_mean_only", historical_mean_prediction, 0, device))
     rows.append(
         evaluate_full_2022(
             frame_2022,
@@ -255,6 +266,20 @@ def build_metric_rows(
                 frame_2022,
                 f"llm_trip_suppression_a{token}",
                 apply_multiplicative_pressure(base_prediction, suppression_pressure, alpha, min_factor),
+                0,
+                device,
+            )
+        )
+        rows.append(
+            evaluate_full_2022(
+                frame_2022,
+                f"llm_only_trip_suppression_a{token}",
+                apply_multiplicative_pressure(
+                    historical_mean_prediction,
+                    suppression_pressure,
+                    alpha,
+                    min_factor,
+                ),
                 0,
                 device,
             )

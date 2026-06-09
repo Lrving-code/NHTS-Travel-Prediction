@@ -15,7 +15,7 @@ Make the project easy to present and review by clarifying method comparisons, me
 
 ## Scope
 - Main story: zero-label 2022 household trip-count adaptation.
-- Auxiliary story: household-level mode composition extension.
+- Integrated behavior story: household trip generation plus household mode composition.
 - Comparison baseline: pure/LLM-only approximation for mode composition, defined as 2017 mean mode composition corrected only by LLM transit-avoidance priors.
 
 ## Metric Definitions To Explain
@@ -27,8 +27,8 @@ Make the project easy to present and review by clarifying method comparisons, me
 - Transit-share weighted MAE/Bias for the public-transit component.
 
 ## Caveats
-- Trip-count regression metrics cannot be directly compared with trip-level `TRPTRANS` classification accuracy.
-- The mode-composition experiment is auxiliary; the strongest claim remains trip-count adaptation.
+- Trip-count regression and mode-composition prediction use different metric families, so both should be explained as outputs of one household behavior system.
+- The mode-composition gain is smaller overall than trip-count adaptation, but it adds the mode-structure dimension.
 - The current LLM-only mode baseline is not a direct LLM output baseline because the LLM was not asked to emit mode shares.
 
 ## Status

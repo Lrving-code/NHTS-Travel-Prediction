@@ -40,8 +40,10 @@ MODE_COLUMNS = [
 HOUSEHOLD_ID = "HOUSEID"
 WEIGHT_COLUMN = "WTHHFIN"
 TRIP_LABELS = {
+    "historical_mean_only": "Historical mean",
     "historical_xgboost": "Historical predictor",
     "historical_mean_trend_shift": "Historical trend shift",
+    "llm_only_trip_suppression_a1p25": "LLM-only pressure",
     "global_trip_suppression_a1p25": "Global event prior",
     "random_trip_suppression_a1p25": "Random prior control",
     "llm_trip_suppression_a1p25": "LLM trip suppression",
@@ -250,6 +252,7 @@ def build_method_comparison() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame,
 def write_method_report(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame) -> Path:
     path = FINAL_DIR / "method_comparison_report.md"
     trip_base = trip[trip["method"] == "historical_xgboost"].iloc[0]
+    trip_llm_only = trip[trip["method"] == "llm_only_trip_suppression_a1p25"].iloc[0]
     trip_best = trip[trip["method"] == "llm_trip_suppression_a1p25"].iloc[0]
     trip_gated = trip[trip["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
     gated_acc = acc[acc["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
@@ -261,11 +264,11 @@ def write_method_report(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFram
         "",
         "## What Is Being Compared",
         "",
-        "There are two related but distinct tasks.",
+        "The project has two household-level behavior outputs.",
         "",
-        "- Main task: household daily trip-count regression, target `CNTTDHH`.",
-        "- Auxiliary task: household-level mode-composition prediction derived from trip-level `TRPTRANS`.",
-        "- Trip-level `TRPTRANS` classification accuracy is a different task and should not be compared directly with these metrics.",
+        "- Household trip generation: daily trip-count regression, target `CNTTDHH`.",
+        "- Household mode composition: mode-share prediction derived from trip-level `TRPTRANS`.",
+        "- Mode-specific trip counts can be formed as predicted total trips multiplied by predicted mode shares.",
         "",
         "## Metric Definitions",
         "",
@@ -295,6 +298,8 @@ def write_method_report(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFram
             "",
             f"- Primary strict no-label row: `{trip_gated.method}`, weighted MAE `{trip_gated.weighted_mae:.4f}`, "
             f"weighted bias `{trip_gated.weighted_bias:.4f}`, weighted R2 `{trip_gated.weighted_r2:.4f}`.",
+            f"- LLM-only pressure baseline: weighted MAE `{trip_llm_only.weighted_mae:.4f}`. "
+            "This shows that event priors help directionally but need a household historical predictor.",
             f"- Best MAE sensitivity row: `{trip_best.method}`, weighted MAE `{trip_best.weighted_mae:.4f}`, "
             f"improving `{100.0 * (trip_base.weighted_mae - trip_best.weighted_mae) / trip_base.weighted_mae:.2f}%` over historical prediction.",
             f"- Gated household accuracy: exact `{pct(gated_acc.exact_rounded_accuracy)}`, within 2 trips `{pct(gated_acc.within_2_trips)}`, within 3 trips `{pct(gated_acc.within_3_trips)}`.",
@@ -343,6 +348,7 @@ def write_method_report(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFram
 def write_method_report_zh(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame) -> Path:
     path = FINAL_DIR / "method_comparison_report_zh.md"
     trip_base = trip[trip["method"] == "historical_xgboost"].iloc[0]
+    trip_llm_only = trip[trip["method"] == "llm_only_trip_suppression_a1p25"].iloc[0]
     trip_best = trip[trip["method"] == "llm_trip_suppression_a1p25"].iloc[0]
     trip_gated = trip[trip["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
     gated_acc = acc[acc["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
@@ -354,11 +360,11 @@ def write_method_report_zh(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataF
         "",
         "## 比较对象",
         "",
-        "本项目现在有两个任务，但主次不同：",
+            "本项目按家庭颗粒度组织为两个行为预测输出：",
         "",
-        "- 主任务：家庭每日出行次数预测，目标变量是 `CNTTDHH`。",
-        "- 辅助任务：家庭层面的出行方式结构预测，由 trip-level `TRPTRANS` 聚合得到。",
-        "- 同学参考资料里的 trip-level `TRPTRANS` 分类是另一个任务，不能直接和我们的 `CNTTDHH` 回归指标比较。",
+        "- Trip generation：家庭每日出行次数预测，目标变量是 `CNTTDHH`。",
+        "- Mode composition：家庭层面的出行方式结构预测，由 trip-level `TRPTRANS` 聚合得到。",
+        "- Mode-specific trip count：用预测总出行次数乘以预测 mode share，得到各方式出行次数。",
         "",
         "## 指标怎么读",
         "",
@@ -384,9 +390,10 @@ def write_method_report_zh(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataF
     lines.extend(
         [
             "",
-            "主任务结论：",
+            "Trip-generation 结论：",
             "",
             f"- 主口径使用固定 no-label gated rule：`{trip_gated.method}`，weighted MAE `{trip_gated.weighted_mae:.4f}`，weighted bias `{trip_gated.weighted_bias:.4f}`，weighted R2 `{trip_gated.weighted_r2:.4f}`。",
+            f"- LLM-only pressure baseline 的 weighted MAE 是 `{trip_llm_only.weighted_mae:.4f}`，说明 LLM 事件先验能给出方向，但需要 historical household predictor 提供个体化 baseline。",
             f"- 最低 MAE 是 sensitivity row `{trip_best.method}`：weighted MAE 从 `{trip_base.weighted_mae:.4f}` 降到 `{trip_best.weighted_mae:.4f}`，降低 `42.78%`；它不作为严格 no-label 主方法的参数选择依据。",
             f"- 家庭颗粒度上，gated correction exact hit `{pct(gated_acc.exact_rounded_accuracy)}`，within 2 trips `{pct(gated_acc.within_2_trips)}`，within 3 trips `{pct(gated_acc.within_3_trips)}`。",
             "",
@@ -415,7 +422,7 @@ def write_method_report_zh(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataF
     lines.extend(
         [
             "",
-            "辅助任务结论：",
+            "Mode-composition 结论：",
             "",
             f"- 纯 LLM-style correction 相比 2017 mean prior 有改善，但仍弱于 XGBoost。",
             f"- XGBoost + LLM transit prior 把 weighted TV 从 `{mode_base.weighted_total_variation:.4f}` 降到 `{mode_best.weighted_total_variation:.4f}`，总体提升较小。",
@@ -530,6 +537,7 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
         return slide
 
     trip_base = trip[trip["method"] == "historical_xgboost"].iloc[0]
+    trip_llm_only = trip[trip["method"] == "llm_only_trip_suppression_a1p25"].iloc[0]
     trip_best = trip[trip["method"] == "llm_trip_suppression_a1p25"].iloc[0]
     trip_gated = trip[trip["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
     gated_acc = acc[acc["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
@@ -541,24 +549,24 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
     slide.background.fill.solid()
     slide.background.fill.fore_color.rgb = COLORS["dark"]
     title = slide.shapes.add_textbox(Inches(0.75), Inches(1.05), Inches(11.6), Inches(1.25))
-    title.text_frame.text = "Label-Free LLM Event Adaptation"
+    title.text_frame.text = "Pandemic-Aware Household Travel Behavior Prediction"
     set_text(title.text_frame.paragraphs[0], 42, RGBColor(255, 255, 255), True)
     subtitle = slide.shapes.add_textbox(Inches(0.78), Inches(2.38), Inches(11.5), Inches(0.75))
-    subtitle.text_frame.text = "Predicting post-pandemic household mobility without 2022 training labels"
+    subtitle.text_frame.text = "LLM event priors for label-free adaptation under post-pandemic shift"
     set_text(subtitle.text_frame.paragraphs[0], 21, RGBColor(203, 213, 225), False)
     add_metric_card(slide, 0.85, 4.45, "Trip-count MAE", "-42.3%", "primary gated rule", COLORS["blue"])
     add_metric_card(slide, 3.95, 4.45, "Bias", "-99.4%", "gated correction absolute bias", COLORS["green"])
     add_metric_card(slide, 7.05, 4.45, "LLM calls", "-83.2%", "cohort prompting", COLORS["orange"])
     add_footer(slide, 1)
 
-    slide = base_slide("What this project predicts", "Two related tasks, two different metric families")
+    slide = base_slide("What this project predicts", "A household-level travel behavior prediction system")
     add_table(
         slide,
         [
-            ["Task", "Target", "Granularity", "Metric family", "Role in story"],
-            ["Trip generation", "CNTTDHH", "Household", "MAE / RMSE / Bias / R2", "Main claim"],
-            ["Mode composition", "Mode shares", "Household", "TV / share MAE / dominant mode", "Auxiliary evidence"],
-            ["Trip-level mode", "TRPTRANS", "Trip", "Accuracy / F1", "Different task"],
+            ["Output", "Target", "Granularity", "Metric family", "Role in system"],
+            ["Trip generation", "CNTTDHH", "Household", "MAE / RMSE / Bias / R2", "How many trips"],
+            ["Mode composition", "Mode shares", "Household", "TV / share MAE / dominant mode", "How trips are distributed"],
+            ["Mode-specific trips", "Trips by mode", "Household", "Derived count error", "How many trips by each mode"],
         ],
         0.75,
         1.45,
@@ -569,8 +577,8 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
     add_bullets(
         slide,
         [
-            "We do not compare regression MAE with trip-level classification accuracy.",
-            "The main contribution is label-free adaptation under a 2022 event shift.",
+            "The project predicts household travel behavior as trip volume plus mode structure.",
+            "The LLM contribution is label-free event adaptation under a 2022 pandemic shift.",
         ],
         1.0,
         4.25,
@@ -598,6 +606,7 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
             ["Method", "Uses 2022 labels?", "LLM?", "Purpose"],
             ["Historical predictor", "No", "No", "Routine mobility baseline"],
             ["Historical trend shift", "No", "No", "Mean-trend control"],
+            ["LLM-only pressure", "No", "LLM only", "No household predictor"],
             ["Global event prior", "No", "Only global mean", "Event-level downscaling control"],
             ["Random prior control", "No", "Shuffled scores", "Negative control"],
             ["LLM trip suppression", "No", "Cohort-specific", "Best-MAE sensitivity"],
@@ -615,6 +624,7 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
     for method in [
         "historical_xgboost",
         "global_trip_suppression_a1p25",
+        "llm_only_trip_suppression_a1p25",
         "random_trip_suppression_a1p25",
         "llm_trip_suppression_a1p25",
         "gated_trip_suppression_a1_d0p15",
@@ -636,6 +646,7 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
         slide,
         [
             f"Primary no-label gated rule: MAE {trip_gated.weighted_mae:.3f}, bias {trip_gated.weighted_bias:.3f}.",
+            f"LLM-only pressure: MAE {trip_llm_only.weighted_mae:.3f}; hybrid keeps household-level baseline.",
             f"Best-MAE sensitivity row: MAE {trip_best.weighted_mae:.3f}, a 42.8% reduction.",
         ],
         0.95,
@@ -694,13 +705,13 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
     slide = base_slide("Mode distribution shift", "2022 has fewer trips and lower transit share")
     add_picture(slide, MODE_DIR / "figures" / "mode_distribution_shift.png", 0.9, 1.25, 11.45)
 
-    slide = base_slide("Mode-composition method comparison", "LLM helps the transit component, but the effect is auxiliary")
+    slide = base_slide("Mode-composition method comparison", "LLM helps the transit component of household behavior")
     add_picture(slide, MODE_DIR / "figures" / "mode_metric_comparison.png", 0.85, 1.25, 11.6)
     add_bullets(
         slide,
         [
             f"Transit-share weighted MAE: {mode_base.transit_share_weighted_mae:.4f} -> {mode_best.transit_share_weighted_mae:.4f}.",
-            "Overall mode-composition gain is small, so this belongs as supporting evidence.",
+            "Overall mode-composition gain is small, while the transit component shows a clearer pandemic-related signal.",
         ],
         1.05,
         6.15,
@@ -757,6 +768,7 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
         [
             "The historical predictor learns routine household mobility from NHTS.",
             "The LLM supplies post-pandemic event priors: trip suppression, remote work, transit avoidance, delivery substitution, recovery sensitivity.",
+            "The LLM-only pressure baseline improves over naive history but is weaker than the hybrid model.",
             "Global controls show that broad event downscaling is strong.",
             "Random controls and subgroup diagnostics show that cohort-specific LLM ranking adds smaller but measurable signal.",
         ],
@@ -773,8 +785,8 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
         [
             "Do not claim that LLM directly predicts household trip counts.",
             "Do not claim the best-MAE alpha was selected without looking at 2022 evaluation; treat it as sensitivity.",
-            "Do not compare trip-count MAE with trip-level mode-classification accuracy.",
-            "Mode composition is an auxiliary extension; the main validated result is CNTTDHH adaptation.",
+            "Present trip generation and mode composition as two household-level outputs, not as separate projects.",
+            "Mode composition is weaker overall than trip-count adaptation, but it adds the mode-structure dimension.",
             "Future work should add external event context, stronger LLM priors, and prospective validation.",
         ],
         0.95,
@@ -787,7 +799,7 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
     slide = base_slide("Final takeaway", "A defensible story for the course project")
     add_metric_card(slide, 1.0, 1.55, "Primary trip-count rule", "-42.3%", "gated weighted MAE reduction", COLORS["blue"])
     add_metric_card(slide, 4.2, 1.55, "Bias", "-99.4%", "gated absolute bias reduction", COLORS["green"])
-    add_metric_card(slide, 7.4, 1.55, "Transit-share error", "-17.4%", "auxiliary mode result", COLORS["orange"])
+    add_metric_card(slide, 7.4, 1.55, "Transit-share error", "-17.4%", "mode-structure result", COLORS["orange"])
     add_bullets(
         slide,
         [
@@ -810,17 +822,18 @@ def write_speaker_notes(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
     trip_base = trip[trip["method"] == "historical_xgboost"].iloc[0]
     trip_best = trip[trip["method"] == "llm_trip_suppression_a1p25"].iloc[0]
     trip_gated = trip[trip["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
+    trip_llm_only = trip[trip["method"] == "llm_only_trip_suppression_a1p25"].iloc[0]
     mode_base = mode[mode["method"] == "historical_xgboost"].iloc[0]
     mode_best = mode[mode["method"] == "llm_transit_avoidance_a1"].iloc[0]
     lines = [
         "# Presentation Speaker Notes",
         "",
         "## Core Message",
-        "We predict 2022 household mobility under post-pandemic distribution shift. The main result is a label-free LLM event-prior correction for household trip counts.",
+        "We formulate 2022 NHTS household travel prediction as event-driven temporal adaptation. The paper story is that historical models capture routine mobility, while LLM event priors encode pandemic mechanisms that are weakly represented in household covariates.",
         "",
         "## One-Minute Version",
         f"Historical prediction overestimates 2022 trips. The primary fixed no-label gated rule reduces weighted MAE from `{trip_base.weighted_mae:.4f}` to `{trip_gated.weighted_mae:.4f}` and moves weighted bias to `{trip_gated.weighted_bias:.4f}`. "
-        f"The best-MAE sensitivity row reaches `{trip_best.weighted_mae:.4f}`. The LLM is not used as a direct trip-count predictor; it provides pandemic-event semantics that modify a historical routine-mobility predictor.",
+        f"The LLM-only pressure baseline reaches `{trip_llm_only.weighted_mae:.4f}`, while the best-MAE hybrid sensitivity row reaches `{trip_best.weighted_mae:.4f}`. The LLM is not used as a direct trip-count predictor; it provides pandemic-event semantics that modify a historical routine-mobility predictor.",
         "",
         "## Metric Language",
         "- Weighted MAE/RMSE are survey-weighted trip-count errors.",
@@ -830,10 +843,10 @@ def write_speaker_notes(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
         "- Transit-share weighted MAE is the public-transit component error.",
         "",
         "## Mode Extension",
-        f"Mode composition is supporting evidence. XGBoost + LLM reduces transit-share weighted MAE from `{mode_base.transit_share_weighted_mae:.4f}` to `{mode_best.transit_share_weighted_mae:.4f}`, but the overall mode-composition improvement is small.",
+        f"Mode composition is the second household-level output. XGBoost + LLM reduces transit-share weighted MAE from `{mode_base.transit_share_weighted_mae:.4f}` to `{mode_best.transit_share_weighted_mae:.4f}`, while the overall mode-composition improvement is small.",
         "",
         "## Questions To Expect",
-        "- Why not compare with your classmate's accuracy? Because that is trip-level classification, while our main task is household-level regression.",
+        "- Why use two metric families? Trip generation is count regression, while mode composition is a share-vector prediction problem.",
         "- Is this pure LLM? No. Pure LLM-like correction is weaker than XGBoost + LLM.",
         "- Did 2022 labels enter training? Not in the main label-free setting; 2022 targets are used for evaluation.",
     ]
@@ -846,6 +859,7 @@ def write_speaker_notes_zh(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
     trip_base = trip[trip["method"] == "historical_xgboost"].iloc[0]
     trip_best = trip[trip["method"] == "llm_trip_suppression_a1p25"].iloc[0]
     trip_gated = trip[trip["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
+    trip_llm_only = trip[trip["method"] == "llm_only_trip_suppression_a1p25"].iloc[0]
     mode_base = mode[mode["method"] == "historical_xgboost"].iloc[0]
     mode_best = mode[mode["method"] == "llm_transit_avoidance_a1"].iloc[0]
     lines = [
@@ -853,11 +867,11 @@ def write_speaker_notes_zh(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
         "",
         "## 核心信息",
         "",
-        "我们研究的是 2022 年疫情后分布变化下的 household mobility prediction。主任务是预测一个家庭在 travel day 的总出行次数 `CNTTDHH`。",
+        "我们把 2022 NHTS household travel behavior prediction 定义成 event-driven temporal adaptation 问题。历史模型负责学习 routine mobility，LLM event priors 负责表达疫情带来的 remote work、transit avoidance、delivery substitution 等事件机制。",
         "",
         "## 一分钟版本",
         "",
-        f"传统历史预测器会明显高估 2022 年家庭出行次数。主口径使用固定 no-label gated rule，weighted MAE 从 `{trip_base.weighted_mae:.4f}` 降到 `{trip_gated.weighted_mae:.4f}`，weighted bias 变成 `{trip_gated.weighted_bias:.4f}`，几乎消除了系统性高估。最低 MAE 的 sensitivity row 可以到 `{trip_best.weighted_mae:.4f}`，但不把它包装成严格无标签参数选择。这里 LLM 不是直接预测 trip count，而是提供疫情事件语义先验，再去修正历史 routine-mobility predictor。",
+        f"传统历史预测器会明显高估 2022 年家庭出行次数。主口径使用固定 no-label gated rule，weighted MAE 从 `{trip_base.weighted_mae:.4f}` 降到 `{trip_gated.weighted_mae:.4f}`，weighted bias 变成 `{trip_gated.weighted_bias:.4f}`，几乎消除了系统性高估。LLM-only pressure baseline 的 weighted MAE 是 `{trip_llm_only.weighted_mae:.4f}`，最低 MAE 的 hybrid sensitivity row 可以到 `{trip_best.weighted_mae:.4f}`。这说明 LLM 不是直接预测 trip count，而是提供疫情事件语义先验，再去修正历史 routine-mobility predictor。",
         "",
         "## 指标解释",
         "",
@@ -869,11 +883,11 @@ def write_speaker_notes_zh(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
         "",
         "## Mode Extension 怎么讲",
         "",
-        f"出行方式结构是辅助实验。XGBoost + LLM 把 transit-share weighted MAE 从 `{mode_base.transit_share_weighted_mae:.4f}` 降到 `{mode_best.transit_share_weighted_mae:.4f}`，说明 LLM 的 transit avoidance prior 对公共交通这一项有帮助。但总体 mode composition 改善不大，所以它应该作为 backup 或 supplementary evidence。",
+        f"出行方式结构是第二个家庭层面的预测输出。XGBoost + LLM 把 transit-share weighted MAE 从 `{mode_base.transit_share_weighted_mae:.4f}` 降到 `{mode_best.transit_share_weighted_mae:.4f}`，说明 LLM 的 transit avoidance prior 对公共交通这一项有帮助；但总体 mode composition 改善不大，所以汇报时要把它讲成 mode-structure 维度，而不是夸大成主要增益。",
         "",
         "## 可能被问到的问题",
         "",
-        "- 为什么不能和同学的 accuracy 直接比？因为同学那版更像 trip-level `TRPTRANS` 分类，我们主任务是 household-level `CNTTDHH` 回归。",
+        "- 为什么有两套指标？因为 trip generation 是 count regression，mode composition 是 share-vector prediction。",
         "- 这是 pure LLM 吗？不是。纯 LLM-style correction 比 XGBoost + LLM 弱，说明 LLM 适合作为 event-prior adapter。",
         "- 有没有用 2022 标签训练？主实验没有。2022 `CNTTDHH` 只在最终 evaluation 中使用。",
     ]
@@ -887,7 +901,7 @@ def write_storyboard() -> Path:
         "# Optimized Presentation Storyboard",
         "",
         "1. Title: label-free LLM event adaptation.",
-        "2. Task map: trip count vs mode composition vs trip-level mode classification.",
+        "2. Task map: trip count, mode composition, and derived mode-specific trip counts.",
         "3. Experimental guardrail: no 2022 labels in main training/adaptation.",
         "4. Trip-count methods: historical, global, random, LLM, gated.",
         "5. Trip-count metric table.",
