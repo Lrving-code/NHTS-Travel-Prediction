@@ -21,8 +21,9 @@ OUTPUT_PATH = PROJECT_ROOT / "outputs" / "final_project" / "NHTS_Travel_Behavior
 FINAL_DIR = PROJECT_ROOT / "outputs" / "final_project"
 MODE_DIR = PROJECT_ROOT / "outputs" / "mode_composition_extension"
 PAPER_FIGURE_DIR = FINAL_DIR / "figures" / "paper_style"
+AUDIT_DIR = PROJECT_ROOT / "outputs" / "adversarial_audit"
 EMU_PER_INCH = 914400
-TOTAL_SLIDES = 18
+TOTAL_SLIDES = 19
 
 LOGGER = logging.getLogger(__name__)
 
@@ -642,7 +643,7 @@ def add_event_heterogeneity_slide(prs: Presentation, logo: bytes | None) -> None
 def add_subgroup_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "07B", "分组鲁棒性 / Subgroup Robustness", "论文图4：哪些家庭群体从事件修正中获益更多", 12, logo)
+    add_frame(slide, "07B", "分组鲁棒性 / Subgroup Robustness", "论文图4：哪些家庭群体从事件修正中获益更多", 13, logo)
     add_picture(slide, PAPER_FIGURE_DIR / "subgroup_gain_top.png", 0.72, 1.25, 6.6)
     story_box(
         slide,
@@ -671,10 +672,43 @@ def add_subgroup_slide(prs: Presentation, logo: bytes | None) -> None:
     )
 
 
+def add_adversarial_audit_slide(prs: Presentation, logo: bytes | None) -> None:
+    slide = blank_slide(prs)
+    set_background(slide)
+    add_frame(slide, "07A", "对抗性审计 / Adversarial Audit", "主动回应审稿人最可能质疑的地方", 12, logo)
+    add_picture(slide, AUDIT_DIR / "permutation_null_mae.png", 0.72, 1.22, 6.2)
+    story_box(
+        slide,
+        "审计结论：真实 LLM cohort pressure 明显优于 500 次随机置换，但 global event pressure 本身也很强，所以不能把贡献夸大成强个体化 LLM 预测。",
+        "Audit verdict: cohort-specific LLM pressure beats permutation controls, but global event downscaling explains much of the gain; the defensible claim is label-free event adaptation.",
+        7.45,
+        1.35,
+        4.45,
+        1.42,
+        COLORS["red"],
+    )
+    small_table(
+        slide,
+        ["Reviewer concern", "Answer"],
+        [
+            ["Is global rule enough?", "Strong baseline; LLM ranking adds incremental value"],
+            ["Is it label leakage?", "LLM inputs exclude target, weights, and IDs"],
+            ["Can LLM replace model?", "No; hybrid beats LLM-only"],
+            ["Is mode solved?", "No; transit-specific extension only"],
+        ],
+        7.45,
+        3.25,
+        [2.0, 2.75],
+        0.4,
+        8.2,
+        COLORS["navy2"],
+    )
+
+
 def add_error_insight_slide(prs: Presentation, logo: bytes | None, values: dict[str, float]) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "08", "误差洞察 / Error Insight", "主收益来自消除 post-pandemic over-prediction", 13, logo)
+    add_frame(slide, "08", "误差洞察 / Error Insight", "主收益来自消除 post-pandemic over-prediction", 14, logo)
     metric_card(slide, 0.75, 1.28, 2.45, 0.9, "Exact rounded", f"{values['exact']:.1%}", "household accuracy", COLORS["blue"])
     metric_card(slide, 3.48, 1.28, 2.45, 0.9, "Within 2 trips", f"{values['within2']:.1%}", "practical tolerance", COLORS["green"])
     metric_card(slide, 6.21, 1.28, 2.45, 0.9, "Within 3 trips", f"{values['within3']:.1%}", "broad tolerance", COLORS["orange"])
@@ -706,7 +740,7 @@ def add_error_insight_slide(prs: Presentation, logo: bytes | None, values: dict[
 def add_llm_role_slide(prs: Presentation, logo: bytes | None, values: dict[str, float]) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "09", "LLM 的角色 / What the LLM Adds", "事件方向有用，但需要和 household baseline 结合", 14, logo)
+    add_frame(slide, "09", "LLM 的角色 / What the LLM Adds", "事件方向有用，但需要和 household baseline 结合", 15, logo)
     rect(slide, 1.15, 1.28, 10.35, 4.48, COLORS["light"], COLORS["line"])
     rect(slide, 6.3, 1.28, 0.012, 4.48, COLORS["line"])
     rect(slide, 1.15, 3.52, 10.35, 0.012, COLORS["line"])
@@ -726,7 +760,7 @@ def add_llm_role_slide(prs: Presentation, logo: bytes | None, values: dict[str, 
 def add_mode_slide(prs: Presentation, logo: bytes | None, mode: pd.DataFrame, values: dict[str, float]) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "10", "方式结构扩展 / Mode Composition Extension", "同一个事件先验也能解释 transit-specific shift", 15, logo)
+    add_frame(slide, "10", "方式结构扩展 / Mode Composition Extension", "同一个事件先验也能解释 transit-specific shift", 16, logo)
     modes = ["private", "walk", "bike", "transit", "taxi", "other"]
     for idx, mode_name in enumerate(modes):
         x = 0.78 + idx * 1.2
@@ -756,7 +790,7 @@ def add_mode_slide(prs: Presentation, logo: bytes | None, mode: pd.DataFrame, va
 def add_scalability_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "11", "可扩展性与审计 / Scalability and Auditability", "Cohort prompting makes LLM use measurable and reviewable", 16, logo)
+    add_frame(slide, "11", "可扩展性与审计 / Scalability and Auditability", "Cohort prompting makes LLM use measurable and reviewable", 17, logo)
     steps = [
         ("7,893 households", "2022 rows"),
         ("1,327 cohorts", "aggregated profiles"),
@@ -785,7 +819,7 @@ def add_scalability_slide(prs: Presentation, logo: bytes | None) -> None:
 def add_contribution_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "12", "学术故事 / Academic Story", "From a course project to a defensible paper narrative", 17, logo)
+    add_frame(slide, "12", "学术故事 / Academic Story", "From a course project to a defensible paper narrative", 18, logo)
     small_table(
         slide,
         ["Contribution", "Why it matters"],
@@ -822,7 +856,7 @@ def add_contribution_slide(prs: Presentation, logo: bytes | None) -> None:
 def add_final_slide(prs: Presentation, logo: bytes | None, values: dict[str, float]) -> None:
     slide = blank_slide(prs)
     set_background(slide, COLORS["navy"])
-    add_frame(slide, "END", "总结 / Final Takeaway", "A clean story: routine mobility + event semantics", 18, logo, True)
+    add_frame(slide, "END", "总结 / Final Takeaway", "A clean story: routine mobility + event semantics", 19, logo, True)
     rect(slide, 0.82, 1.45, 11.15, 2.2, RGBColor(30, 64, 91), RGBColor(71, 85, 105), True)
     text_box(slide, "我们研究的不是“LLM 直接预测出行次数”，而是：\n当 2022 疫情后分布变化打破历史连续性时，能否用 LLM 的事件泛化能力，为传统 household travel model 提供无标签修正先验。", 1.12, 1.73, 10.5, 0.9, 15, COLORS["white"], True, PP_ALIGN.CENTER)
     metric_card(slide, 1.0, 4.25, 2.45, 0.9, "Accuracy", f"-{values['mae_reduction']:.1%}", "weighted MAE", COLORS["blue"], COLORS["white"])
@@ -886,6 +920,7 @@ def create_deck() -> Path:
     add_tradeoff_slide(prs, logo)
     add_error_distribution_figure_slide(prs, logo)
     add_event_heterogeneity_slide(prs, logo)
+    add_adversarial_audit_slide(prs, logo)
     add_subgroup_slide(prs, logo)
     add_error_insight_slide(prs, logo, values)
     add_llm_role_slide(prs, logo, values)

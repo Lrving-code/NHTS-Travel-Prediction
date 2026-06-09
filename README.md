@@ -68,6 +68,7 @@ predicted trips by mode = predicted total trips * predicted mode share
 
 汇报材料：
 
+- `outputs/final_project/NHTS_Travel_Behavior_Template_Presentation_v2.pptx`（当前主汇报版本，含 adversarial audit）
 - `outputs/final_project/NHTS_Travel_Behavior_Template_Presentation.pptx`
 - `outputs/final_project/NHTS_LLM_Event_Adaptation_Optimized_Presentation.pptx`
 - `outputs/final_project/presentation_speaker_notes_zh.md`
@@ -81,6 +82,12 @@ predicted trips by mode = predicted total trips * predicted mode share
 - `outputs/final_project/final_metrics_summary.csv`
 - `outputs/final_project/household_accuracy_summary.csv`
 - `outputs/final_project/figures/`
+
+对抗性审计：
+
+- `outputs/adversarial_audit/adversarial_audit_report.md`
+- `outputs/adversarial_audit/permutation_pressure_controls.csv`
+- `outputs/adversarial_audit/permutation_null_mae.png`
 
 出行方式结构实验：
 
@@ -104,6 +111,7 @@ src/
   run_label_free_llm_adaptation.py
   run_mode_composition_extension.py
   generate_paper_style_figures.py
+  run_adversarial_audit.py
   generate_final_project_assets.py
   build_optimized_presentation.py
   build_template_presentation.py
@@ -116,6 +124,7 @@ plan/
   presentation_optimization_plan.md
 
 outputs/
+  adversarial_audit/
   final_project/
   label_free_llm_adaptation/
   mode_composition_extension/
@@ -150,6 +159,7 @@ python src\run_mode_composition_extension.py --device cuda
 
 ```powershell
 python src\generate_paper_style_figures.py
+python src\run_adversarial_audit.py
 python src\build_template_presentation.py
 python src\build_optimized_presentation.py
 ```
@@ -177,6 +187,8 @@ data/raw/nhts_2022/csv/tripv2pub.csv
 
 - 主实验不使用 2022 `CNTTDHH` 标签训练或校准，2022 标签只用于最终 evaluation。
 - 汇报主口径使用固定 `gated_trip_suppression_a1_d0p15` no-label rule；`llm_trip_suppression_a1p25` 是 best-MAE sensitivity row，不应表述为严格无标签参数选择的主方法。
+- 对抗性审计显示 global event pressure 是很强的 baseline；应把贡献表述为 event-level label-free adaptation，cohort-specific LLM ranking 是增量证据，不是唯一或主导来源。
+- mode-composition 是探索性扩展：总体 weighted TV 改善较小，最清楚的结果是 transit-share weighted MAE 改善。
 - `TRPTRANS` 编码在 2017 和 2022 不能直接按数字对齐，mode-composition 扩展使用 year-specific official codebook mapping。
 - `outputs/share_package/` 是本地分享包目录，默认 git ignored。
 - 不要提交 `.env`、API key、原始 LLM JSONL 请求日志或原始 NHTS 大文件。
