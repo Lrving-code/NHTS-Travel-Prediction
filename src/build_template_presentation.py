@@ -21,7 +21,7 @@ OUTPUT_PATH = PROJECT_ROOT / "outputs" / "final_project" / "NHTS_Travel_Behavior
 FINAL_DIR = PROJECT_ROOT / "outputs" / "final_project"
 MODE_DIR = PROJECT_ROOT / "outputs" / "mode_composition_extension"
 PAPER_FIGURE_DIR = FINAL_DIR / "figures" / "paper_style"
-AUDIT_DIR = PROJECT_ROOT / "outputs" / "adversarial_audit"
+ROBUSTNESS_DIR = PROJECT_ROOT / "outputs" / "robustness_checks"
 EMU_PER_INCH = 914400
 TOTAL_SLIDES = 19
 
@@ -176,8 +176,19 @@ def add_picture(slide: Slide, path: Path, x: float, y: float, w: float) -> None:
 def story_box(slide: Slide, zh: str, en: str, x: float, y: float, w: float, h: float, color: RGBColor) -> None:
     rect(slide, x, y, w, h, COLORS["pale"], COLORS["line"], True)
     rect(slide, x, y, 0.055, h, color)
-    text_box(slide, zh, x + 0.18, y + 0.1, w - 0.32, 0.28, 12, COLORS["ink"], True)
-    text_box(slide, en, x + 0.18, y + 0.43, w - 0.32, h - 0.48, 12, COLORS["gray"])
+    zh_height = min(0.46, max(0.32, h * 0.36))
+    text_box(slide, zh, x + 0.18, y + 0.1, w - 0.32, zh_height, 12, COLORS["ink"], True, valign=MSO_ANCHOR.TOP)
+    text_box(
+        slide,
+        en,
+        x + 0.18,
+        y + 0.17 + zh_height,
+        w - 0.32,
+        max(0.34, h - zh_height - 0.25),
+        12,
+        COLORS["gray"],
+        valign=MSO_ANCHOR.TOP,
+    )
 
 
 def add_frame(
@@ -346,12 +357,12 @@ def add_title_slide(prs: Presentation, logo: bytes | None, values: dict[str, flo
     add_logo(slide, logo, 11.82, 0.34, 0.92, True)
     text_box(slide, "基于 NHTS 与 LLM 事件先验的\n疫情感知家庭出行行为预测", 0.68, 0.78, 9.6, 0.95, 25, COLORS["white"], True)
     text_box(slide, "Pandemic-Aware Household Travel Behavior Prediction", 0.72, 1.86, 8.4, 0.32, 12.5, RGBColor(203, 213, 225), True)
-    text_box(slide, "LLM event priors for label-free adaptation under post-pandemic shift", 0.72, 2.23, 8.8, 0.28, 10, RGBColor(203, 213, 225))
+    text_box(slide, "不使用 2022 标签校准的疫情后出行预测修正", 0.72, 2.23, 8.8, 0.28, 10, RGBColor(203, 213, 225))
     rect(slide, 0.72, 3.0, 11.9, 0.01, RGBColor(148, 163, 184))
     nodes = [
         ("历史 NHTS", "routine mobility"),
         ("2022 疫情冲击", "event-driven shift"),
-        ("LLM 事件先验", "semantic adapter"),
+        ("LLM 事件先验", "event correction"),
         ("家庭出行行为", "trips + modes"),
     ]
     for idx, (title, note) in enumerate(nodes):
@@ -372,7 +383,7 @@ def add_content_slide(prs: Presentation, logo: bytes | None) -> None:
     add_frame(slide, "00", "汇报结构 / Content", "从研究问题到技术路线，再到结果解释", 2, logo)
     rect(slide, 0.55, 1.45, 3.1, 4.7, COLORS["navy"])
     text_box(slide, "CONTENT", 1.02, 2.45, 2.1, 0.42, 20, COLORS["white"], True, PP_ALIGN.CENTER)
-    text_box(slide, "一条主线：\n2022 不是普通预测年，而是疫情后事件冲击下的 label-free adaptation。", 0.92, 3.1, 2.38, 0.82, 10, RGBColor(203, 213, 225), False, PP_ALIGN.CENTER)
+    text_box(slide, "一条主线：\n2022 不是普通预测年，而是疫情后出行行为发生变化的一年。", 0.92, 3.1, 2.38, 0.82, 10, RGBColor(203, 213, 225), False, PP_ALIGN.CENTER)
     items = [
         ("01", "Research gap", "为什么传统 cross-year transfer 会失效"),
         ("02", "Data and target system", "家庭层面预测：出行次数 + 方式结构"),
@@ -410,9 +421,9 @@ def add_problem_slide(prs: Presentation, logo: bytes | None, values: dict[str, f
         "核心问题：历史 household travel model 在 2022 会系统性高估出行，因此我们研究 label-free event adaptation，而不是单纯调参。",
         "Core question: can structured LLM event priors repair post-pandemic shift without using 2022 target labels for calibration?",
         0.82,
-        5.9,
+        5.72,
         10.95,
-        0.78,
+        1.18,
         COLORS["teal"],
     )
 
@@ -441,9 +452,9 @@ def add_data_slide(prs: Presentation, logo: bytes | None) -> None:
         "目标不是只预测 CNTTDHH，而是构造 household travel behavior：出行多少次、用什么方式、每种方式多少次。",
         "The prediction target is a household behavior system: trip generation, mode composition, and derived mode-specific trip counts.",
         0.82,
-        5.62,
+        5.55,
         10.95,
-        0.78,
+        1.12,
         COLORS["blue"],
     )
 
@@ -481,7 +492,7 @@ def add_llm_prior_slide(prs: Presentation, logo: bytes | None) -> None:
         ["transit_avoidance", "public-transit perceived risk", "lower transit share"],
         ["delivery_substitution", "online replacement of shopping trips", "fewer discretionary trips"],
         ["recovery_sensitivity", "ability to return to routine mobility", "heterogeneous rebound"],
-        ["confidence", "LLM self-reported certainty", "audit / filtering signal"],
+        ["confidence", "LLM self-reported certainty", "quality-check signal"],
     ]
     small_table(slide, headers, rows, 0.68, 1.18, [2.35, 4.45, 4.3], 0.36, 8.1, COLORS["navy2"])
     small_table(
@@ -513,8 +524,8 @@ def add_comparison_slide(prs: Presentation, logo: bytes | None, trip: pd.DataFra
         ["Trend / indicator", "Yes", "No", "No", "simple non-semantic shift", f"{metric(trip, 'historical_mean_trend_shift', 'weighted_mae'):.2f}"],
         ["LLM-only pressure", "No", "Yes", "No", "event direction without baseline", f"{metric(trip, 'llm_only_trip_suppression_a1p25', 'weighted_mae'):.2f}"],
         ["Global event rule", "Yes", "No", "No", "common pandemic downscaling", f"{metric(trip, 'global_trip_suppression_a1p25', 'weighted_mae'):.2f}"],
-        ["Random pressure", "Yes", "No", "No", "placebo heterogeneity", f"{metric(trip, 'random_trip_suppression_a1p25', 'weighted_mae'):.2f}"],
-        ["Hybrid gated", "Yes", "Yes", "No", "proposed semantic adapter", f"{metric(trip, 'gated_trip_suppression_a1_d0p15', 'weighted_mae'):.2f}"],
+        ["Random pressure", "Yes", "No", "No", "randomized event control", f"{metric(trip, 'random_trip_suppression_a1p25', 'weighted_mae'):.2f}"],
+        ["Hybrid gated", "Yes", "Yes", "No", "routine + event correction", f"{metric(trip, 'gated_trip_suppression_a1_d0p15', 'weighted_mae'):.2f}"],
     ]
     small_table(
         slide,
@@ -531,9 +542,9 @@ def add_comparison_slide(prs: Presentation, logo: bytes | None, trip: pd.DataFra
         "公平性原则：2022 标签只用于最后 evaluation，主方法使用固定 no-label 参数，避免把测试年标签隐含用于调参。",
         "Fairness rule: 2022 labels are held out until final evaluation; the primary method uses fixed parameters rather than target-year calibration.",
         0.82,
-        5.92,
+        5.72,
         10.95,
-        0.72,
+        1.08,
         COLORS["teal"],
     )
 
@@ -566,7 +577,7 @@ def add_results_slide(prs: Presentation, logo: bytes | None, trip: pd.DataFrame,
         0.82,
         5.35,
         10.95,
-        0.82,
+        1.22,
         COLORS["orange"],
     )
 
@@ -574,16 +585,16 @@ def add_results_slide(prs: Presentation, logo: bytes | None, trip: pd.DataFrame,
 def add_tradeoff_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "06A", "准确率-偏差权衡 / Accuracy-Bias Tradeoff", "论文图1：主方法同时降低误差和系统性偏差 | Paper-style Figure 1", 9, logo)
+    add_frame(slide, "06A", "误差与偏差权衡 / Error-Bias Tradeoff", "分析图1：主方法同时降低误差和系统性偏差", 9, logo)
     add_picture(slide, PAPER_FIGURE_DIR / "mae_bias_tradeoff.png", 0.72, 1.28, 6.75)
     story_box(
         slide,
         "这张图要讲的不是“哪个点最低”这么简单，而是说明我们的方法同时移动到低 MAE 和低 bias 的区域。",
-        "The proposed adapter improves the accuracy-bias Pareto position instead of only trading one metric for another.",
+        "The proposed correction improves both household error and systematic bias, rather than improving one metric at the cost of the other.",
         7.75,
         1.42,
         4.1,
-        1.28,
+        1.58,
         COLORS["green"],
     )
     small_table(
@@ -607,7 +618,7 @@ def add_tradeoff_slide(prs: Presentation, logo: bytes | None) -> None:
 def add_error_distribution_figure_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "06B", "误差分布与容忍度 / Error Distribution and Tolerance", "论文图2：从平均误差走向 household-level 可解释准确率", 10, logo)
+    add_frame(slide, "06B", "误差分布与容忍度 / Error Distribution and Tolerance", "分析图2：从平均误差走向 household-level 可解释准确率", 10, logo)
     add_picture(slide, PAPER_FIGURE_DIR / "error_distribution.png", 0.65, 1.2, 5.85)
     add_picture(slide, PAPER_FIGURE_DIR / "tolerance_curve.png", 6.85, 1.2, 5.65)
     story_box(
@@ -615,9 +626,9 @@ def add_error_distribution_figure_slide(prs: Presentation, logo: bytes | None) -
         "左图说明历史模型的误差分布明显向正方向偏移；右图说明 hybrid 方法在不同容忍阈值下都有更高的家庭覆盖率。",
         "The distributional view explains why weighted MAE improves, while the tolerance curve translates the result into household-level prediction usability.",
         0.85,
-        5.72,
+        5.55,
         10.95,
-        0.82,
+        1.20,
         COLORS["orange"],
     )
 
@@ -625,17 +636,17 @@ def add_error_distribution_figure_slide(prs: Presentation, logo: bytes | None) -
 def add_event_heterogeneity_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "07", "事件异质性 / Event Heterogeneity", "论文图3：LLM prior 是否真的在表达疫情机制", 11, logo)
+    add_frame(slide, "07", "疫情影响异质性 / Event Heterogeneity", "分析图3：LLM 先验是否和疫情机制一致", 11, logo)
     add_picture(slide, PAPER_FIGURE_DIR / "pressure_quintile_gain.png", 0.65, 1.2, 5.85)
     add_picture(slide, PAPER_FIGURE_DIR / "event_prior_heatmap.png", 7.0, 1.13, 4.95)
     story_box(
         slide,
-        "这页的故事是：LLM event pressure 不是装饰变量。它在不同 pressure strata 中都能带来修正，并且内部 prior 之间有可解释的相关结构。",
-        "The event-prior structure is auditable: pressure-stratified gains and prior correlations show semantic consistency rather than arbitrary numerical fitting.",
+        "这页要说明：LLM event pressure 不是装饰变量。分层结果和相关结构说明，它和远程办公、公共交通规避等疫情机制有一致关系。",
+        "Pressure-stratified gains and prior correlations show that the LLM-derived variables follow interpretable COVID-related mobility mechanisms.",
         0.85,
-        5.88,
+        5.62,
         10.95,
-        0.72,
+        1.10,
         COLORS["teal"],
     )
 
@@ -643,25 +654,25 @@ def add_event_heterogeneity_slide(prs: Presentation, logo: bytes | None) -> None
 def add_subgroup_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "07B", "分组鲁棒性 / Subgroup Robustness", "论文图4：哪些家庭群体从事件修正中获益更多", 13, logo)
+    add_frame(slide, "07B", "分组检验 / Subgroup Check", "分析图4：哪些家庭群体从事件修正中获益更多", 13, logo)
     add_picture(slide, PAPER_FIGURE_DIR / "subgroup_gain_top.png", 0.72, 1.25, 6.6)
     story_box(
         slide,
-        "这张图用于回答老师可能会问的 fairness / heterogeneity 问题：提升不是只来自一个总体均值，而是在多个 household subgroup 中都能观察到。",
-        "The subgroup view reframes the result as heterogeneous adaptation, which is more convincing than only reporting one aggregate test-set metric.",
+        "这张图回答一个实际问题：提升是不是只来自总体均值？分组结果显示，不同家庭群体中也能看到改进。",
+        "The subgroup check tests whether the improvement only comes from the aggregate mean or also appears across household segments.",
         7.65,
         1.38,
         4.25,
-        1.32,
+        1.58,
         COLORS["purple"],
     )
     small_table(
         slide,
-        ["How to present", "Caveat"],
+        ["汇报时怎么讲", "注意边界"],
         [
-            ["Use it as diagnostic evidence", "not a causal subgroup claim"],
-            ["Focus on broad gain pattern", "codes need explanation in appendix"],
-            ["Connect to planning", "which household segments are harder"],
+            ["作为分组诊断证据", "不解释成因果结论"],
+            ["强调整体改进趋势", "编码细节可放附录"],
+            ["联系规划含义", "哪些家庭更难预测"],
         ],
         7.65,
         3.15,
@@ -672,29 +683,29 @@ def add_subgroup_slide(prs: Presentation, logo: bytes | None) -> None:
     )
 
 
-def add_adversarial_audit_slide(prs: Presentation, logo: bytes | None) -> None:
+def add_robustness_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "07A", "对抗性审计 / Adversarial Audit", "主动回应审稿人最可能质疑的地方", 12, logo)
-    add_picture(slide, AUDIT_DIR / "permutation_null_mae.png", 0.72, 1.22, 6.2)
+    add_frame(slide, "07A", "稳健性检验 / Robustness Check", "主动说明结果经不经得起对照实验", 12, logo)
+    add_picture(slide, ROBUSTNESS_DIR / "permutation_null_mae.png", 0.72, 1.22, 6.2)
     story_box(
         slide,
-        "审计结论：真实 LLM cohort pressure 明显优于 500 次随机置换，但 global event pressure 本身也很强，所以不能把贡献夸大成强个体化 LLM 预测。",
-        "Audit verdict: cohort-specific LLM pressure beats permutation controls, but global event downscaling explains much of the gain; the defensible claim is label-free event adaptation.",
+        "检验结论：真实 LLM pressure 优于 500 次随机置换；但 global pressure 也很强，所以贡献应讲成疫情事件修正。",
+        "The real cohort pressure beats permutation controls, but global downscaling explains much of the gain; the method is event-aware correction.",
         7.45,
         1.35,
         4.45,
-        1.42,
+        1.6,
         COLORS["red"],
     )
     small_table(
         slide,
-        ["Reviewer concern", "Answer"],
+        ["可能被问到的问题", "我们的回答"],
         [
-            ["Is global rule enough?", "Strong baseline; LLM ranking adds incremental value"],
-            ["Is it label leakage?", "LLM inputs exclude target, weights, and IDs"],
-            ["Can LLM replace model?", "No; hybrid beats LLM-only"],
-            ["Is mode solved?", "No; transit-specific extension only"],
+            ["global rule 是否已经足够？", "它很强；LLM 排序提供增量价值"],
+            ["是否用了 2022 标签？", "LLM 输入排除目标值、权重和 ID"],
+            ["LLM 能否替代表格模型？", "不能；hybrid 明显更稳"],
+            ["方式结构是否已经解决？", "还没有；主要是 transit 维度更清楚"],
         ],
         7.45,
         3.25,
@@ -728,7 +739,7 @@ def add_error_insight_slide(prs: Presentation, logo: bytes | None, values: dict[
         5.1,
         2.35,
     )
-    headers = ["Observation", "Interpretation for paper story"]
+    headers = ["Observation", "Interpretation for presentation"]
     rows = [
         ["XGBoost has strong household signal but positive bias", "routine mobility from history is too high for 2022"],
         ["LLM-only improves direction but lacks calibration", "event semantics alone cannot replace household baseline"],
@@ -753,8 +764,8 @@ def add_llm_role_slide(prs: Presentation, logo: bytes | None, values: dict[str, 
     node(slide, 1.75, 4.1, 3.4, 0.8, "Ordinary XGBoost", f"household grounding without pandemic semantics\nwMAE {values['baseline']:.2f}", COLORS["red"])
     node(slide, 7.15, 4.1, 3.4, 0.8, "Hybrid gated", f"household baseline + event prior\nwMAE {values['gated']:.2f}", COLORS["green"])
     rect(slide, 1.1, 6.1, 10.45, 0.48, COLORS["pale"], COLORS["line"], True)
-    text_box(slide, "Paper sentence", 1.3, 6.2, 1.35, 0.2, 9, COLORS["orange"], True)
-    text_box(slide, "LLM is not a black-box travel model; it is a semantic event adapter for rare temporal shocks.", 2.58, 6.15, 8.45, 0.28, 9.2, COLORS["ink"], True)
+    text_box(slide, "汇报讲法", 1.3, 6.2, 1.0, 0.2, 9, COLORS["orange"], True)
+    text_box(slide, "LLM 不直接预测出行次数，而是把 2022 疫情冲击转成可用于修正模型的事件先验。", 2.35, 6.13, 8.8, 0.32, 12, COLORS["ink"], True)
 
 
 def add_mode_slide(prs: Presentation, logo: bytes | None, mode: pd.DataFrame, values: dict[str, float]) -> None:
@@ -780,9 +791,9 @@ def add_mode_slide(prs: Presentation, logo: bytes | None, mode: pd.DataFrame, va
         "方式结构的总体提升不如出行次数大，但 transit component 明显改善，正好对应疫情期间公共交通规避这个机制。",
         "Mode composition is a weaker but useful extension: transit-share improvement supports the semantic validity of the COVID event prior.",
         0.82,
-        5.62,
+        5.50,
         10.95,
-        0.82,
+        1.18,
         COLORS["orange"],
     )
 
@@ -790,7 +801,7 @@ def add_mode_slide(prs: Presentation, logo: bytes | None, mode: pd.DataFrame, va
 def add_scalability_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "11", "可扩展性与审计 / Scalability and Auditability", "Cohort prompting makes LLM use measurable and reviewable", 17, logo)
+    add_frame(slide, "11", "可扩展性 / Scalability", "Cohort prompting 降低请求量，并让结果更容易检查", 17, logo)
     steps = [
         ("7,893 households", "2022 rows"),
         ("1,327 cohorts", "aggregated profiles"),
@@ -806,7 +817,7 @@ def add_scalability_slide(prs: Presentation, logo: bytes | None) -> None:
     metric_card(slide, 1.0, 3.08, 2.4, 0.86, "Request reduction", "83.2%", "5.95x fewer prompts", COLORS["blue"])
     metric_card(slide, 3.85, 3.08, 2.4, 0.86, "Invalid records", "0", "after validation", COLORS["green"])
     metric_card(slide, 6.7, 3.08, 2.4, 0.86, "Re-runnable", "Yes", "fixed adapter rule", COLORS["purple"])
-    headers = ["Risk", "Control"]
+    headers = ["风险", "控制方式"]
     rows = [
         ["LLM hallucination", "structured schema + numeric range validation"],
         ["target leakage", "no target labels / weights / household IDs in prompt"],
@@ -819,15 +830,15 @@ def add_scalability_slide(prs: Presentation, logo: bytes | None) -> None:
 def add_contribution_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "12", "学术故事 / Academic Story", "From a course project to a defensible paper narrative", 18, logo)
+    add_frame(slide, "12", "汇报主线 / Storyline", "把大作业讲成一个完整的研究设计", 18, logo)
     small_table(
         slide,
-        ["Contribution", "Why it matters"],
+        ["我们做了什么", "为什么有意义"],
         [
-            ["Event-driven temporal adaptation framing", "turns 2022 prediction into a distribution-shift research problem"],
-            ["LLM as event-prior generator", "uses LLM generalization without asking it to hallucinate exact labels"],
-            ["Label-free hybrid adapter", "separates routine travel demand from pandemic response"],
-            ["Behavior-system output", "covers both trip generation and mode composition"],
+            ["把 2022 定义成疫情后预测问题", "不是普通跨年预测，而是事件冲击下的出行恢复"],
+            ["让 LLM 生成事件先验", "不让 LLM 直接猜出行次数，降低胡编风险"],
+            ["历史模型 + 事件修正", "把正常出行规律和疫情影响分开处理"],
+            ["同时看出行次数和方式结构", "回答“出行多少”和“怎么出行”两个问题"],
         ],
         0.72,
         1.18,
@@ -838,11 +849,11 @@ def add_contribution_slide(prs: Presentation, logo: bytes | None) -> None:
     )
     small_table(
         slide,
-        ["Current limitation", "How to discuss it honestly"],
+        ["目前的边界", "汇报时怎么说"],
         [
-            ["Cohort heterogeneity gain is smaller than global event downscaling", "the strongest signal is event-level trip suppression"],
-            ["Mode-composition gain is concentrated in transit", "this is expected because transit avoidance is the clearest COVID channel"],
-            ["No prospective external event feed yet", "future work can use news/mobility indices available before survey release"],
+            ["cohort 差异增益小于 global 修正", "主要贡献是疫情事件层面的修正"],
+            ["方式结构提升集中在 transit", "公共交通规避是最清楚的疫情机制"],
+            ["还没有接入外部实时事件数据", "后续可加入新闻、政策和 mobility index"],
         ],
         0.72,
         4.38,
@@ -856,15 +867,15 @@ def add_contribution_slide(prs: Presentation, logo: bytes | None) -> None:
 def add_final_slide(prs: Presentation, logo: bytes | None, values: dict[str, float]) -> None:
     slide = blank_slide(prs)
     set_background(slide, COLORS["navy"])
-    add_frame(slide, "END", "总结 / Final Takeaway", "A clean story: routine mobility + event semantics", 19, logo, True)
+    add_frame(slide, "END", "总结 / Conclusion", "历史出行规律 + 疫情事件修正", 19, logo, True)
     rect(slide, 0.82, 1.45, 11.15, 2.2, RGBColor(30, 64, 91), RGBColor(71, 85, 105), True)
     text_box(slide, "我们研究的不是“LLM 直接预测出行次数”，而是：\n当 2022 疫情后分布变化打破历史连续性时，能否用 LLM 的事件泛化能力，为传统 household travel model 提供无标签修正先验。", 1.12, 1.73, 10.5, 0.9, 15, COLORS["white"], True, PP_ALIGN.CENTER)
     metric_card(slide, 1.0, 4.25, 2.45, 0.9, "Accuracy", f"-{values['mae_reduction']:.1%}", "weighted MAE", COLORS["blue"], COLORS["white"])
     metric_card(slide, 3.85, 4.25, 2.45, 0.9, "Bias", f"{values['gated_bias']:+.3f}", "weighted bias", COLORS["green"], COLORS["white"])
     metric_card(slide, 6.7, 4.25, 2.45, 0.9, "Scope", "2 tasks", "trip count + modes", COLORS["orange"], COLORS["white"])
     metric_card(slide, 9.55, 4.25, 2.45, 0.9, "LLM role", "adapter", "not standalone predictor", COLORS["purple"], COLORS["white"])
-    text_box(slide, "Suggested one-sentence claim", 1.02, 6.08, 2.25, 0.22, 9.5, RGBColor(203, 213, 225), True)
-    text_box(slide, "LLM event priors enable label-free adaptation of household travel behavior prediction under rare post-pandemic temporal shift.", 3.05, 6.02, 8.6, 0.32, 10, COLORS["white"], True)
+    text_box(slide, "一句话总结", 1.02, 6.08, 1.35, 0.24, 12, RGBColor(203, 213, 225), True)
+    text_box(slide, "用历史 NHTS 学正常出行规律，用 LLM 事件先验修正 2022 疫情后的出行变化。", 2.35, 6.0, 8.9, 0.38, 12, COLORS["white"], True)
 
 
 def create_deck() -> Path:
@@ -920,7 +931,7 @@ def create_deck() -> Path:
     add_tradeoff_slide(prs, logo)
     add_error_distribution_figure_slide(prs, logo)
     add_event_heterogeneity_slide(prs, logo)
-    add_adversarial_audit_slide(prs, logo)
+    add_robustness_slide(prs, logo)
     add_subgroup_slide(prs, logo)
     add_error_insight_slide(prs, logo, values)
     add_llm_role_slide(prs, logo, values)

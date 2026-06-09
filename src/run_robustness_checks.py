@@ -1,4 +1,4 @@
-"""Run adversarial reviewer-style diagnostics for the final project."""
+"""Run robustness-check diagnostics for the final project."""
 
 from __future__ import annotations
 
@@ -21,7 +21,7 @@ MODE_DIR = PROJECT_ROOT / "outputs" / "mode_composition_extension"
 MODEL_DIR = PROJECT_ROOT / "outputs" / "models" / "final_label_free_2022"
 LABEL_FREE_DIR = PROJECT_ROOT / "outputs" / "label_free_llm_adaptation"
 LLM_FEATURE_DIR = PROJECT_ROOT / "outputs" / "llm_event_features"
-OUTPUT_DIR = PROJECT_ROOT / "outputs" / "adversarial_audit"
+OUTPUT_DIR = PROJECT_ROOT / "outputs" / "robustness_checks"
 
 TARGET = "CNTTDHH"
 WEIGHT = "WTHHFIN"
@@ -219,9 +219,9 @@ def plot_permutation_null(permutation: pd.DataFrame) -> Path:
     sns.histplot(controls["weighted_mae"], bins=32, color="#94a3b8", edgecolor="white")
     plt.axvline(actual["weighted_mae"], color="#198754", linewidth=2.5, label="actual LLM pressure")
     plt.axvline(global_row["weighted_mae"], color="#00796b", linewidth=2.5, linestyle="--", label="global pressure")
-    plt.xlabel("weighted MAE under permuted cohort pressure")
+    plt.xlabel("weighted MAE after random assignment of cohort pressure")
     plt.ylabel("count")
-    plt.title("Permutation null for cohort-specific LLM trip-suppression pressure", fontsize=12, fontweight="bold")
+    plt.title("Robustness check: real LLM pressure beats random assignment", fontsize=12, fontweight="bold")
     plt.legend(frameon=False, fontsize=8)
     plt.grid(True, axis="y", linestyle="--", linewidth=0.5, alpha=0.35)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -237,7 +237,7 @@ def write_report(
     claim_audit: pd.DataFrame,
     figure_path: Path,
 ) -> Path:
-    path = OUTPUT_DIR / "adversarial_audit_report.md"
+    path = OUTPUT_DIR / "robustness_check_report.md"
     baseline = metric_from_summary(final_metrics, BASE, "weighted_mae")
     primary = metric_from_summary(final_metrics, PRIMARY, "weighted_mae")
     global_a1 = float(permutation.loc[permutation["method"] == "actual_global_a1", "weighted_mae"].iloc[0])
@@ -248,22 +248,22 @@ def write_report(
     leak_ok, leaks = leakage_status()
 
     lines = [
-        "# Adversarial Audit Report",
+        "# Robustness Check Report",
         "",
         "## Scope",
         "",
-        "This report audits the project from a skeptical reviewer perspective. It checks whether the empirical evidence supports the paper story, whether target leakage is visible in LLM inputs, and whether additional null controls weaken any claims.",
+        "This report checks whether the main project results hold under stricter controls. It focuses on target leakage, global-event baselines, random-pressure controls, and claims that should be scoped carefully in the course presentation.",
         "",
-        "## Headline Verdict",
+        "## Main Findings",
         "",
         f"- Main trip-count claim remains supported: ordinary historical XGBoost weighted MAE `{baseline:.4f}` -> primary gated weighted MAE `{primary:.4f}`.",
-        f"- The strongest contribution should be phrased as **event-level label-free adaptation**, not as strong individualized LLM ranking.",
+        f"- The strongest contribution should be phrased as **event-level correction without 2022 label calibration**, not as strong individualized LLM ranking.",
         f"- Compared with same-alpha global pressure, primary gated wMAE is `{primary:.4f}` vs global-a1 wMAE `{global_a1:.4f}`.",
         f"- 500-run permutation null for best LLM pressure: actual wMAE `{llm_actual:.4f}`, random mean `{llm_perm.mean():.4f}`, empirical p `{empirical_p_value(llm_perm, llm_actual):.4f}`.",
         f"- 500-run permutation null for primary gated rule: actual wMAE `{primary_actual:.4f}`, random mean `{primary_perm.mean():.4f}`, empirical p `{empirical_p_value(primary_perm, primary_actual):.4f}`.",
         f"- LLM-input leakage scan: `{'PASS' if leak_ok else 'FAIL'}`" + ("" if leak_ok else f" ({'; '.join(leaks)})"),
         "",
-        "## Claim Audit",
+        "## Claim Check",
         "",
         "| Claim | Verdict | Evidence | Revision |",
         "|---|---|---|---|",
@@ -278,11 +278,11 @@ def write_report(
     lines.extend(
         [
             "",
-            "## Reviewer Findings and Required Framing Fixes",
+            "## Presentation Framing Fixes",
             "",
             "### Finding 1: Global event downscaling is a very strong baseline",
             "",
-            "A reviewer will notice that applying the global average trip-suppression pressure already removes much of the 2022 over-prediction. Therefore, the story should not claim that LLM individualized ranking is the dominant mechanism. The defensible claim is that LLM-derived event semantics provide a label-free event-level correction, with cohort-specific ranking adding incremental support.",
+            "Applying the global average trip-suppression pressure already removes much of the 2022 over-prediction. Therefore, the presentation should not claim that LLM individualized ranking is the dominant mechanism. The cleaner statement is that LLM-derived event semantics provide an event-level correction, with cohort-specific ranking adding incremental support.",
             "",
             "### Finding 2: Best-MAE sensitivity row must not be the main method",
             "",
@@ -294,11 +294,11 @@ def write_report(
             "",
             "### Finding 4: Temporal validity needs an explicit caveat",
             "",
-            "The project is label-free with respect to 2022 NHTS outcomes, but GPT-5.5 may contain retrospective world knowledge about COVID-era mobility. For a formal paper, state that the available event context is allowed, and list prospective external event feeds as future work.",
+            "The project is label-free with respect to 2022 NHTS outcomes, but GPT-5.5 may contain retrospective world knowledge about COVID-era mobility. In the course presentation, state that the event context is allowed, and list prospective external event feeds as future work.",
             "",
-            "### Finding 5: Current evidence is enough for a strong course project, not yet for a top-tier ML claim",
+            "### Finding 5: Current evidence is enough for a strong course project, but should stay scoped",
             "",
-            "A top-tier paper would require external validation across multiple shocks or regions, prospective event-context freezing, and stronger statistical uncertainty estimates. For the course project, the current contribution is coherent if claims are scoped carefully.",
+            "A larger follow-up study would need validation across multiple shocks or regions, prospective event-context freezing, and stronger uncertainty estimates. For the course project, the current contribution is coherent if claims are scoped carefully.",
             "",
             "## New Audit Artifacts",
             "",
@@ -324,7 +324,7 @@ def main() -> None:
     claim_audit.to_csv(OUTPUT_DIR / "claim_audit.csv", index=False)
     figure_path = plot_permutation_null(permutation)
     report_path = write_report(final_metrics, mode_metrics, permutation, claim_audit, figure_path)
-    LOGGER.info("Wrote adversarial audit report: %s", report_path)
+    LOGGER.info("Wrote robustness check report: %s", report_path)
 
 
 if __name__ == "__main__":

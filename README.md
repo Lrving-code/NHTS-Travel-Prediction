@@ -68,8 +68,8 @@ predicted trips by mode = predicted total trips * predicted mode share
 
 汇报材料：
 
-- `outputs/final_project/NHTS_Travel_Behavior_Template_Presentation_v2.pptx`（当前主汇报版本，含 adversarial audit）
-- `outputs/final_project/NHTS_Travel_Behavior_Template_Presentation.pptx`
+- `outputs/final_project/NHTS_Travel_Behavior_Template_Presentation.pptx`（当前主汇报版本，含稳健性检验）
+- `outputs/final_project/NHTS_Travel_Behavior_Template_Presentation_v2.pptx`
 - `outputs/final_project/NHTS_LLM_Event_Adaptation_Optimized_Presentation.pptx`
 - `outputs/final_project/presentation_speaker_notes_zh.md`
 - `outputs/final_project/method_comparison_report_zh.md`
@@ -83,11 +83,11 @@ predicted trips by mode = predicted total trips * predicted mode share
 - `outputs/final_project/household_accuracy_summary.csv`
 - `outputs/final_project/figures/`
 
-对抗性审计：
+稳健性检验：
 
-- `outputs/adversarial_audit/adversarial_audit_report.md`
-- `outputs/adversarial_audit/permutation_pressure_controls.csv`
-- `outputs/adversarial_audit/permutation_null_mae.png`
+- `outputs/robustness_checks/robustness_check_report.md`
+- `outputs/robustness_checks/permutation_pressure_controls.csv`
+- `outputs/robustness_checks/permutation_null_mae.png`
 
 出行方式结构实验：
 
@@ -111,7 +111,7 @@ src/
   run_label_free_llm_adaptation.py
   run_mode_composition_extension.py
   generate_paper_style_figures.py
-  run_adversarial_audit.py
+  run_robustness_checks.py
   generate_final_project_assets.py
   build_optimized_presentation.py
   build_template_presentation.py
@@ -124,7 +124,7 @@ plan/
   presentation_optimization_plan.md
 
 outputs/
-  adversarial_audit/
+  robustness_checks/
   final_project/
   label_free_llm_adaptation/
   mode_composition_extension/
@@ -159,12 +159,12 @@ python src\run_mode_composition_extension.py --device cuda
 
 ```powershell
 python src\generate_paper_style_figures.py
-python src\run_adversarial_audit.py
+python src\run_robustness_checks.py
 python src\build_template_presentation.py
 python src\build_optimized_presentation.py
 ```
 
-其中 `build_template_presentation.py` 会读取 `temp/ppt_template_reference.pptx` 作为样式参考，生成中英双语、章节化、包含 paper-style analysis figures 的主汇报 PPT。
+其中 `build_template_presentation.py` 会读取 `temp/ppt_template_reference.pptx` 作为样式参考，生成中英双语、章节化、包含分析图和稳健性检验的主汇报 PPT。
 
 ## 关键文件依赖
 

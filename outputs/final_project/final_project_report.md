@@ -47,16 +47,16 @@ This project formulates 2022 NHTS household travel prediction as event-driven te
 - LLM cohort prompts: `1,327`.
 - LLM request reduction: `83.2%`, or about `5.95x` fewer requests than household-level prompting.
 
-## Adversarial Audit
+## Robustness Check
 
-We ran an additional reviewer-style audit in `outputs/adversarial_audit/`.
+We ran additional robustness checks in `outputs/robustness_checks/`.
 
 - 500-run permutation control for `llm_trip_suppression_a1p25`: actual weighted MAE `2.4820`, random-permutation mean `2.6425`, empirical p-value `0.0020`.
 - 500-run permutation control for the primary gated rule: actual weighted MAE `2.5023`, random-permutation mean `2.5808`, empirical p-value `0.0020`.
 - Same-alpha global pressure remains strong: primary gated weighted MAE `2.5023` vs global-a1 weighted MAE `2.5531`.
 - Leakage scan passes for LLM-facing profile/feature files: they exclude `HOUSEID`, `CNTTDHH`, and `WTHHFIN`.
 
-Reviewer-facing interpretation: the dominant contribution should be stated as event-level label-free adaptation. Cohort-specific LLM ranking provides measurable incremental signal, but it should not be overclaimed as the sole source of improvement.
+Interpretation for the course report: the dominant contribution is event-level label-free adaptation. Cohort-specific LLM ranking provides measurable incremental signal, but it should not be described as the sole source of improvement.
 
 ## Figures
 
