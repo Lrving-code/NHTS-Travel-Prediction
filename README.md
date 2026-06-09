@@ -68,10 +68,12 @@ predicted trips by mode = predicted total trips * predicted mode share
 
 汇报材料：
 
+- `outputs/final_project/NHTS_Travel_Behavior_Template_Presentation.pptx`
 - `outputs/final_project/NHTS_LLM_Event_Adaptation_Optimized_Presentation.pptx`
 - `outputs/final_project/presentation_speaker_notes_zh.md`
 - `outputs/final_project/method_comparison_report_zh.md`
 - `outputs/final_project/method_comparison_report.md`
+- `outputs/final_project/figures/paper_style/`
 
 主实验：
 
@@ -101,8 +103,10 @@ src/
   run_household_baseline.py
   run_label_free_llm_adaptation.py
   run_mode_composition_extension.py
+  generate_paper_style_figures.py
   generate_final_project_assets.py
   build_optimized_presentation.py
+  build_template_presentation.py
 
 plan/
   current_research_design.md
@@ -145,8 +149,12 @@ python src\run_mode_composition_extension.py --device cuda
 优化汇报材料：
 
 ```powershell
+python src\generate_paper_style_figures.py
+python src\build_template_presentation.py
 python src\build_optimized_presentation.py
 ```
+
+其中 `build_template_presentation.py` 会读取 `temp/ppt_template_reference.pptx` 作为样式参考，生成中英双语、章节化、包含 paper-style analysis figures 的主汇报 PPT。
 
 ## 关键文件依赖
 
