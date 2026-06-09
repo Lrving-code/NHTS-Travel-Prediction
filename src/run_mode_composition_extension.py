@@ -80,6 +80,11 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument("--output-dir", type=Path, default=Path("outputs/mode_composition_extension"))
+    parser.add_argument(
+        "--trip-predictions-path",
+        type=Path,
+        default=Path("outputs/models/final_label_free_2022/final_2022_predictions.csv"),
+    )
     parser.add_argument("--n-estimators", type=int, default=160)
     parser.add_argument("--device", choices=("auto", "cuda"), default="auto")
     parser.add_argument("--alphas", default="0.50,0.75,1.00")
@@ -349,7 +354,92 @@ def save_csv(frame: pd.DataFrame, path: Path) -> None:
     frame.to_csv(path, index=False, quoting=csv.QUOTE_MINIMAL)
 
 
-def write_report(metrics: pd.DataFrame, distribution: pd.DataFrame, output_dir: Path) -> Path:
+def make_mode_prediction_frame(
+    test_frame: pd.DataFrame,
+    predictions_by_method: dict[str, np.ndarray],
+) -> pd.DataFrame:
+    output = test_frame[
+        [HOUSEHOLD_ID, WEIGHT_COLUMN, "valid_trip_count", *MODE_COLUMNS]
+        + [column.replace("_share", "_trips") for column in MODE_COLUMNS]
+    ].copy()
+    for method, prediction in predictions_by_method.items():
+        for index, column in enumerate(MODE_COLUMNS):
+            output[f"{method}_{column}"] = prediction[:, index]
+    return output
+
+
+def load_trip_predictions(path: Path) -> pd.DataFrame:
+    if not path.exists():
+        raise FileNotFoundError(f"Missing trip prediction file: {path}")
+    columns = [
+        HOUSEHOLD_ID,
+        "prediction_historical_xgboost",
+        "prediction_gated_trip_suppression_a1_d0p15",
+        "prediction_llm_trip_suppression_a1p25",
+    ]
+    frame = pd.read_csv(path, usecols=columns)
+    frame[HOUSEHOLD_ID] = frame[HOUSEHOLD_ID].astype(str)
+    return frame
+
+
+def evaluate_mode_trip_counts(
+    test_frame: pd.DataFrame,
+    mode_predictions: dict[str, np.ndarray],
+    trip_predictions: pd.DataFrame,
+) -> pd.DataFrame:
+    joined = test_frame[[HOUSEHOLD_ID, WEIGHT_COLUMN, "valid_trip_count"]].copy()
+    for column in [column.replace("_share", "_trips") for column in MODE_COLUMNS]:
+        joined[column] = test_frame[column].to_numpy(dtype=float)
+    joined = joined.merge(trip_predictions, on=HOUSEHOLD_ID, how="inner", validate="one_to_one")
+    rows: list[dict[str, float | str | int]] = []
+    truth = joined[[column.replace("_share", "_trips") for column in MODE_COLUMNS]].to_numpy(dtype=float)
+    weights = joined[WEIGHT_COLUMN].to_numpy(dtype=float)
+    combos = {
+        "traditional_count_x_traditional_mode": (
+            "prediction_historical_xgboost",
+            "historical_xgboost",
+        ),
+        "gated_count_x_traditional_mode": (
+            "prediction_gated_trip_suppression_a1_d0p15",
+            "historical_xgboost",
+        ),
+        "gated_count_x_llm_mode": (
+            "prediction_gated_trip_suppression_a1_d0p15",
+            "llm_transit_avoidance_a1",
+        ),
+        "best_count_x_llm_mode": (
+            "prediction_llm_trip_suppression_a1p25",
+            "llm_transit_avoidance_a1",
+        ),
+    }
+    for method, (trip_column, mode_method) in combos.items():
+        if mode_method not in mode_predictions:
+            continue
+        total = joined[trip_column].to_numpy(dtype=float).reshape(-1, 1)
+        predicted = np.maximum(total * mode_predictions[mode_method], 0.0)
+        error = predicted - truth
+        abs_error = np.abs(error)
+        row: dict[str, float | str | int] = {
+            "method": method,
+            "rows": int(len(joined)),
+            "weighted_total_mode_trip_mae": weighted_average(abs_error.sum(axis=1), weights),
+            "weighted_mean_mode_trip_mae": weighted_average(abs_error.mean(axis=1), weights),
+            "weighted_total_trip_bias": weighted_average(error.sum(axis=1), weights),
+        }
+        for index, column in enumerate(MODE_COLUMNS):
+            base = column.replace("_share", "")
+            row[f"{base}_trip_weighted_mae"] = weighted_average(abs_error[:, index], weights)
+            row[f"{base}_trip_weighted_bias"] = weighted_average(error[:, index], weights)
+        rows.append(row)
+    return pd.DataFrame(rows)
+
+
+def write_report(
+    metrics: pd.DataFrame,
+    distribution: pd.DataFrame,
+    trip_count_metrics: pd.DataFrame,
+    output_dir: Path,
+) -> Path:
     path = output_dir / "mode_composition_report.md"
     baseline = metrics[metrics["method"] == "historical_xgboost"].iloc[0]
     mean_row = metrics[metrics["method"] == "historical_mean_2017"].iloc[0]
@@ -396,6 +486,26 @@ def write_report(metrics: pd.DataFrame, distribution: pd.DataFrame, output_dir: 
             "|---|---:|---:|---:|---:|---:|",
         ]
     )
+    if not trip_count_metrics.empty:
+        lines.extend(
+            [
+                "",
+                "## Derived Mode-Specific Trip Volumes",
+                "",
+                "Mode shares can be combined with trip-count predictions to estimate trips by mode. "
+                "This turns the project into a household travel-behavior system rather than a single-output regression task.",
+                "",
+                "| Method | Total mode-trip MAE | Mean component MAE | Total trip bias | Transit trip MAE | Active trip MAE |",
+                "|---|---:|---:|---:|---:|---:|",
+            ]
+        )
+        for row in trip_count_metrics.itertuples(index=False):
+            active_mae = row.walk_trip_weighted_mae + row.bike_trip_weighted_mae
+            lines.append(
+                f"| {row.method} | {row.weighted_total_mode_trip_mae:.4f} | "
+                f"{row.weighted_mean_mode_trip_mae:.4f} | {row.weighted_total_trip_bias:.4f} | "
+                f"{row.transit_trip_weighted_mae:.4f} | {active_mae:.4f} |"
+            )
     for row in metrics.itertuples(index=False):
         lines.append(
             f"| {row.method} | {row.weighted_total_variation:.4f} | "
@@ -420,7 +530,7 @@ def write_report(metrics: pd.DataFrame, distribution: pd.DataFrame, output_dir: 
             "",
             "## Caveat",
             "",
-            "Treat this as an exploratory extension. The main paper claim remains the label-free trip-count adaptation.",
+            "Treat this as an exploratory extension. The main course-project story is broader: trip generation, mode composition, and derived mode-specific trip volumes.",
         ]
     )
     path.write_text("\n".join(lines), encoding="utf-8")
@@ -501,6 +611,10 @@ def run_experiment(args: argparse.Namespace) -> None:
     mean_prediction = weighted_mean_prediction(train_frame, len(test_frame))
     xgb_prediction = fit_xgboost_share_models(dataset, args.n_estimators, device)
 
+    predictions_by_method: dict[str, np.ndarray] = {
+        "historical_mean_2017": mean_prediction,
+        "historical_xgboost": xgb_prediction,
+    }
     metrics = [
         evaluate_mode_predictions("historical_mean_2017", test_frame, mean_prediction, "none"),
         evaluate_mode_predictions("historical_xgboost", test_frame, xgb_prediction, device),
@@ -525,12 +639,22 @@ def run_experiment(args: argparse.Namespace) -> None:
         metrics.append(
             evaluate_mode_predictions(f"global_transit_avoidance_a{token}", test_frame, global_prediction, device)
         )
+        predictions_by_method[f"llm_transit_avoidance_a{token}"] = llm_prediction
+        predictions_by_method[f"global_transit_avoidance_a{token}"] = global_prediction
 
     metrics_frame = pd.DataFrame(metrics)
     save_csv(metrics_frame, output_dir / "mode_composition_metrics.csv")
+    prediction_frame = make_mode_prediction_frame(test_frame, predictions_by_method)
+    save_csv(prediction_frame, output_dir / "mode_composition_predictions.csv")
+    trip_count_metrics = evaluate_mode_trip_counts(
+        test_frame,
+        predictions_by_method,
+        load_trip_predictions(args.trip_predictions_path),
+    )
+    save_csv(trip_count_metrics, output_dir / "mode_specific_trip_count_metrics.csv")
     save_distribution_figure(distribution, output_dir)
     save_metrics_figure(metrics_frame, output_dir)
-    report_path = write_report(metrics_frame, distribution, output_dir)
+    report_path = write_report(metrics_frame, distribution, trip_count_metrics, output_dir)
     LOGGER.info("Wrote mode-composition report: %s", report_path)
 
 

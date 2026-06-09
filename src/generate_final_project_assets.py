@@ -52,7 +52,7 @@ SELECTED_METHODS = [
 ]
 PLOT_LABELS = {
     "historical_mean_only": "Historical mean",
-    "historical_xgboost": "Historical predictor",
+    "historical_xgboost": "Traditional supervised baseline",
     "historical_mean_trend_shift": "Historical trend shift",
     "llm_only_trip_suppression_a1p25": "LLM-only pressure",
     "global_trip_suppression_a1p25": "Global event prior",
@@ -471,7 +471,7 @@ def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: di
             "## Presentation Framing",
             "",
             "Avoid framing the project as a generic feature-only forecasting improvement. The cleaner narrative is: "
-            "historical routine-mobility prediction fails under a rare event; LLMs provide event semantics "
+            "the traditional supervised baseline fails under a rare event; LLMs provide event semantics "
             "that can be distilled into a lightweight correction rule.",
         ]
     )
@@ -496,7 +496,7 @@ def write_storyboard() -> Path:
         "- Can LLM event priors repair 2022 prediction without target-year labels?",
         "",
         "## Slide 4: Method",
-        "- Historical predictor learns routine mobility.",
+        "- Traditional supervised baseline learns routine mobility.",
         "- LLM produces cohort-level pandemic priors.",
         "- A fixed correction rule distills the priors into prediction adjustment.",
         "",

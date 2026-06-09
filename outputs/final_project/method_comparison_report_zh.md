@@ -23,7 +23,7 @@
 | 方法 | Weighted MAE | Weighted RMSE | Weighted Bias | Weighted R2 | 相对历史预测 MAE 提升 |
 |---|---:|---:|---:|---:|---:|
 | Historical mean | 5.5116 | 6.1251 | 4.4995 | -1.1722 | -27.06% |
-| Historical predictor | 4.3377 | 5.3169 | 3.6052 | -0.6367 | 0.00% |
+| Traditional supervised baseline | 4.3377 | 5.3169 | 3.6052 | -0.6367 | 0.00% |
 | Historical trend shift | 4.1504 | 5.1463 | 3.3485 | -0.5334 | 4.32% |
 | LLM-only pressure | 2.7175 | 3.9876 | -0.3732 | 0.0794 | 37.35% |
 | Global event prior | 2.5223 | 3.7432 | -0.7477 | 0.1888 | 41.85% |
@@ -54,8 +54,8 @@ Mode-composition 结论：
 - 纯 LLM-style correction 相比 2017 mean prior 有改善，但仍弱于 XGBoost。
 - XGBoost + LLM transit prior 把 weighted TV 从 `0.2008` 降到 `0.1985`，总体提升较小。
 - 但公共交通这一项改善明显：transit-share weighted MAE 从 `0.0325` 降到 `0.0269`。
-- LLM-only corrected transit MAE 是 `0.0451`，说明 LLM 知道方向，但需要历史预测器提供 household-specific baseline。
+- LLM-only corrected transit MAE 是 `0.0451`，说明 LLM 知道方向，但需要传统监督模型提供 household-specific baseline。
 
 ## 最终口径
 
-不要把这个项目讲成“LLM 替代传统模型”。更准确的说法是：历史预测器学习 routine mobility，LLM 提供疫情事件先验，两者结合后能在不使用 2022 标签训练的前提下修正 post-pandemic distribution shift。
+不要把这个项目讲成“LLM 替代传统模型”。更准确的说法是：传统监督模型学习 routine mobility，LLM 提供疫情事件先验，两者结合后能在不使用 2022 标签训练的前提下修正 post-pandemic distribution shift。

@@ -1,10 +1,10 @@
 # Presentation Speaker Notes
 
 ## Core Message
-We formulate 2022 NHTS household travel prediction as event-driven temporal adaptation. The paper story is that historical models capture routine mobility, while LLM event priors encode pandemic mechanisms that are weakly represented in household covariates.
+We formulate 2022 NHTS household travel prediction as event-driven temporal adaptation. The paper story is that a traditional supervised baseline captures routine mobility, while LLM event priors encode pandemic mechanisms that are weakly represented in household covariates.
 
 ## One-Minute Version
-Historical prediction overestimates 2022 trips. The primary fixed no-label gated rule reduces weighted MAE from `4.3377` to `2.5023` and moves weighted bias to `-0.0230`. The LLM-only pressure baseline reaches `2.7175`, while the best-MAE hybrid sensitivity row reaches `2.4820`. The LLM is not used as a direct trip-count predictor; it provides pandemic-event semantics that modify a historical routine-mobility predictor.
+The traditional supervised baseline overestimates 2022 trips. The primary fixed no-label gated rule reduces weighted MAE from `4.3377` to `2.5023` and moves weighted bias to `-0.0230`. The LLM-only pressure baseline reaches `2.7175`, while the best-MAE hybrid sensitivity row reaches `2.4820`. The LLM is not used as a direct trip-count predictor; it provides pandemic-event semantics that modify a routine predictor trained on pre-2022 NHTS data.
 
 ## Metric Language
 - Weighted MAE/RMSE are survey-weighted trip-count errors.

@@ -32,6 +32,9 @@ outputs/figures/
 outputs/cache/
 outputs/share_package/
 outputs/mode_composition_extension/household_mode_composition.csv
+outputs/mode_composition_extension/mode_composition_predictions.csv
+outputs/purpose_composition_extension/household_purpose_composition.csv
+outputs/purpose_composition_extension/purpose_composition_predictions.csv
 outputs/**/*.jsonl
 outputs/llm_event_features/household_cohort_prompts.jsonl
 outputs/llm_event_features/household_cohort_profiles.csv

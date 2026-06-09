@@ -22,6 +22,17 @@ This extension predicts household-level 2022 mode shares derived from trip recor
 
 | Method | Weighted TV | Weighted Mean Share MAE | Weighted Dominant Accuracy | Transit Weighted MAE | Transit Weighted Bias |
 |---|---:|---:|---:|---:|---:|
+
+## Derived Mode-Specific Trip Volumes
+
+Mode shares can be combined with trip-count predictions to estimate trips by mode. This turns the project into a household travel-behavior system rather than a single-output regression task.
+
+| Method | Total mode-trip MAE | Mean component MAE | Total trip bias | Transit trip MAE | Active trip MAE |
+|---|---:|---:|---:|---:|---:|
+| traditional_count_x_traditional_mode | 4.8467 | 0.8078 | 2.9008 | 0.1649 | 0.8079 |
+| gated_count_x_traditional_mode | 3.2918 | 0.5486 | -0.9119 | 0.1114 | 0.5956 |
+| gated_count_x_llm_mode | 3.2802 | 0.5467 | -0.9119 | 0.0956 | 0.5972 |
+| best_count_x_llm_mode | 3.3384 | 0.5564 | -1.3865 | 0.0914 | 0.5713 |
 | historical_mean_2017 | 0.2647 | 0.0882 | 0.8933 | 0.0567 | 0.0220 |
 | historical_xgboost | 0.2008 | 0.0669 | 0.9029 | 0.0325 | 0.0035 |
 | llm_transit_avoidance_a0p5 | 0.1996 | 0.0665 | 0.9042 | 0.0297 | -0.0014 |
@@ -46,4 +57,4 @@ This extension predicts household-level 2022 mode shares derived from trip recor
 
 ## Caveat
 
-Treat this as an exploratory extension. The main paper claim remains the label-free trip-count adaptation.
+Treat this as an exploratory extension. The main course-project story is broader: trip generation, mode composition, and derived mode-specific trip volumes.
