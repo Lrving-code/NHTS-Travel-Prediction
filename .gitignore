@@ -23,6 +23,9 @@ data/processed/*.csv
 # Temporary files
 temp/
 
+# Local reference dumps
+refs/
+
 # Large/generated outputs
 outputs/models/
 outputs/figures/
