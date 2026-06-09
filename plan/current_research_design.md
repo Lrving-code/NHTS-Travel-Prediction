@@ -195,7 +195,18 @@ Main zero-label constraint:
 - Generate 2022 LLM cohort priors without exposing `CNTTDHH`, sample weights, IDs, or aggregate 2022 target statistics.
 - Use 2022 `CNTTDHH` only inside final evaluation metrics.
 
-Current best zero-label sensitivity result:
+Primary strict no-label result:
+
+- Method: `gated_trip_suppression_a1_d0p15`
+- Weighted MAE: `2.5023`
+- Weighted RMSE: `3.6038`
+- Weighted bias: `-0.0230`
+- Weighted R2: `0.2480`
+- Weighted MAE reduction vs historical baseline: `42.31%`
+- Absolute weighted-bias reduction vs historical baseline: `99.36%`
+- Interpretation: this fixed rule uses alpha `1.0` and delta threshold `0.15`, so it is the cleanest presentation choice under the no-2022-label claim.
+
+Best MAE sensitivity result:
 
 - Method: `llm_trip_suppression_a1p25`
 - Weighted MAE: `2.4820`
@@ -205,7 +216,7 @@ Current best zero-label sensitivity result:
 - Weighted MAE reduction vs historical baseline: `42.78%`
 - Absolute weighted-bias reduction vs historical baseline: `85.01%`
 
-Best bias/R2 tradeoff:
+Bias/R2 tradeoff:
 
 - Method: `gated_trip_suppression_a1_d0p15`
 - Weighted MAE: `2.5023`
@@ -221,7 +232,7 @@ Important diagnostic result:
 - `llm_trip_suppression_a1p25` improves weighted MAE by `1.60%` over its global-mean control and by `6.22%` over its random-shuffle control.
 - The broader recovery-adjusted composite should not be overclaimed because it does not beat global/random controls at the strongest alpha.
 - No-label gated correction adds a useful bias/R2 tradeoff: `gated_trip_suppression_a1_d0p15` has weighted MAE `2.5023`, weighted bias `-0.0230`, and weighted R2 `0.2480`.
-- This gated result is slightly worse than the best MAE row but is nearly unbiased and has the highest current weighted R2.
+- This gated result is slightly worse than the best-MAE sensitivity row but is nearly unbiased and has the highest current weighted R2.
 - Gated correction is a useful compromise when the paper emphasizes bias correction and distributional fit rather than MAE alone.
 
 Subgroup diagnostic result:

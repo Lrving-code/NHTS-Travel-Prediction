@@ -7,10 +7,12 @@
 主任务是 household-level trip-count regression：
 
 - Historical predictor weighted MAE: `4.3377`
-- LLM trip-suppression correction weighted MAE: `2.4820`
-- Weighted MAE reduction: `42.78%`
-- Weighted RMSE reduction: `31.16%`
-- Gated LLM correction weighted bias: `-0.0230`
+- Primary fixed no-label gated correction weighted MAE: `2.5023`
+- Primary fixed no-label gated correction weighted bias: `-0.0230`
+- Primary fixed no-label gated correction weighted R2: `0.2480`
+- Primary gated weighted MAE reduction: `42.31%`
+- Best-MAE sensitivity row weighted MAE: `2.4820`
+- Best-MAE sensitivity reduction: `42.78%`
 - Gated household accuracy: exact `17.7%`, within 2 trips `54.5%`, within 3 trips `71.2%`
 
 辅助任务是 household-level mode composition：
@@ -110,6 +112,14 @@ python src\run_label_free_llm_adaptation.py --device cuda
 python src\generate_final_project_assets.py
 ```
 
+最终可复现产物：
+
+```powershell
+python src\export_final_repro_artifacts.py --device cuda
+```
+
+该脚本会在 `outputs/models/final_label_free_2022/` 保存 historical routine model、feature list、2022 prediction CSV、metrics、metadata、数据 hash 和环境信息。该目录默认不提交到 git。
+
 mode-composition 辅助实验：
 
 ```powershell
@@ -142,6 +152,7 @@ data/raw/nhts_2022/csv/tripv2pub.csv
 ## 重要注意事项
 
 - 主实验不使用 2022 `CNTTDHH` 标签训练或校准，2022 标签只用于最终 evaluation。
+- 汇报主口径使用固定 `gated_trip_suppression_a1_d0p15` no-label rule；`llm_trip_suppression_a1p25` 是 best-MAE sensitivity row，不应表述为严格无标签参数选择的主方法。
 - `TRPTRANS` 编码在 2017 和 2022 不能直接按数字对齐，mode-composition 扩展使用 year-specific official codebook mapping。
 - `outputs/share_package/` 是本地分享包目录，默认 git ignored。
 - `refs/` 是本地参考资料目录，默认 git ignored。

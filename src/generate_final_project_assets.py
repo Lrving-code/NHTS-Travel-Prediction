@@ -415,13 +415,14 @@ def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: di
             "",
             "## Improvement Over Historical Predictor",
             "",
-            f"- Best MAE row: `{best_mae.method}`.",
-            f"- Weighted MAE drops from `{baseline.weighted_mae:.4f}` to `{best_mae.weighted_mae:.4f}` "
+            f"- Primary strict no-label row: `{gated.method}`.",
+            f"- Primary weighted MAE drops from `{baseline.weighted_mae:.4f}` to `{gated.weighted_mae:.4f}` "
+            f"({gated.weighted_mae_reduction_pct:.2f}% reduction).",
+            f"- Primary weighted RMSE drops from `{baseline.weighted_rmse:.4f}` to `{gated.weighted_rmse:.4f}` "
+            f"({gated.weighted_rmse_reduction_pct:.2f}% reduction).",
+            f"- Primary absolute weighted bias drops by `{gated.abs_weighted_bias_reduction_pct:.2f}%`.",
+            f"- Best-MAE sensitivity row: `{best_mae.method}` reaches weighted MAE `{best_mae.weighted_mae:.4f}` "
             f"({best_mae.weighted_mae_reduction_pct:.2f}% reduction).",
-            f"- Weighted RMSE drops from `{baseline.weighted_rmse:.4f}` to `{best_mae.weighted_rmse:.4f}` "
-            f"({best_mae.weighted_rmse_reduction_pct:.2f}% reduction).",
-            f"- Absolute weighted bias drops by `{best_mae.abs_weighted_bias_reduction_pct:.2f}%`.",
-            f"- Gated row: `{gated.method}` gives weighted bias `{gated.weighted_bias:.4f}` and weighted R2 `{gated.weighted_r2:.4f}`.",
             "",
             "## Household-Level Accuracy",
             "",
@@ -485,9 +486,10 @@ def write_storyboard() -> Path:
         "- 1,327 cohorts cover 7,893 households.",
         "",
         "## Slide 6: Main Result",
-        "- Weighted MAE reduction: 42.78%.",
-        "- Weighted RMSE reduction: 31.16%.",
-        "- Absolute weighted-bias reduction: 85.01%.",
+        "- Primary gated weighted MAE reduction: 42.31%.",
+        "- Primary gated weighted RMSE reduction: 32.22%.",
+        "- Primary gated absolute weighted-bias reduction: 99.36%.",
+        "- Best-MAE sensitivity reduction: 42.78%.",
         "",
         "## Slide 7: Bias/R2 Tradeoff",
         "- Gated correction has near-zero weighted bias and highest weighted R2.",
@@ -622,8 +624,8 @@ def create_presentation(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_pa
     subtitle.text_frame.paragraphs[0].font.name = "Microsoft YaHei"
     subtitle.text_frame.paragraphs[0].font.size = Pt(22)
     subtitle.text_frame.paragraphs[0].font.color.rgb = RGBColor(203, 213, 225)
-    add_metric_card(slide, 0.85, 4.55, "Weighted MAE", "-42.8%", "vs historical predictor", blue)
-    add_metric_card(slide, 3.85, 4.55, "Weighted Bias", "-85.0%", "absolute bias reduction", green)
+    add_metric_card(slide, 0.85, 4.55, "Weighted MAE", "-42.3%", "primary gated rule", blue)
+    add_metric_card(slide, 3.85, 4.55, "Weighted Bias", "-99.4%", "gated absolute bias reduction", green)
     add_metric_card(slide, 6.85, 4.55, "LLM Requests", "-83.2%", "cohort-level generation", orange)
     add_footer(slide, 1)
 
@@ -687,7 +689,7 @@ def create_presentation(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_pa
     )
     add_picture(slide, figure_paths["pressure_distribution"], 6.25, 1.3, 6.35)
 
-    slide = slide_base("Main result", "LLM trip-suppression prior sharply reduces household prediction error")
+    slide = slide_base("Main result", "Fixed gated LLM event prior sharply reduces household prediction error")
     add_picture(slide, figure_paths["metric_comparison"], 0.8, 1.25, 11.9)
 
     slide = slide_base("Bias and distributional fit", "Gated correction is nearly unbiased")
@@ -731,7 +733,8 @@ def create_presentation(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_pa
         slide,
         [
             "Contribution: label-free event adaptation for post-pandemic travel demand.",
-            "Accuracy: weighted MAE reduction 42.8%; weighted RMSE reduction 31.2%.",
+            "Accuracy: primary weighted MAE reduction 42.3%; best-MAE sensitivity reduction 42.8%.",
+            "Bias: primary gated correction reduces absolute weighted bias by 99.4%.",
             "Efficiency: cohort prompting reduces LLM requests by 83.2%.",
             "Future work: stronger priors, external event context, and prospective validation.",
         ],

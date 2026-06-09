@@ -21,9 +21,10 @@
 - 1,327 cohorts cover 7,893 households.
 
 ## Slide 6: Main Result
-- Weighted MAE reduction: 42.78%.
-- Weighted RMSE reduction: 31.16%.
-- Absolute weighted-bias reduction: 85.01%.
+- Primary gated weighted MAE reduction: 42.31%.
+- Primary gated weighted RMSE reduction: 32.22%.
+- Primary gated absolute weighted-bias reduction: 99.36%.
+- Best-MAE sensitivity reduction: 42.78%.
 
 ## Slide 7: Bias/R2 Tradeoff
 - Gated correction has near-zero weighted bias and highest weighted R2.

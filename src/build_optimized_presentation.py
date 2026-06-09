@@ -293,9 +293,10 @@ def write_method_report(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFram
             "",
             "Trip-count takeaway:",
             "",
-            f"- Best MAE row: `{trip_best.method}`, weighted MAE `{trip_best.weighted_mae:.4f}`, "
+            f"- Primary strict no-label row: `{trip_gated.method}`, weighted MAE `{trip_gated.weighted_mae:.4f}`, "
+            f"weighted bias `{trip_gated.weighted_bias:.4f}`, weighted R2 `{trip_gated.weighted_r2:.4f}`.",
+            f"- Best MAE sensitivity row: `{trip_best.method}`, weighted MAE `{trip_best.weighted_mae:.4f}`, "
             f"improving `{100.0 * (trip_base.weighted_mae - trip_best.weighted_mae) / trip_base.weighted_mae:.2f}%` over historical prediction.",
-            f"- Best bias/R2 tradeoff: `{trip_gated.method}`, weighted bias `{trip_gated.weighted_bias:.4f}`, weighted R2 `{trip_gated.weighted_r2:.4f}`.",
             f"- Gated household accuracy: exact `{pct(gated_acc.exact_rounded_accuracy)}`, within 2 trips `{pct(gated_acc.within_2_trips)}`, within 3 trips `{pct(gated_acc.within_3_trips)}`.",
             "",
             "## Mode-Composition Results",
@@ -385,8 +386,8 @@ def write_method_report_zh(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataF
             "",
             "主任务结论：",
             "",
-            f"- 最低 MAE 是 `{trip_best.method}`：weighted MAE 从 `{trip_base.weighted_mae:.4f}` 降到 `{trip_best.weighted_mae:.4f}`，降低 `42.78%`。",
-            f"- 最好的 bias/R2 折中是 `{trip_gated.method}`：weighted bias `{trip_gated.weighted_bias:.4f}`，weighted R2 `{trip_gated.weighted_r2:.4f}`。",
+            f"- 主口径使用固定 no-label gated rule：`{trip_gated.method}`，weighted MAE `{trip_gated.weighted_mae:.4f}`，weighted bias `{trip_gated.weighted_bias:.4f}`，weighted R2 `{trip_gated.weighted_r2:.4f}`。",
+            f"- 最低 MAE 是 sensitivity row `{trip_best.method}`：weighted MAE 从 `{trip_base.weighted_mae:.4f}` 降到 `{trip_best.weighted_mae:.4f}`，降低 `42.78%`；它不作为严格 no-label 主方法的参数选择依据。",
             f"- 家庭颗粒度上，gated correction exact hit `{pct(gated_acc.exact_rounded_accuracy)}`，within 2 trips `{pct(gated_acc.within_2_trips)}`，within 3 trips `{pct(gated_acc.within_3_trips)}`。",
             "",
             "## 出行方式结构结果",
@@ -545,7 +546,7 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
     subtitle = slide.shapes.add_textbox(Inches(0.78), Inches(2.38), Inches(11.5), Inches(0.75))
     subtitle.text_frame.text = "Predicting post-pandemic household mobility without 2022 training labels"
     set_text(subtitle.text_frame.paragraphs[0], 21, RGBColor(203, 213, 225), False)
-    add_metric_card(slide, 0.85, 4.45, "Trip-count MAE", "-42.8%", "LLM prior vs historical", COLORS["blue"])
+    add_metric_card(slide, 0.85, 4.45, "Trip-count MAE", "-42.3%", "primary gated rule", COLORS["blue"])
     add_metric_card(slide, 3.95, 4.45, "Bias", "-99.4%", "gated correction absolute bias", COLORS["green"])
     add_metric_card(slide, 7.05, 4.45, "LLM calls", "-83.2%", "cohort prompting", COLORS["orange"])
     add_footer(slide, 1)
@@ -599,8 +600,8 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
             ["Historical trend shift", "No", "No", "Mean-trend control"],
             ["Global event prior", "No", "Only global mean", "Event-level downscaling control"],
             ["Random prior control", "No", "Shuffled scores", "Negative control"],
-            ["LLM trip suppression", "No", "Cohort-specific", "Best MAE"],
-            ["Gated LLM correction", "No", "Cohort-specific when confident", "Best bias/R2 tradeoff"],
+            ["LLM trip suppression", "No", "Cohort-specific", "Best-MAE sensitivity"],
+            ["Gated LLM correction", "No", "Cohort-specific when confident", "Primary no-label rule"],
         ],
         0.65,
         1.3,
@@ -634,8 +635,8 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
     add_bullets(
         slide,
         [
-            f"Best MAE: {trip_best.weighted_mae:.3f}, a 42.8% reduction.",
-            f"Best bias/R2: gated correction bias {trip_gated.weighted_bias:.3f}, R2 {trip_gated.weighted_r2:.3f}.",
+            f"Primary no-label gated rule: MAE {trip_gated.weighted_mae:.3f}, bias {trip_gated.weighted_bias:.3f}.",
+            f"Best-MAE sensitivity row: MAE {trip_best.weighted_mae:.3f}, a 42.8% reduction.",
         ],
         0.95,
         5.35,
@@ -771,6 +772,7 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
         slide,
         [
             "Do not claim that LLM directly predicts household trip counts.",
+            "Do not claim the best-MAE alpha was selected without looking at 2022 evaluation; treat it as sensitivity.",
             "Do not compare trip-count MAE with trip-level mode-classification accuracy.",
             "Mode composition is an auxiliary extension; the main validated result is CNTTDHH adaptation.",
             "Future work should add external event context, stronger LLM priors, and prospective validation.",
@@ -783,7 +785,7 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
     )
 
     slide = base_slide("Final takeaway", "A defensible story for the course project")
-    add_metric_card(slide, 1.0, 1.55, "Trip-count error", "-42.8%", "weighted MAE reduction", COLORS["blue"])
+    add_metric_card(slide, 1.0, 1.55, "Primary trip-count rule", "-42.3%", "gated weighted MAE reduction", COLORS["blue"])
     add_metric_card(slide, 4.2, 1.55, "Bias", "-99.4%", "gated absolute bias reduction", COLORS["green"])
     add_metric_card(slide, 7.4, 1.55, "Transit-share error", "-17.4%", "auxiliary mode result", COLORS["orange"])
     add_bullets(
@@ -807,6 +809,7 @@ def write_speaker_notes(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
     path = FINAL_DIR / "presentation_speaker_notes.md"
     trip_base = trip[trip["method"] == "historical_xgboost"].iloc[0]
     trip_best = trip[trip["method"] == "llm_trip_suppression_a1p25"].iloc[0]
+    trip_gated = trip[trip["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
     mode_base = mode[mode["method"] == "historical_xgboost"].iloc[0]
     mode_best = mode[mode["method"] == "llm_transit_avoidance_a1"].iloc[0]
     lines = [
@@ -816,8 +819,8 @@ def write_speaker_notes(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
         "We predict 2022 household mobility under post-pandemic distribution shift. The main result is a label-free LLM event-prior correction for household trip counts.",
         "",
         "## One-Minute Version",
-        f"Historical prediction overestimates 2022 trips. LLM trip-suppression priors reduce weighted MAE from `{trip_base.weighted_mae:.4f}` to `{trip_best.weighted_mae:.4f}`. "
-        "The LLM is not used as a direct trip-count predictor; it provides pandemic-event semantics that modify a historical routine-mobility predictor.",
+        f"Historical prediction overestimates 2022 trips. The primary fixed no-label gated rule reduces weighted MAE from `{trip_base.weighted_mae:.4f}` to `{trip_gated.weighted_mae:.4f}` and moves weighted bias to `{trip_gated.weighted_bias:.4f}`. "
+        f"The best-MAE sensitivity row reaches `{trip_best.weighted_mae:.4f}`. The LLM is not used as a direct trip-count predictor; it provides pandemic-event semantics that modify a historical routine-mobility predictor.",
         "",
         "## Metric Language",
         "- Weighted MAE/RMSE are survey-weighted trip-count errors.",
@@ -842,6 +845,7 @@ def write_speaker_notes_zh(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
     path = FINAL_DIR / "presentation_speaker_notes_zh.md"
     trip_base = trip[trip["method"] == "historical_xgboost"].iloc[0]
     trip_best = trip[trip["method"] == "llm_trip_suppression_a1p25"].iloc[0]
+    trip_gated = trip[trip["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
     mode_base = mode[mode["method"] == "historical_xgboost"].iloc[0]
     mode_best = mode[mode["method"] == "llm_transit_avoidance_a1"].iloc[0]
     lines = [
@@ -853,7 +857,7 @@ def write_speaker_notes_zh(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
         "",
         "## 一分钟版本",
         "",
-        f"传统历史预测器会明显高估 2022 年家庭出行次数。加入 LLM trip-suppression event prior 后，weighted MAE 从 `{trip_base.weighted_mae:.4f}` 降到 `{trip_best.weighted_mae:.4f}`。这里 LLM 不是直接预测 trip count，而是提供疫情事件语义先验，再去修正历史 routine-mobility predictor。",
+        f"传统历史预测器会明显高估 2022 年家庭出行次数。主口径使用固定 no-label gated rule，weighted MAE 从 `{trip_base.weighted_mae:.4f}` 降到 `{trip_gated.weighted_mae:.4f}`，weighted bias 变成 `{trip_gated.weighted_bias:.4f}`，几乎消除了系统性高估。最低 MAE 的 sensitivity row 可以到 `{trip_best.weighted_mae:.4f}`，但不把它包装成严格无标签参数选择。这里 LLM 不是直接预测 trip count，而是提供疫情事件语义先验，再去修正历史 routine-mobility predictor。",
         "",
         "## 指标解释",
         "",

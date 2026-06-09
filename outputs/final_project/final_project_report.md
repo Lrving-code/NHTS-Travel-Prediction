@@ -17,11 +17,11 @@ This project predicts 2022 household daily trip counts under post-pandemic distr
 
 ## Improvement Over Historical Predictor
 
-- Best MAE row: `llm_trip_suppression_a1p25`.
-- Weighted MAE drops from `4.3377` to `2.4820` (42.78% reduction).
-- Weighted RMSE drops from `5.3169` to `3.6601` (31.16% reduction).
-- Absolute weighted bias drops by `85.01%`.
-- Gated row: `gated_trip_suppression_a1_d0p15` gives weighted bias `-0.0230` and weighted R2 `0.2480`.
+- Primary strict no-label row: `gated_trip_suppression_a1_d0p15`.
+- Primary weighted MAE drops from `4.3377` to `2.5023` (42.31% reduction).
+- Primary weighted RMSE drops from `5.3169` to `3.6038` (32.22% reduction).
+- Primary absolute weighted bias drops by `99.36%`.
+- Best-MAE sensitivity row: `llm_trip_suppression_a1p25` reaches weighted MAE `2.4820` (42.78% reduction).
 
 ## Household-Level Accuracy
 

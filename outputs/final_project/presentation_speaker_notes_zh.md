@@ -6,7 +6,7 @@
 
 ## 一分钟版本
 
-传统历史预测器会明显高估 2022 年家庭出行次数。加入 LLM trip-suppression event prior 后，weighted MAE 从 `4.3377` 降到 `2.4820`。这里 LLM 不是直接预测 trip count，而是提供疫情事件语义先验，再去修正历史 routine-mobility predictor。
+传统历史预测器会明显高估 2022 年家庭出行次数。主口径使用固定 no-label gated rule，weighted MAE 从 `4.3377` 降到 `2.5023`，weighted bias 变成 `-0.0230`，几乎消除了系统性高估。最低 MAE 的 sensitivity row 可以到 `2.4820`，但不把它包装成严格无标签参数选择。这里 LLM 不是直接预测 trip count，而是提供疫情事件语义先验，再去修正历史 routine-mobility predictor。
 
 ## 指标解释
 

@@ -203,6 +203,13 @@ Baseline:
 
 Label-free LLM adaptation:
 
+- Primary strict no-label rule: `gated_trip_suppression_a1_d0p15`
+- Primary weighted MAE: 2.5023
+- Primary weighted RMSE: 3.6038
+- Primary weighted bias: -0.0230
+- Primary weighted R2: 0.2480
+- Primary weighted MAE reduction vs historical baseline: 42.31%
+- Primary absolute weighted-bias reduction vs historical baseline: 99.36%
 - Current best sensitivity row: `llm_trip_suppression_a1p25`
 - Weighted MAE: 2.4820
 - Weighted RMSE: 3.6601
@@ -210,11 +217,6 @@ Label-free LLM adaptation:
 - Weighted R2: 0.2244
 - Weighted MAE reduction vs historical baseline: 42.78%
 - Absolute weighted-bias reduction vs historical baseline: 85.01%
-- Best bias/R2 tradeoff: `gated_trip_suppression_a1_d0p15`
-- Gated weighted MAE: 2.5023
-- Gated weighted RMSE: 3.6038
-- Gated weighted bias: -0.0230
-- Gated weighted R2: 0.2480
 
 Controls:
 
@@ -222,7 +224,7 @@ Controls:
 - `random_trip_suppression_a1p25`: weighted MAE 2.6466 +/- 0.0141
 - `llm_trip_suppression_a1p25` improves weighted MAE by 1.60% over global mean and 6.22% over random shuffle.
 - The broader recovery-adjusted composite is weaker than the simple `trip_suppression_risk` score and should not be overclaimed.
-- `gated_trip_suppression_a1_d0p15` provides the best bias/R2 tradeoff: weighted MAE 2.5023, weighted bias -0.0230, weighted R2 0.2480.
+- `gated_trip_suppression_a1_d0p15` is the primary strict no-label rule: weighted MAE 2.5023, weighted bias -0.0230, weighted R2 0.2480.
 - The gated correction is a no-label rule: it uses cohort-specific LLM scores only when they differ from the global mean by a fixed threshold.
 
 Subgroup diagnostics:
@@ -236,8 +238,8 @@ Interpretation:
 - The model is learning historical trip-generation behavior, but the 2022 target distribution is shifted downward.
 - The positive bias creates a clear measurable target for event-aware adaptation.
 - LLM priors are useful in the realistic no-2022-label setting, but most current gain comes from event-level downscaling; household-specific LLM ranking adds a smaller incremental benefit.
-- If the paper prioritizes pure MAE, `llm_trip_suppression_a1p25` is strongest; if it prioritizes unbiased adaptation and distributional fit, the gated no-label correction is more defensible.
+- The main paper/presentation should use the fixed gated rule as the strict no-label method. `llm_trip_suppression_a1p25` should be described as a best-MAE sensitivity result, not as a label-free parameter-selection outcome.
 
 ## Immediate Next Experiment
 
-Write the Results section around two complementary findings: (1) LLM trip-suppression priors give the best MAE reduction, and (2) no-label gated correction gives the best bias/R2 tradeoff.
+Write the Results section around two complementary findings: (1) the fixed no-label gated correction is the primary defensible method because it nearly removes bias while preserving the large MAE reduction, and (2) LLM trip-suppression priors give the best MAE in sensitivity analysis.

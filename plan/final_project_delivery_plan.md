@@ -26,8 +26,8 @@ Finish the project as a reproducible large-coursework deliverable with full expe
 
 ## Main Claims To Support
 - Label-free LLM event-prior correction reduces household-level 2022 prediction error under post-pandemic distribution shift.
-- Best MAE row: `llm_trip_suppression_a1p25`.
-- Best bias/R2 tradeoff row: `gated_trip_suppression_a1_d0p15`.
+- Primary strict no-label row: `gated_trip_suppression_a1_d0p15`.
+- Best-MAE sensitivity row: `llm_trip_suppression_a1p25`.
 - Cohort-level LLM generation cuts requests from 7,893 households to 1,327 cohorts, an 83.2% reduction.
 
 ## Status

@@ -31,8 +31,8 @@
 
 主任务结论：
 
-- 最低 MAE 是 `llm_trip_suppression_a1p25`：weighted MAE 从 `4.3377` 降到 `2.4820`，降低 `42.78%`。
-- 最好的 bias/R2 折中是 `gated_trip_suppression_a1_d0p15`：weighted bias `-0.0230`，weighted R2 `0.2480`。
+- 主口径使用固定 no-label gated rule：`gated_trip_suppression_a1_d0p15`，weighted MAE `2.5023`，weighted bias `-0.0230`，weighted R2 `0.2480`。
+- 最低 MAE 是 sensitivity row `llm_trip_suppression_a1p25`：weighted MAE 从 `4.3377` 降到 `2.4820`，降低 `42.78%`；它不作为严格 no-label 主方法的参数选择依据。
 - 家庭颗粒度上，gated correction exact hit `17.7%`，within 2 trips `54.5%`，within 3 trips `71.2%`。
 
 ## 出行方式结构结果

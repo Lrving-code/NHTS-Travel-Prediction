@@ -4,7 +4,7 @@
 We predict 2022 household mobility under post-pandemic distribution shift. The main result is a label-free LLM event-prior correction for household trip counts.
 
 ## One-Minute Version
-Historical prediction overestimates 2022 trips. LLM trip-suppression priors reduce weighted MAE from `4.3377` to `2.4820`. The LLM is not used as a direct trip-count predictor; it provides pandemic-event semantics that modify a historical routine-mobility predictor.
+Historical prediction overestimates 2022 trips. The primary fixed no-label gated rule reduces weighted MAE from `4.3377` to `2.5023` and moves weighted bias to `-0.0230`. The best-MAE sensitivity row reaches `2.4820`. The LLM is not used as a direct trip-count predictor; it provides pandemic-event semantics that modify a historical routine-mobility predictor.
 
 ## Metric Language
 - Weighted MAE/RMSE are survey-weighted trip-count errors.

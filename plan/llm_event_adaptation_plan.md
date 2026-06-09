@@ -145,7 +145,18 @@ Current implemented script:
 
 - `src/run_label_free_llm_adaptation.py`
 
-Current best zero-label sensitivity result:
+Primary strict no-label result:
+
+- `gated_trip_suppression_a1_d0p15`
+- Weighted MAE: `2.5023`
+- Weighted RMSE: `3.6038`
+- Weighted bias: `-0.0230`
+- Weighted R2: `0.2480`
+- Weighted MAE reduction vs historical baseline: `42.31%`
+- Absolute weighted-bias reduction vs historical baseline: `99.36%`
+- The gate uses only the distance between cohort-specific `trip_suppression_risk` and the global mean, so it does not require 2022 labels.
+
+Best MAE sensitivity result:
 
 - `llm_trip_suppression_a1p25`
 - Weighted MAE: `2.4820`
@@ -155,21 +166,12 @@ Current best zero-label sensitivity result:
 - Weighted MAE reduction vs historical baseline: `42.78%`
 - Absolute weighted-bias reduction vs historical baseline: `85.01%`
 
-Best bias/R2 tradeoff:
-
-- `gated_trip_suppression_a1_d0p15`
-- Weighted MAE: `2.5023`
-- Weighted RMSE: `3.6038`
-- Weighted bias: `-0.0230`
-- Weighted R2: `0.2480`
-- The gate uses only the distance between cohort-specific `trip_suppression_risk` and the global mean, so it does not require 2022 labels.
-
 Strict controls:
 
 - `global_trip_suppression_a1p25`: weighted MAE `2.5223`
 - `random_trip_suppression_a1p25`: weighted MAE `2.6466 +/- 0.0141`
 - `llm_trip_suppression_a1p25` improves weighted MAE by `1.60%` vs global mean and `6.22%` vs random shuffle.
-- `gated_trip_suppression_a1_d0p15` gives the strongest bias/R2 tradeoff: weighted MAE `2.5023`, weighted bias `-0.0230`, weighted R2 `0.2480`.
+- `gated_trip_suppression_a1_d0p15` is the primary strict no-label rule: weighted MAE `2.5023`, weighted bias `-0.0230`, weighted R2 `0.2480`.
 - The gated rule is label-free because it uses only the distance between cohort-specific `trip_suppression_risk` and the global weighted mean, with a fixed threshold.
 
 Interpretation:
