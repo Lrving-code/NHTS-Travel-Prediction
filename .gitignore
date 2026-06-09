@@ -30,6 +30,8 @@ refs/
 outputs/models/
 outputs/figures/
 outputs/cache/
+outputs/share_package/
+outputs/mode_composition_extension/household_mode_composition.csv
 outputs/**/*.jsonl
 outputs/llm_event_features/household_cohort_prompts.jsonl
 outputs/llm_event_features/household_cohort_profiles.csv
