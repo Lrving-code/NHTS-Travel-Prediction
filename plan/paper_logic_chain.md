@@ -198,6 +198,21 @@ Figure 1 should show:
 4. Event-driven mobility modeling under societal shocks
 5. Hybrid structured-data and LLM systems
 
+## 2025-2026 Literature Anchor
+
+The current literature positioning is stored in `plan/literature_grounding_2026.md`.
+
+Key anchors:
+
+- ELLMob, ICLR 2026: event-driven mobility generation with habitual patterns and event constraints.
+- CausalMob, KDD 2025: LLM-derived public-event intentions as causal treatment features for mobility prediction.
+- AgentMove, NAACL 2025: zero-shot next-location prediction with LLM agents.
+- UniMob, KDD 2025: universal mobility prediction across individual trajectory and crowd flow.
+- ELP-Mob, SIGSPATIAL/GIS 2025: efficient LLM pipeline for human mobility prediction.
+- Spatiotemporal foundation model surveys and ST-LLM-style work: the field is moving toward generalization, reasoning, and efficient adaptation.
+
+Our gap: these works largely target trajectories, flows, traffic sensors, or public-event time series; this project targets NHTS household survey prediction under a post-pandemic event shift, with no 2022 trip-count label calibration.
+
 ## Current Evidence Snapshot
 
 Data:

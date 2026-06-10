@@ -76,6 +76,11 @@
 - 实现 LLM rule + small historical calibration 中间 baseline，回应“先由 LLM 提取规则、再用少量历史数据校准”的合作方案。
 - 通过 irrelevant pseudo-event placebo 检验机制相关性：任意 distribution-matched cohort score 不能替代 post-pandemic event prior。
 
+最新文献定位：
+
+- `plan/literature_grounding_2026.md` 汇总了截至 2026-06-10 核查的相关方向，包括 ELLMob（ICLR 2026）、CausalMob（KDD 2025）、AgentMove（NAACL 2025）、UniMob（KDD 2025）、ELP-Mob（SIGSPATIAL/GIS 2025）和 spatiotemporal foundation model survey。
+- 我们的定位不是 generic mobility foundation model，而是 **survey-based household mobility 的 event-driven label-free adaptation**：用 NHTS 历史标签锚定 routine mobility，用 LLM event priors 表达疫情冲击机制。
+
 ## 整体任务设计
 
 本项目按家庭颗粒度组织成一个两阶段预测框架：

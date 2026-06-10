@@ -539,20 +539,20 @@ def add_problem_slide(prs: Presentation, logo: bytes | None, values: dict[str, f
 def add_related_work_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "02", "相关研究与缺口 / Related Work and Gap", "从交通预测到 LLM 事件泛化", 4, logo)
-    headers = ["研究方向", "已有做法", "本项目的切入点"]
+    add_frame(slide, "02", "相关研究与缺口 / Related Work and Gap", "2025-2026: LLM mobility, causal events, and foundation models", 4, logo)
+    headers = ["最新方向", "2025-2026 代表线索", "本项目的位置"]
     rows = [
-        ["Travel demand modeling", "用 household covariates 预测出行强度/方式", "2022 是疫情后 shift，不是普通外推"],
-        ["ML for NHTS", "XGBoost 等模型捕捉非线性家庭差异", "传统监督模型缺少事件机制变量"],
-        ["LLM mobility forecasting", "利用文本事件、语义和少样本泛化", "LLM 不直接预测 y，只生成 event priors"],
-        ["Sustainable mobility", "关注 transit、active mobility 与不平等", "输出扩展到 mode / purpose / derived trips"],
+        ["Event-driven mobility", "ELLMob ICLR'26; CausalMob KDD'25", "把 COVID shock 转成 label-free event priors"],
+        ["Zero-shot LLM mobility", "AgentMove NAACL'25; ELP-Mob GIS'25", "直接 LLM 可做 baseline，但数值校准弱"],
+        ["Mobility foundation models", "UniMob KDD'25; STFM survey'25", "不训练大 FM；用轻量 adapter 处理 survey shift"],
+        ["Planning evaluation", "causal guardrails + multi-objective metrics", "同时报告 accuracy、bias、equity、mode/purpose"],
     ]
     small_table(slide, headers, rows, 0.65, 1.22, [2.55, 4.2, 4.7], 0.72, 12, COLORS["navy2"])
     rect(slide, 0.9, 5.25, 10.8, 0.85, COLORS["pale"], COLORS["line"], True)
     text_box(slide, "研究缺口", 1.12, 5.52, 1.1, 0.22, 10, COLORS["orange"], True)
     text_box(
         slide,
-        "缺的不是更复杂的黑箱，而是一个能把“日常出行规律”和“疫情事件机制”组合起来、且不依赖 2022 标签校准的可解释框架。",
+        "缺口：已有工作多关注 trajectory / flow / sensor forecasting；NHTS household survey 的 post-pandemic label-free event adaptation 仍需要一个可解释、可审计框架。",
         2.25,
         5.37,
         8.95,

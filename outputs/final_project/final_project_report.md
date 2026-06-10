@@ -10,6 +10,12 @@ This project formulates 2022 NHTS household travel prediction as event-driven te
 - RQ2: Can event priors reduce this bias without using 2022 `CNTTDHH` labels for training or calibration?
 - RQ3: Does the LLM replace historical prediction, or is the stronger design a hybrid of routine mobility and event semantics?
 
+## Literature Position
+
+The 2025-2026 literature grounding is summarized in `plan/literature_grounding_2026.md`. The closest directions are event-driven LLM mobility generation (ELLMob, ICLR 2026), LLM-derived causal public-event features for mobility prediction (CausalMob, KDD 2025), zero-shot LLM mobility agents (AgentMove, NAACL 2025), efficient LLM mobility pipelines (ELP-Mob, SIGSPATIAL/GIS 2025), and universal mobility foundation models (UniMob, KDD 2025).
+
+Our gap is survey-based household mobility under a post-pandemic event shift: most recent work targets trajectories, flows, traffic sensors, or public-event time series, while this project uses historical NHTS labels to ground routine household demand and uses LLM priors only for no-label event adaptation.
+
 ## Main Result
 
 | Method | Weighted MAE | Weighted RMSE | Weighted Bias | Weighted R2 |
