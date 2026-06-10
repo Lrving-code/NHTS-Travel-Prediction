@@ -8,6 +8,20 @@ The main method is not pure LLM prediction. It is a hybrid gated adapter: histor
 ## One-Minute Version
 Historical prediction overestimates 2022 trips. The primary fixed no-label gated rule reduces weighted MAE from `4.3377` to `2.5023` and moves weighted bias to `-0.0230`. The LLM-only pressure baseline reaches `2.7175`. The LLM is not used as a direct trip-count predictor; it provides pandemic-event semantics that modify a historical routine-mobility predictor.
 
+## 10-Minute Talk Path
+
+The first 23 slides are the main talk path. Slides B1-B6 after END are backup Q&A slides and should only be used during discussion.
+
+Suggested timing:
+
+- Background and research question: 1.5 minutes.
+- Data, technical route, and LLM event priors: 2 minutes.
+- Method comparison and main results: 2.5 minutes.
+- Robustness, heterogeneity, multi-objective analysis, and mode/purpose extension: 2 minutes.
+- Conclusion and limitations: 2 minutes.
+
+If time is tight, keep the problem, route, method comparison, main results, robustness framing, and conclusion; skim the error-distribution, subgroup, and mode/purpose details.
+
 ## Method Comparison Logic
 
 - Ordinary historical prediction has household grounding but lacks event semantics: wMAE `4.3377`, wBias `3.6052`.
@@ -36,3 +50,12 @@ Mode-specific trip volume is the derived planning output: predicted total trips 
 - Why not let the LLM build a zero-shot 2022 decision tree? We now include that ablation. The zero-shot rule tree reaches wMAE `2.6019`, still weaker and more biased than the primary hybrid rule. Without labels, the output is closer to an LLM belief tree than a data-fitted decision tree.
 - Did 2022 labels enter training? Not in the main label-free setting; 2022 targets are used for evaluation.
 - What should we not claim? Do not claim causal effects or direct LLM trip-count prediction; claim causal guardrails and event-prior adaptation.
+
+## Backup Slide Map
+
+- B1: why not direct LLM rule-tree prediction.
+- B2: no 2022-label training and leakage guardrails.
+- B3: what the LLM adds beyond a global event prior.
+- B4: relation to 2025-2026 LLM mobility and foundation-model work.
+- B5: limits of mode and purpose outputs.
+- B6: plain-language interpretation of weighted MAE, bias, and within-k accuracy.

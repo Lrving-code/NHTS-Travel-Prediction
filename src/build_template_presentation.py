@@ -225,6 +225,19 @@ def add_frame(
     text_box(slide, f"{page:02d} / {TOTAL_SLIDES}", 11.65, 7.08, 1.0, 0.18, 7.5, sub_color, True, PP_ALIGN.RIGHT)
 
 
+def add_backup_frame(slide: Slide, title: str, subtitle: str, label: str, logo: bytes | None) -> None:
+    text_box(slide, "Mobility Inequality and Sustainable Development", 0.42, 0.12, 4.9, 0.18, 7.5, COLORS["gray"], True)
+    text_box(slide, "BACKUP", 0.42, 0.38, 0.85, 0.32, 13, COLORS["orange"], True)
+    text_box(slide, title, 1.35, 0.27, 9.2, 0.36, 17.0, COLORS["ink"], True)
+    if subtitle:
+        text_box(slide, subtitle, 1.37, 0.64, 9.7, 0.25, 8.5, COLORS["gray"])
+    add_logo(slide, logo, 12.05, 0.22, 0.78)
+    rect(slide, 0.42, 0.96, 12.25, 0.012, COLORS["line"])
+    rect(slide, 0.42, 7.03, 12.25, 0.012, COLORS["line"])
+    text_box(slide, "Appendix: reviewer and instructor Q&A", 0.42, 7.08, 5.7, 0.18, 7.5, COLORS["gray"])
+    text_box(slide, label, 11.1, 7.08, 1.55, 0.18, 7.5, COLORS["gray"], True, PP_ALIGN.RIGHT)
+
+
 def metric_card(
     slide: Slide,
     x: float,
@@ -1181,6 +1194,119 @@ def add_final_slide(prs: Presentation, logo: bytes | None, values: dict[str, flo
     text_box(slide, "用 NHTS 历史数据学习正常出行规律，用 LLM 事件先验泛化疫情冲击，并输出家庭层面的出行强度、方式结构和目的结构。", 2.35, 6.0, 8.9, 0.38, 12, COLORS["white"], True)
 
 
+def add_backup_qa_slide(
+    prs: Presentation,
+    logo: bytes | None,
+    label: str,
+    title: str,
+    question: str,
+    short_answer: str,
+    evidence_rows: list[list[str]],
+    response: str,
+) -> None:
+    slide = blank_slide(prs)
+    set_background(slide)
+    add_backup_frame(slide, title, question, label, logo)
+    rect(slide, 0.72, 1.22, 11.25, 0.82, COLORS["pale"], COLORS["line"], True)
+    text_box(slide, "Short answer", 0.95, 1.42, 1.6, 0.2, 10, COLORS["orange"], True)
+    text_box(slide, short_answer, 2.45, 1.33, 9.15, 0.36, 13, COLORS["ink"], True)
+    small_table(slide, ["Evidence", "Value / implication"], evidence_rows, 0.78, 2.38, [4.4, 6.6], 0.46, 12, COLORS["teal"])
+    story_box(slide, response, "", 0.82, 5.55, 10.95, 1.1, COLORS["blue"])
+
+
+def add_backup_qa_slides(prs: Presentation, logo: bytes | None, values: dict[str, float]) -> None:
+    add_backup_qa_slide(
+        prs,
+        logo,
+        "B1",
+        "为什么不直接让 LLM 构建 2022 决策树？",
+        "Why not ask the LLM to build the 2022 decision tree directly?",
+        "已经实现为 baseline；方向有用，但数值校准弱于 hybrid adapter。",
+        [
+            ["Zero-shot LLM rule tree", f"wMAE {values['zero_rule']:.4f}; wBias {values['zero_rule_bias']:+.4f}"],
+            ["Pseudo-label tree", "wMAE 2.6040; still follows LLM belief labels"],
+            ["Primary hybrid gated", f"wMAE {values['gated']:.4f}; wBias {values['gated_bias']:+.4f}"],
+            ["Key issue", "No target labels for split thresholds and leaf values"],
+        ],
+        "答法：LLM 可以生成 qualitative belief tree，但没有 2022 标签时无法学习真实 NHTS 的 split threshold 和 leaf value。我们的设计把数值预测锚定在历史 NHTS household baseline 上，只让 LLM 提供事件机制先验。",
+    )
+    add_backup_qa_slide(
+        prs,
+        logo,
+        "B2",
+        "有没有使用 2022 标签或 retrospective leakage？",
+        "Did the pipeline use 2022 labels or retrospective leakage?",
+        "主方法不使用 2022 CNTTDHH 训练或校准；2022 只做最终 evaluation。",
+        [
+            ["Main method", "gated_trip_suppression_a1_d0p15 fixed before evaluation"],
+            ["LLM inputs", "Exclude HOUSEID, CNTTDHH, WTHHFIN"],
+            ["Leakage audit", "LLM-facing files pass forbidden-column scan"],
+            ["Prospective context", "prospective_event_context_2022 documents event assumptions"],
+        ],
+        "答法：LLM 输入是 cohort-level household profile 和泛化疫情事件语境，不含目标值、权重和 household ID。我们用 leakage audit、zero-shot baseline、placebo 和 fixed adapter 共同约束 no-label claim。",
+    )
+    add_backup_qa_slide(
+        prs,
+        logo,
+        "B3",
+        "Global event prior 已经很强，LLM 还贡献什么？",
+        "If the global prior is strong, what does the LLM add?",
+        "主贡献应表述为 event-level correction；cohort ranking 是增量 refinement。",
+        [
+            ["Global event prior", "wMAE 2.5223; wBias -0.7477"],
+            ["Primary gated adapter", f"wMAE {values['gated']:.4f}; wBias {values['gated_bias']:+.4f}"],
+            ["Pseudo-event ranked", "best placebo wMAE 2.6274"],
+            ["Pseudo-event gated", "best gated placebo wMAE 2.5610"],
+        ],
+        "答法：不能夸大成 LLM cohort ranking 独自贡献全部提升。更准确的说法是：LLM event semantics 给出 label-free event correction，gated cohort refinement 改善 calibration 和 robustness。",
+    )
+    add_backup_qa_slide(
+        prs,
+        logo,
+        "B4",
+        "和 2025-2026 mobility foundation model 有什么区别？",
+        "How is this different from recent mobility foundation-model work?",
+        "最新工作多是 trajectory / flow / sensor forecasting；我们是 NHTS household survey 的 event adaptation。",
+        [
+            ["Event-driven LLM mobility", "ELLMob ICLR'26; CausalMob KDD'25"],
+            ["Zero-shot / efficient LLM mobility", "AgentMove NAACL'25; ELP-Mob GIS'25"],
+            ["Foundation model direction", "UniMob KDD'25; STFM survey'25"],
+            ["Our unit", "Household survey record, not trajectory or road node"],
+        ],
+        "答法：我们借用了 event-generalization 思路，但不声称训练 universal mobility foundation model。LLM 是 structured event-prior generator，数值需求预测仍由 NHTS 历史标签锚定。",
+    )
+    add_backup_qa_slide(
+        prs,
+        logo,
+        "B5",
+        "Mode / purpose 是否已经解决？",
+        "Are mode and purpose choice solved?",
+        "没有。trip generation 是主贡献；mode/purpose 是 behavior-system extension。",
+        [
+            ["Transit-share MAE", "0.0325 -> 0.0269"],
+            ["Mode-trip volume MAE", "4.8467 -> 3.2802"],
+            ["Purpose composition", "Exploratory; LLM prior not overall best"],
+            ["Safe claim", "Planning relevance, not solved full mode-choice model"],
+        ],
+        "答法：综合目标是预测 household behavior system，但最强结果仍是 post-pandemic trip generation。方式和目的模块说明可扩展到规划相关输出，也明确了未来工作边界。",
+    )
+    add_backup_qa_slide(
+        prs,
+        logo,
+        "B6",
+        "这些指标怎么用一句话解释？",
+        "How should the metrics be interpreted?",
+        "wMAE 是加权平均误差，wBias 是系统性高估/低估，越接近 0 越好。",
+        [
+            ["Historical XGBoost", f"wMAE {values['baseline']:.4f}; wBias {values['baseline_bias']:+.4f}"],
+            ["Primary gated", f"wMAE {values['gated']:.4f}; wBias {values['gated_bias']:+.4f}"],
+            ["Within 2 trips", f"{values['within2']:.1%} households"],
+            ["Within 3 trips", f"{values['within3']:.1%} households"],
+        ],
+        "答法：MAE 看单个家庭预测误差，bias 看总需求是否系统性偏高或偏低。我们的核心收益不是只降低误差，而是几乎消除了 2022 的系统性高估。",
+    )
+
+
 def create_deck() -> Path:
     logo = extract_template_logo()
     template = TEMPLATE_PATH if TEMPLATE_PATH.exists() else None
@@ -1283,6 +1409,7 @@ def create_deck() -> Path:
     add_scalability_slide(prs, logo)
     add_contribution_slide(prs, logo)
     add_final_slide(prs, logo, values)
+    add_backup_qa_slides(prs, logo, values)
 
     return save_presentation(prs, OUTPUT_PATH)
 

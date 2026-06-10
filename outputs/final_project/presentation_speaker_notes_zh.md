@@ -18,6 +18,20 @@ LLM 输出的是结构化事件先验，不直接输出 `CNTTDHH`。
 
 传统历史预测器会明显高估 2022 年家庭出行次数。主口径使用固定 no-label gated rule，weighted MAE 从 `4.3377` 降到 `2.5023`，weighted bias 变成 `-0.0230`，几乎消除了系统性高估。LLM-only pressure baseline 的 weighted MAE 是 `2.7175`。这说明 LLM 不是直接预测 trip count，而是提供疫情事件语义先验，再去修正历史 routine-mobility predictor。
 
+## 10 分钟主讲路径
+
+正式模板 PPT 的前 23 页是主讲路径。END 之后的 B1-B6 是 backup Q&A，不主动讲，只有在讨论环节老师追问时跳转。
+
+建议时间分配：
+
+- 背景与研究问题：1.5 分钟。
+- 数据、技术路线和 LLM 事件先验：2 分钟。
+- 方法比较和主结果：2.5 分钟。
+- 稳健性、异质性、多目标和 mode/purpose 扩展：2 分钟。
+- 总结与边界：2 分钟。
+
+如果时间不够，优先保留：研究问题、技术路线、方法比较、主结果、稳健性边界和总结；error distribution、subgroup、mode/purpose 可以快速带过。
+
 ## 各方法怎么比较
 
 - 传统 XGBoost / CatBoost：优势是有 household grounding，问题是不知道 2022 疫情机制变化。普通 historical predictor 的 wMAE 是 `4.3377`，wBias 是 `3.6052`，明显高估。
@@ -58,3 +72,12 @@ LLM 输出的是结构化事件先验，不直接输出 `CNTTDHH`。
 - 为什么不直接让 LLM 零样本构建 2022 决策树？我们已经把它作为 ablation 跑过，zero-shot rule tree wMAE `2.6019`，仍弱于主方法。原因是没有标签时 split threshold 和 leaf value 缺少数据校准，更像 LLM belief tree。
 - 有没有用 2022 标签训练？主实验没有。2022 `CNTTDHH` 只在最终 evaluation 中使用。
 - 结果够不够做大作业？够，因为我们有完整数据链路、强 baseline、LLM event prior、无标签修正、稳健性检验、mode 扩展和 10 分钟汇报材料。
+
+## Backup 页怎么用
+
+- B1：老师问“为什么不直接用 LLM 构树”。
+- B2：老师问“有没有用 2022 标签或泄漏”。
+- B3：老师问“global rule 已经很强，LLM 到底贡献什么”。
+- B4：老师问“这和最新 LLM mobility/foundation model 工作是什么关系”。
+- B5：老师问“mode/purpose 是不是已经做完了”。
+- B6：老师问“Weighted MAE、bias、within-k accuracy 怎么解释”。
