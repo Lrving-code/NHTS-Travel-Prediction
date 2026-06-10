@@ -25,7 +25,7 @@ No FAIL-level blockers were detected from the checked artifacts.
 
 | Category | Item | Evidence | Recommendation |
 |---|---|---|---|
-| Reproducibility and GPU | Local open-source LLM prior replication | No local LLM replication audit artifact was found. | Run src/run_local_llm_prior_replication.py --audit-only before paper submission. |
+| Reproducibility and GPU | Local open-source LLM prior replication | Protocol and environment audit exist, but status is BLOCKED_TORCH_CPU. | Install CUDA-enabled PyTorch or run the local model in a GPU-ready environment, then regenerate local priors. |
 
 ## Full Evidence Matrix
 
@@ -76,7 +76,7 @@ No FAIL-level blockers were detected from the checked artifacts.
 | Reproducibility and GPU | Stronger baseline script | PASS | 1.0 | Strong baseline script and metrics exist. |
 | Reproducibility and GPU | GPU execution evidence | PASS | 1.0 | label_free_llm_adaptation_metrics.csv records device=cuda. |
 | Reproducibility and GPU | Environment manifest | PASS | 1.0 | Environment manifest and freeze file exist under outputs/submission_readiness. |
-| Reproducibility and GPU | Local open-source LLM prior replication | PARTIAL | 0.5 | No local LLM replication audit artifact was found. |
+| Reproducibility and GPU | Local open-source LLM prior replication | PARTIAL | 0.5 | Protocol and environment audit exist, but status is BLOCKED_TORCH_CPU. |
 
 ## Interpretation
 
