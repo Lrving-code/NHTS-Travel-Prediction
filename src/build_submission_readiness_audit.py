@@ -345,6 +345,34 @@ def audit_literature_and_story() -> list[Check]:
                 "Create outputs/paper_draft/nhts_event_adaptation_paper_draft.md and claim_evidence_matrix.md.",
             )
         )
+    latex_ready = (
+        exists("outputs/paper_draft/latex/main.tex")
+        and exists("outputs/paper_draft/latex/references.bib")
+        and exists("outputs/paper_draft/latex/citation_verification_log.md")
+        and contains_text(
+            "outputs/paper_draft/latex/main.tex",
+            ["Label-Free Event-Aware LLM Adaptation", "2.5023", "Discussion", "Limitations"],
+        )
+        and contains_text(
+            "outputs/paper_draft/latex/references.bib",
+            ["wang2026ellmob", "yang2025causalmob", "feng2025agentmove", "long2025unimob"],
+        )
+        and contains_text(
+            "outputs/paper_draft/latex/citation_verification_log.md",
+            ["DOI BibTeX fetched", "arXiv BibTeX fetched", "Official data source checked"],
+        )
+    )
+    if latex_ready:
+        checks.append(pass_check(category, "LaTeX manuscript and verified references", "LaTeX skeleton, BibTeX, and citation verification log exist."))
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "LaTeX manuscript and verified references",
+                "Missing LaTeX manuscript package or citation verification evidence.",
+                "Create outputs/paper_draft/latex/main.tex, references.bib, and citation_verification_log.md.",
+            )
+        )
     return checks
 
 
@@ -509,7 +537,7 @@ def write_outputs(checks: list[Check]) -> tuple[Path, Path]:
             "## Interpretation",
             "",
             "- Course-project readiness is strong: the core result, baselines, guardrails, deck, Q&A material, and paper draft package are present.",
-            "- No artifact-level FAIL or PARTIAL items remain in this audit; remaining work is LaTeX formatting, advisor feedback, and optional additional replications.",
+            "- No artifact-level FAIL or PARTIAL items remain in this audit; remaining work is advisor feedback, optional additional replications, and a full LaTeX/BibTeX compile in a normal non-elevated TeX environment.",
             "- The defensible paper claim should remain scoped to label-free event adaptation for survey-based household mobility under a post-pandemic shift.",
         ]
     )

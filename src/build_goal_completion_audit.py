@@ -88,6 +88,9 @@ def build_requirements() -> list[RequirementEvidence]:
     logic = read_text("plan/paper_logic_chain.md")
     paper_draft = read_text("outputs/paper_draft/nhts_event_adaptation_paper_draft.md")
     claim_matrix = read_text("outputs/paper_draft/claim_evidence_matrix.md")
+    latex_main = read_text("outputs/paper_draft/latex/main.tex")
+    latex_bib = read_text("outputs/paper_draft/latex/references.bib")
+    citation_log = read_text("outputs/paper_draft/latex/citation_verification_log.md")
 
     return [
         pass_if(
@@ -114,6 +117,14 @@ def build_requirements() -> list[RequirementEvidence]:
             "Paper draft and claim-evidence ledger exist",
             "Draft manuscript and claim matrix constrain paper-level wording.",
             "outputs/paper_draft/nhts_event_adaptation_paper_draft.md",
+        ),
+        pass_if(
+            all(term in latex_main for term in ["\\begin{abstract}", "\\section{Method}", "\\section{Results}", "\\bibliography{references}"])
+            and all(term in latex_bib for term in ["wang2026ellmob", "yang2025causalmob", "feng2025agentmove", "long2025unimob"])
+            and all(term in citation_log for term in ["DOI BibTeX fetched", "arXiv BibTeX fetched", "Official data source checked"]),
+            "LaTeX manuscript and citation verification package exist",
+            "LaTeX skeleton, BibTeX, and citation verification log are present.",
+            "outputs/paper_draft/latex/main.tex",
         ),
         pass_if(
             "historical wMAE 4.3377 -> primary wMAE 2.5023" in read_text(
@@ -250,7 +261,7 @@ def write_report(rows: list[RequirementEvidence]) -> Path:
             "",
             "## Remaining Work",
             "",
-            "No artifact-level blocker remains in the current audit. Future work is optional extension rather than required closure: LaTeX formatting, advisor feedback, and additional external regional replications.",
+            "No artifact-level blocker remains in the current audit. Future work is optional extension rather than required closure: full LaTeX/BibTeX compile in a normal non-elevated TeX environment, advisor feedback, and additional external regional replications.",
         ]
     )
     report_path.write_text("\n".join(lines), encoding="utf-8")

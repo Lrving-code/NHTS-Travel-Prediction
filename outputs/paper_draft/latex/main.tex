@@ -1,0 +1,252 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{natbib}
+\usepackage{xcolor}
+
+\emergencystretch=3em
+
+\title{Label-Free Event-Aware LLM Adaptation for Post-Pandemic Household Travel Demand Prediction}
+\author{Anonymous Authors}
+\date{}
+
+\newcommand{\nhts}{\textsc{NHTS}}
+\newcommand{\method}{\textsc{EventAdapter}}
+\newcommand{\whmae}{weighted MAE}
+\newcommand{\whbias}{weighted bias}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Household travel surveys provide calibrated evidence for transportation planning, but temporal transfer can fail when rare societal shocks change the behavioral meaning of otherwise stable household covariates.
+We study this problem with the U.S. National Household Travel Survey (\nhts), training routine-mobility predictors on pre-2022 waves and evaluating on the 2022 post-pandemic recovery wave.
+A historical XGBoost model substantially overpredicts 2022 household trip generation, with \whmae{} 4.3377 and \whbias{} +3.6052.
+We propose a label-free event-aware adaptation framework in which a large language model (LLM) does not directly predict household trips.
+Instead, it generates cohort-level event priors for mechanisms such as trip suppression, remote-work substitution, transit avoidance, delivery substitution, and recovery sensitivity.
+These priors are distilled into a fixed no-label event adapter that corrects the historical routine predictor without using 2022 trip-count labels for training or calibration.
+The primary gated adapter reduces \whmae{} to 2.5023, reduces weighted RMSE by 32.22\%, and nearly removes systematic overprediction with \whbias{} -0.0230.
+We evaluate the method against historical, trend, global-event, random-prior, LLM-only, zero-shot rule-tree, small-history rule-calibration, and stronger non-LLM baselines.
+The results suggest that LLMs are most useful in this survey setting as constrained event-prior generators rather than standalone numerical predictors.
+\end{abstract}
+
+\section{Introduction}
+
+Household travel demand prediction is usually grounded in historical survey data.
+Models trained on prior survey waves can learn routine relationships between household attributes and travel behavior: household size, vehicle ownership, worker count, income, urban form, day of week, and regional context all influence how much a household travels on a diary day.
+This assumption becomes fragile when the target year is affected by a rare societal event.
+The 2022 \nhts{} wave is a post-pandemic recovery wave, after remote work, public-transit avoidance, online shopping, and uneven activity recovery changed daily travel patterns \citep{fhwa2022nhts,fhwa2024nhtstrends}.
+
+This paper asks whether an LLM can help adapt a historical household travel model to a post-pandemic target year without using target-year trip-count labels for training or calibration.
+The key design choice is to separate routine mobility from event response.
+A supervised tabular model estimates household-level routine demand from historical \nhts{} waves, while the LLM supplies structured event priors for how the post-pandemic context may suppress or reshape travel.
+The LLM is therefore not a direct trip-count regressor.
+It is a constrained event-generalization module whose outputs are validated and distilled into an auditable correction rule.
+
+Recent 2025--2026 mobility work motivates this role separation.
+ELLMob frames event-driven mobility as a conflict between habitual patterns and event constraints \citep{wang2026ellmob}.
+CausalMob transforms public-event text into LLM-derived intention features for mobility prediction with a causal framing \citep{yang2025causalmob}.
+AgentMove studies zero-shot mobility prediction with an LLM agentic framework \citep{feng2025agentmove}, while AgentMob points to a fast-path plus selective-reasoning pattern for efficient evidence-grounded mobility prediction \citep{chen2026agentmob}.
+ELP-Mob and UniMob reflect related trends in efficient LLM mobility pipelines and universal mobility modeling \citep{wang2025elpmob,long2025unimob}.
+Broader surveys show that transportation and spatio-temporal modeling are moving toward language-model and foundation-model paradigms \citep{yan2025transportllm,liang2025stfmsurvey}.
+Recent supervised daily-travel work also combines recurrent neural networks and LLMs for travel behavior prediction, but it does not target the no-target-year-label adaptation setting studied here \citep{sharifi2026dailytravel}.
+Our target differs from these settings: the prediction unit is a household survey record, not a GPS trajectory, road sensor, or flow node, and the target-year labels should be unavailable in the intended prospective setting.
+
+\paragraph{Contributions.}
+We make four contributions.
+First, we formulate 2022 \nhts{} household trip generation as event-driven temporal adaptation rather than ordinary cross-year forecasting.
+Second, we introduce a label-free LLM event-prior adapter that corrects a historical household predictor without using 2022 \texttt{CNTTDHH} labels for calibration.
+Third, we evaluate against a broad method spectrum, including historical mean, ordinary XGBoost, trend shift, CatBoost GPU, LLM-only pressure, global event prior, random prior, zero-shot LLM rule tree, pseudo-label tree, and LLM rule plus historical calibration.
+Fourth, we add leakage audits, placebo controls, bootstrap confidence intervals, equity-aware subgroup analysis, mode/purpose extensions, and external mechanism checks with ACS and PSRC data \citep{burrows2024commuting,psrc2024regionaltravelstudy}.
+
+\section{Problem Definition}
+
+Let $X$ denote harmonized household features and $y$ denote household diary-day trip count \texttt{CNTTDHH}.
+Historical \nhts{} waves are available for training, and the target wave is 2022.
+The strict setting forbids using 2022 \texttt{CNTTDHH} labels for training, calibration, or parameter selection.
+The labels are used only for final evaluation.
+
+The main task is:
+\begin{quote}
+Given historical labeled \nhts{} waves and unlabeled 2022 household profiles, predict 2022 household travel behavior under post-pandemic event shift.
+\end{quote}
+
+The primary target is household trip generation.
+Additional behavior outputs include household mode-share vector, household purpose-share vector, and derived mode-specific trip volume:
+\begin{equation}
+\widehat{y}_{m} = \widehat{y}_{\mathrm{trips}} \cdot \widehat{s}_{m},
+\end{equation}
+where $\widehat{s}_{m}$ is the predicted household share for mode $m$.
+
+\section{Method}
+
+\subsection{Historical Routine Predictor}
+
+We train a historical routine-mobility model $f_{\mathrm{hist}}(X)$ on pre-2022 \nhts{} household records.
+The final ordinary supervised baseline is a CUDA XGBoost model trained on 2001, 2009, and 2017 and evaluated on 2022.
+This branch captures household heterogeneity but lacks post-pandemic event semantics.
+
+\subsection{LLM Event-Prior Generation}
+
+The LLM receives cohort-level household profiles rather than individual household targets.
+Cohorts summarize safe household attributes and exclude \texttt{HOUSEID}, \texttt{CNTTDHH}, survey weights, and target-derived aggregate statistics.
+The output schema contains numeric event priors:
+\begin{itemize}
+    \item trip suppression,
+    \item remote-work substitution,
+    \item transit avoidance,
+    \item delivery substitution,
+    \item post-pandemic recovery sensitivity,
+    \item confidence.
+\end{itemize}
+The 2022 households are compressed from 7,893 rows to 1,327 cohorts.
+Batch prompting with batch size 15 reduces event-prior generation to 89 prompts.
+After schema and range validation, inference uses a deterministic adapter rather than per-household online LLM calls.
+
+\subsection{Fixed No-Label Adapter}
+
+The primary prediction is
+\begin{equation}
+\widehat{y}_{2022}
+= f_{\mathrm{hist}}(X)
+\cdot
+\mathrm{clip}\left(1 - \alpha s_{\mathrm{event}}, \lambda_{\min}, 1\right),
+\label{eq:adapter}
+\end{equation}
+where $s_{\mathrm{event}}$ is the distilled event pressure.
+The reported primary rule is the gated trip-suppression adapter.
+Low-confidence or weakly differentiated cohort priors fall back to a global event pressure.
+This keeps the main experiment fixed and label-free.
+
+\subsection{What the Method Is Not}
+
+The method is not pure LLM regression, not an LLM-generated 2022 decision tree, and not a generic mobility foundation model.
+It is a hybrid structured-data system: historical labels provide the numerical household baseline, and LLM event priors provide semantic adaptation under post-pandemic shift.
+
+\section{Experimental Setup}
+
+\paragraph{Data.}
+The main dataset is public-use \nhts{} household data for 2001, 2009, 2017, and 2022, with 357,553 harmonized household records and 28 common household variables.
+The target 2022 evaluation set contains 7,893 households.
+External mechanism checks use ACS commuting statistics and PSRC household travel survey data \citep{burrows2024commuting,psrc2024regionaltravelstudy}.
+
+\paragraph{Metrics.}
+For trip generation, we report weighted MAE, weighted RMSE, weighted bias, weighted $R^2$, and household-level tolerance accuracy.
+Weighted bias is central because historical transfer overpredicts total demand.
+For mode and purpose composition, we report weighted total variation and component MAE.
+
+\paragraph{Baselines and ablations.}
+The comparison includes historical mean, ordinary historical XGBoost, historical trend shift, stronger tabular baselines, LLM-only pressure, global event prior, random pressure control, zero-shot LLM rule tree, pseudo-label tree, LLM rule plus historical calibration, and the primary gated LLM event adapter.
+
+\section{Results}
+
+\subsection{Main Trip-Generation Result}
+
+\begin{table}[t]
+\centering
+\caption{Household trip-generation results on the 2022 \nhts{} target wave. Lower \whmae{}, RMSE, and absolute bias are better.}
+\label{tab:main_results}
+\begin{tabular}{lrrrr}
+\toprule
+Method & \whmae{} & weighted RMSE & \whbias{} & weighted $R^2$ \\
+\midrule
+Historical mean & 5.5116 & 6.1251 & +4.4995 & -1.1722 \\
+Ordinary XGBoost & 4.3377 & 5.3169 & +3.6052 & -0.6367 \\
+Historical trend shift & 4.1504 & 5.1463 & +3.3485 & -0.5334 \\
+LLM-only pressure & 2.7175 & 3.9876 & -0.3732 & 0.0794 \\
+Global event prior & 2.5223 & 3.7432 & -0.7477 & 0.1888 \\
+Random prior control & 2.6466 & 3.8807 & -0.6368 & 0.1280 \\
+Zero-shot LLM rule tree & 2.6019 & 3.8300 & -0.4072 & 0.1507 \\
+LLM rule + 500-history calibration & 2.7723 & 3.8226 & +0.4627 & 0.1538 \\
+\method{} gated adapter & \textbf{2.5023} & \textbf{3.6038} & \textbf{-0.0230} & \textbf{0.2480} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The ordinary XGBoost baseline overpredicts strongly.
+The primary gated adapter reduces \whmae{} by 42.31\%, weighted RMSE by 32.22\%, and absolute weighted bias by 99.36\%.
+The LLM-only pressure baseline is directionally useful but less calibrated, supporting the hypothesis that LLM priors need a historical household baseline.
+
+\subsection{Statistical Validation}
+
+Household bootstrap resampling gives 95\% confidence intervals:
+ordinary XGBoost \whmae{} [4.2418, 4.4312], gated adapter \whmae{} [2.4292, 2.5808], paired \whmae{} reduction [1.7422, 1.9267], and paired absolute-bias reduction [3.3582, 3.6696].
+These intervals support that the improvement is not a single point-estimate artifact.
+
+\subsection{Controls and Robustness}
+
+The global event prior is strong, so the correct interpretation is event-level adaptation plus incremental cohort refinement, not ``LLM ranking explains everything.''
+Placebo and robustness checks constrain the claim:
+\begin{itemize}
+    \item 500-run permutation control for the primary gated rule: actual \whmae{} 2.5023, random-permutation mean 2.5808, empirical $p=0.0020$.
+    \item Irrelevant pseudo-event controls are weaker: best ranked pseudo-event \whmae{} 2.6274, best gated pseudo-event \whmae{} 2.5610.
+    \item Zero-shot LLM rule tree reaches \whmae{} 2.6019, and a pseudo-label tree distilled from it reaches 2.6040; both are weaker and more biased than the primary adapter.
+    \item LLM rule plus 500 historical calibration reaches \whmae{} 2.7723, showing that rule distillation plus small historical calibration is coherent but not the best solution for the 2022 event-shift task.
+    \item CatBoost GPU is the strongest extra non-LLM baseline with \whmae{} 4.2196 and \whbias{} +3.4873.
+\end{itemize}
+
+\subsection{Behavior-System Outputs}
+
+The method extends beyond total trips.
+Transit-share weighted MAE improves from 0.0325 to 0.0269.
+Total mode-trip MAE improves from 4.8467 to 3.2802 when combining gated trip count with LLM-adjusted mode shares.
+Purpose composition is implemented as an exploratory third dimension, but the LLM prior is not the overall best purpose row.
+These results support a broader household behavior-system framing, while trip generation remains the main contribution.
+
+\subsection{External and Temporal Validation}
+
+Temporal transfer checks show that 2022 is more difficult than pre-COVID transfer: pre-COVID mean absolute weighted bias is 0.9024, while a diagnostic 2022 transfer check has absolute weighted bias 3.7202.
+External evidence supports the event mechanisms.
+ACS commuting statistics show worked-from-home share 5.7\% to 15.2\% from 2019 to 2022, while public-transportation commute share changes 5.0\% to 3.1\% \citep{burrows2024commuting}.
+PSRC household survey replication shows a pre/post improvement from \whmae{} 3.4271 to 3.2498 and \whbias{} +1.0532 to +0.2605 using an ACS-derived remote-work suppression factor without target-year PSRC label calibration.
+The PSRC result is an external regional replication of the event-adaptation principle, not direct numerical validation of \nhts{} 2022.
+
+\section{Discussion}
+
+The main finding is role separation.
+Historical tabular models supply calibrated household heterogeneity but fail under post-pandemic event shift.
+LLM priors supply event semantics but are under-calibrated as standalone numerical predictors.
+The hybrid adapter works because it constrains the LLM to a narrow semantic role and leaves numerical scale to historical survey data.
+
+The strongest alternative explanation is that a global post-pandemic downscaling scalar captures most of the benefit.
+The experiments partly confirm this: the global event prior is strong.
+The contribution should therefore be framed carefully as label-free event adaptation with auditable cohort refinement, not as evidence that rich LLM reasoning alone dominates.
+Placebo controls, zero-shot rule-tree baselines, small-calibration baselines, and subgroup checks provide evidence that the event prior is meaningful, but additional regional and shock replications would strengthen the paper.
+
+\section{Limitations}
+
+The current evidence has five limitations.
+First, the main \nhts{} evaluation focuses on one shock year, 2022.
+Second, the LLM may contain broad post-pandemic mobility knowledge from pretraining; the prospective event-context file reduces but does not fully eliminate retrospective knowledge concerns.
+Third, the global event prior is strong, so cohort-specific LLM ranking should be described as incremental.
+Fourth, mode and purpose extensions are useful for planning relevance but are not yet full mode-choice or purpose-choice models.
+Fifth, PSRC is a regional external survey with different sampling and diary protocols, so it validates transfer of the principle rather than exact \nhts{} numerical accuracy.
+
+\section{Conclusion}
+
+This project shows that post-pandemic household travel prediction can be formulated as label-free event adaptation.
+A historical household model alone overpredicts 2022 travel, while a pure LLM-style predictor is directionally useful but under-calibrated.
+Distilling LLM event semantics into a fixed adapter substantially reduces trip-count error and nearly removes systematic bias without using 2022 trip-count labels for calibration.
+The result suggests a practical path for using LLMs in survey-based mobility modeling: constrain them to produce auditable event priors, combine them with historically calibrated models, and evaluate them with causal guardrails, robust baselines, and planning-oriented multi-objective metrics.
+
+\section*{Artifact Notes}
+
+The numerical results in this draft are backed by repository artifacts:
+\begin{itemize}
+    \item \texttt{outputs/final\_project/final\_metrics\_summary.csv}
+    \item \texttt{outputs/statistical\_validation/}
+    \item \texttt{outputs/robustness\_checks/}
+    \item \texttt{outputs/zero\_shot\_llm\_rule\_tree\_baseline/}
+    \item \texttt{outputs/llm\_rule\_small\_data\_calibration/}
+    \item \texttt{outputs/external\_validation/}
+\end{itemize}
+
+\bibliographystyle{plainnat}
+\bibliography{references}
+
+\end{document}

@@ -116,6 +116,10 @@ predicted trips by mode = predicted total trips * predicted mode share
 - `outputs/paper_draft/nhts_event_adaptation_paper_draft.md`（论文初稿）
 - `outputs/paper_draft/claim_evidence_matrix.md`（claim-evidence 对照表）
 - `outputs/paper_draft/paper_self_review_2026_06_10.md`（论文自审记录）
+- `outputs/paper_draft/latex/main.tex`（LaTeX manuscript skeleton）
+- `outputs/paper_draft/latex/references.bib`（已核验 BibTeX）
+- `outputs/paper_draft/latex/citation_verification_log.md`（引用核验记录）
+- `outputs/paper_draft/latex/latex_build_notes.md`（本机 LaTeX 编译状态与环境限制）
 
 主实验：
 

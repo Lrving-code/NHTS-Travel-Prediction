@@ -14,6 +14,7 @@ Overall status: `COMPLETE`
 | Single paper spine is explicit | PASS | paper_logic_chain.md states event-driven temporal adaptation and LLM event-semantic adapter. | `plan/paper_logic_chain.md` |
 | 2025-2026 literature grounding is present | PASS | Literature note covers current LLM/mobility anchors. | `plan/literature_grounding_2026.md` |
 | Paper draft and claim-evidence ledger exist | PASS | Draft manuscript and claim matrix constrain paper-level wording. | `outputs/paper_draft/nhts_event_adaptation_paper_draft.md` |
+| LaTeX manuscript and citation verification package exist | PASS | LaTeX skeleton, BibTeX, and citation verification log are present. | `outputs/paper_draft/latex/main.tex` |
 | Primary NHTS result is documented | PASS | Historical XGBoost to gated adapter improvement is in the audit. | `outputs/final_project/final_metrics_summary.csv` |
 | Strong baselines and LLM rule-tree ablations exist | PASS | Strong tabular, zero-shot rule tree, pseudo-label tree, and small-calibration evidence are present. | `outputs/strong_baselines/strong_tabular_baseline_metrics.csv` |
 | Robustness and placebo controls exist | PASS | Permutation and irrelevant pseudo-event controls are present. | `outputs/robustness_checks/permutation_pressure_controls.csv` |
@@ -41,4 +42,4 @@ Overall status: `COMPLETE`
 
 ## Remaining Work
 
-No artifact-level blocker remains in the current audit. Future work is optional extension rather than required closure: LaTeX formatting, advisor feedback, and additional external regional replications.
+No artifact-level blocker remains in the current audit. Future work is optional extension rather than required closure: full LaTeX/BibTeX compile in a normal non-elevated TeX environment, advisor feedback, and additional external regional replications.
