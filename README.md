@@ -23,6 +23,7 @@
 - Equity-aware subgroup evaluation: worst-subgroup weighted MAE improves from `8.3778` under historical XGBoost to `4.7091` under the primary gated event adapter; all evaluated subgroups improve relative to historical XGBoost.
 - Multi-objective analysis: calibration-first and balanced profiles select the primary `gated_trip_suppression_a1_d0p15`; low-cost deployment selects `global_trip_suppression_a1`.
 - External mechanism validation: ACS commute statistics show worked-from-home share stayed much higher in 2022 than 2019 (`5.7% -> 15.2%`) and public-transportation commute share stayed lower (`5.0% -> 3.1%`), supporting the remote-work and transit-avoidance event priors. BTS daily mobility is retained as a compatibility guardrail: its device-based trip counts should not be used as direct numeric labels for NHTS household `CNTTDHH`.
+- External household microdata validation: PSRC 2021->2023 household/day recovery transfer improves modestly in weighted MAE (`3.6908 -> 3.6855`) and more clearly in weighted bias (`-1.1480 -> -0.2646`) when a BTS-derived recovery factor is applied without target-year PSRC label calibration.
 
 行为目标 2 是 household-level mode composition：
 
@@ -206,6 +207,7 @@ src/
   run_llm_input_leakage_audit.py
   build_causal_guardrail_evidence_pack.py
   run_external_aggregate_validation.py
+  run_psrc_external_household_validation.py
   run_stronger_tabular_baselines.py
   build_batched_llm_event_prompts.py
   generate_presentation_figures.py
@@ -272,6 +274,7 @@ python src\run_pre_covid_placebo_event_correction.py --device cuda
 python src\run_llm_input_leakage_audit.py
 python src\build_causal_guardrail_evidence_pack.py
 python src\run_external_aggregate_validation.py --device cuda
+python src\run_psrc_external_household_validation.py --device cuda
 ```
 
 多目标/Pareto 分析：
@@ -328,11 +331,11 @@ purpose-composition 扩展使用同一组 trip-level files，并额外依赖跨�
 
 ## 重要注意事项
 
-- 当前版本足够作为“大数据与城市规划”课程大作业汇报；如果要发展成论文，应按 `outputs/final_project/project_quality_assessment.md` 继续补 household-level external microdata validation、前瞻式事件上下文和不确定性分析。
+- 当前版本足够作为“大数据与城市规划”课程大作业汇报；如果要发展成论文，应按 `outputs/final_project/project_quality_assessment.md` 继续补 direct pre-pandemic-to-post-pandemic external replication、前瞻式事件上下文和不确定性分析。
 - 主实验不使用 2022 `CNTTDHH` 标签训练或校准，2022 标签只用于最终 evaluation。
 - 汇报主口径使用固定 `gated_trip_suppression_a1_d0p15` no-label rule；参数扫描结果只放内部附录，不进入公开方法比较主表。
 - 稳健性检验显示 global event pressure 是很强的 baseline；应把贡献表述为 event-level label-free adaptation，cohort-specific LLM ranking 是增量证据，不是唯一或主导来源。
-- 外部验证目前是 mechanism-level：ACS 支持 LLM event priors 的方向，BTS 暴露了 device-mobility trip count 与 NHTS travel-diary `CNTTDHH` 的不可直接对齐问题；不要把它表述为外部 household-level MAE。
+- 外部验证现在包括 mechanism-level ACS/BTS 证据和 PSRC household-level recovery-transfer microdata。PSRC 的 MAE 增益很小，主要价值是 bias 改善和独立微观数据链路；不要把它表述为 NHTS 2022 的直接外部复刻。
 - mode-composition 是探索性扩展：总体 weighted TV 改善较小，最清楚的结果是 transit-share weighted MAE 和 mode-specific trip volume 改善。
 - purpose-composition 是综合目标扩展和边界实验：它说明项目可以预测“为什么出行”，但当前 LLM purpose prior 还不是整体最优。
 - LLM 的核心价值应表述为 event-generalizable priors，而不是逐户直接预测；batch prompting 是工程加速，prospective event context 是防止 retrospective leakage 的论文级改进方向。

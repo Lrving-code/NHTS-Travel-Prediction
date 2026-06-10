@@ -54,4 +54,4 @@ Use only if asked:
 - “The global event prior is a strong low-cost baseline; the gated LLM adapter is the balanced reporting operating point.”
 - “Pure LLM pressure has the right direction but weaker calibration; the hybrid design is why the final bias is near zero.”
 - “Causal guardrails and negative controls make the LLM component auditable.”
-- “External data supports the event mechanisms, while household-level external MAE remains future work.”
+- “External data supports the event mechanisms; PSRC household microdata provides recovery-transfer evidence, while direct NHTS-style external replication remains future work.”

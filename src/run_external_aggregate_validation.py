@@ -41,6 +41,10 @@ BTS_COVID_BEHAVIOR_URL = (
     "https://www.bts.gov/browse-statistical-products-and-data/"
     "covid-related/effects-covid-19-travel-behavior"
 )
+PSRC_DATA_PORTAL_URL = (
+    "https://psrc-psregcncl.hub.arcgis.com/datasets/"
+    "PSREGCNCL::household-travel-survey-households/about"
+)
 
 PRESSURE_WEIGHTS: dict[str, float] = {
     "trip_suppression_risk": 0.35,
@@ -236,12 +240,12 @@ def build_candidate_dataset_table(output_path: Path) -> None:
             "status": "candidate",
         },
         {
-            "dataset": "Regional post-pandemic household travel surveys",
-            "provider": "MPO/state travel survey programs",
-            "url": "https://www.campo-nc.us/mapsdata/trm-household-travel-survey",
-            "granularity": "household/person/trip microdata when released",
-            "project_use": "Full external household-level validation if compatible microdata are available.",
-            "status": "manual follow-up",
+            "dataset": "PSRC Household Travel Survey",
+            "provider": "Puget Sound Regional Council",
+            "url": PSRC_DATA_PORTAL_URL,
+            "granularity": "household/person-day/trip microdata",
+            "project_use": "Household-level external recovery-transfer validation using 2021/2023/2025 microdata.",
+            "status": "implemented in run_psrc_external_household_validation.py",
         },
     ]
     with output_path.open("w", encoding="utf-8", newline="") as file:

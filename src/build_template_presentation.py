@@ -1311,14 +1311,14 @@ def add_backup_qa_slides(prs: Presentation, logo: bytes | None, values: dict[str
         "B7",
         "有没有 NHTS 之外的外部验证？",
         "Do we have validation beyond NHTS?",
-        "有机制级外部验证；但没有 household-level external MAE，不能夸大。",
+        "有机制级验证和 PSRC household microdata；但不是 NHTS 2022 的直接复刻。",
         [
             ["ACS work from home", "2019 5.7% -> 2022 15.2%; supports remote-work prior"],
             ["ACS public transit", "2019 5.0% -> 2022 3.1%; supports transit-avoidance prior"],
-            ["BTS daily mobility", "Device trips/person is not a direct CNTTDHH label"],
-            ["Safe claim", "External mechanism support + compatibility guardrail"],
+            ["PSRC microdata", "2021->2023 wMAE 3.6908->3.6855; wBias -1.1480->-0.2646"],
+            ["Safe claim", "External mechanism + recovery-transfer support"],
         ],
-        "答法：我们用 ACS 证明疫情后通勤机制确实发生了远程办公和公共交通下降；同时用 BTS 做 guardrail，说明 device mobility trips 不能直接当作 NHTS household trip-count 的外部标签。论文版还需要兼容的 household travel survey microdata。",
+        "答法：我们用 ACS 证明疫情后通勤机制确实发生了远程办公和公共交通下降；用 PSRC 独立 household microdata 做 recovery-transfer 验证；同时用 BTS 做 guardrail，说明 device mobility trips 不能直接当作 NHTS household trip-count 的外部标签。",
     )
 
 

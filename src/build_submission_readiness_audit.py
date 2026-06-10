@@ -45,6 +45,24 @@ def metric_value(path: str, method: str, column: str) -> float | None:
     return float(row[column].iloc[0])
 
 
+def metric_value_filtered(path: str, filters: dict[str, str | int], column: str) -> float | None:
+    file_path = PROJECT_ROOT / path
+    if not file_path.exists():
+        return None
+    frame = pd.read_csv(file_path)
+    if column not in frame.columns:
+        return None
+    mask = pd.Series(True, index=frame.index)
+    for filter_column, filter_value in filters.items():
+        if filter_column not in frame.columns:
+            return None
+        mask &= frame[filter_column].astype(str) == str(filter_value)
+    rows = frame.loc[mask]
+    if rows.empty:
+        return None
+    return float(rows[column].iloc[0])
+
+
 def contains_text(path: str, terms: list[str]) -> bool:
     content = read_text(PROJECT_ROOT / path)
     return all(term in content for term in terms)
@@ -224,14 +242,6 @@ def audit_temporal_external_validation() -> list[Check]:
                 "Report as mechanism-level external evidence, not household-level MAE.",
             )
         )
-        checks.append(
-            partial_check(
-                category,
-                "Household-level external microdata validation",
-                "Independent ACS/BTS evidence is aggregate; no NHTS-compatible household external microdata MAE is available.",
-                "For paper submission, add a compatible household travel survey if accessible, or scope the claim as NHTS-centered with external mechanism validation.",
-            )
-        )
     else:
         checks.append(
             partial_check(
@@ -239,6 +249,60 @@ def audit_temporal_external_validation() -> list[Check]:
                 "External validation beyond NHTS",
                 "Internal temporal validation exists; no independent external dataset is documented.",
                 "Run src/run_external_aggregate_validation.py or add an external mobility survey/region/shock dataset.",
+            )
+        )
+
+    psrc_metric_path = "outputs/external_validation/psrc_household_external_validation_metrics.csv"
+    psrc_report_path = "outputs/external_validation/psrc_household_external_validation_report.md"
+    baseline_mae = metric_value_filtered(
+        psrc_metric_path,
+        {"method": "psrc_2021_xgboost", "test_year": 2023},
+        "weighted_mae",
+    )
+    adapted_mae = metric_value_filtered(
+        psrc_metric_path,
+        {"method": "bts_recovery_event_adapter", "test_year": 2023},
+        "weighted_mae",
+    )
+    baseline_bias = metric_value_filtered(
+        psrc_metric_path,
+        {"method": "psrc_2021_xgboost", "test_year": 2023},
+        "weighted_bias",
+    )
+    adapted_bias = metric_value_filtered(
+        psrc_metric_path,
+        {"method": "bts_recovery_event_adapter", "test_year": 2023},
+        "weighted_bias",
+    )
+    if all(value is not None for value in [baseline_mae, adapted_mae, baseline_bias, adapted_bias]) and exists(
+        psrc_report_path
+    ):
+        checks.append(
+            pass_check(
+                category,
+                "Household-level external microdata validation",
+                (
+                    f"PSRC 2021->2023 household microdata: wMAE {baseline_mae:.4f}->{adapted_mae:.4f}; "
+                    f"wBias {baseline_bias:+.4f}->{adapted_bias:+.4f}."
+                ),
+                "Report as external recovery-transfer evidence with modest MAE gain and clearer bias improvement.",
+            )
+        )
+        checks.append(
+            partial_check(
+                category,
+                "External validation scope",
+                "PSRC validation uses 2021 recovery transfer; current PSRC Hub CSV does not expose 2017/2019 day/trip microdata in the same endpoint.",
+                "For a full paper, add a direct pre-pandemic-to-post-pandemic external travel-survey replication if accessible.",
+            )
+        )
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Household-level external microdata validation",
+                "No PSRC household-level external validation metrics are documented.",
+                "Run src/run_psrc_external_household_validation.py.",
             )
         )
     return checks
@@ -419,7 +483,7 @@ def write_outputs(checks: list[Check]) -> tuple[Path, Path]:
             "## Interpretation",
             "",
             "- Course-project readiness is strong: the core result, baselines, guardrails, deck, and Q&A material are present.",
-            "- Paper-submission readiness is close but not complete: the main remaining gap is household-level external microdata validation beyond NHTS-compatible targets.",
+            "- Paper-submission readiness is close but not complete: the main remaining gap is direct pre-pandemic-to-post-pandemic external replication in a NHTS-compatible travel-survey schema.",
             "- The defensible paper claim should remain scoped to label-free event adaptation for survey-based household mobility under a post-pandemic shift.",
         ]
     )
