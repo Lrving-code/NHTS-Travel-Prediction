@@ -15,6 +15,7 @@
 - Best-MAE sensitivity row weighted MAE: `2.4820`
 - Best-MAE sensitivity reduction: `42.78%`
 - LLM-only pressure weighted MAE: `2.7175`
+- Compared with LLM-only pressure, the primary hybrid gated adapter reduces weighted MAE from `2.7175` to `2.5023` and reduces absolute weighted bias from `0.3732` to `0.0230`.
 - Gated household accuracy: exact `17.7%`, within 2 trips `54.5%`, within 3 trips `71.2%`
 - Stronger non-LLM baselines still overpredict 2022: best extra baseline is CatBoost GPU with weighted MAE `4.2196` and weighted bias `+3.4873`; the primary gated event adapter is `40.70%` lower in weighted MAE.
 - Equity-aware subgroup evaluation: worst-subgroup weighted MAE improves from `8.3778` under historical XGBoost to `4.7091` under the primary gated event adapter; all evaluated subgroups improve relative to historical XGBoost.
@@ -48,6 +49,8 @@
 ```
 
 注意：LLM 不是直接预测 household trip count，也不是替代 XGBoost。LLM 的角色是 event-prior adapter。
+
+和 pure LLM pressure 相比，hybrid gated 方法更稳：pure LLM 能抓到疫情后出行下降方向，但缺少 household-level routine baseline，容易把总量压得过低；hybrid 方法保留传统模型学到的家庭基础出行需求，再用 LLM event priors 做机制修正。
 
 ## 学术问题与贡献
 
@@ -109,6 +112,8 @@ predicted trips by mode = predicted total trips * predicted mode share
 - `outputs/temporal_transfer_validation/temporal_transfer_validation_report.md`
 - `outputs/pre_covid_placebo_event_correction/pre_covid_placebo_event_correction_report.md`
 - `outputs/leakage_audit/llm_input_leakage_audit_report.md`
+- `outputs/causal_guardrails/causal_guardrail_evidence_report.md`
+- `outputs/causal_guardrails/causal_dag.png`
 
 更强非 LLM baseline：
 
@@ -175,6 +180,7 @@ src/
   run_equity_aware_evaluation.py
   run_pre_covid_placebo_event_correction.py
   run_llm_input_leakage_audit.py
+  build_causal_guardrail_evidence_pack.py
   run_stronger_tabular_baselines.py
   build_batched_llm_event_prompts.py
   generate_presentation_figures.py
@@ -238,6 +244,7 @@ python src\run_robustness_checks.py
 python src\run_temporal_transfer_validation.py --device cuda
 python src\run_pre_covid_placebo_event_correction.py --device cuda
 python src\run_llm_input_leakage_audit.py
+python src\build_causal_guardrail_evidence_pack.py
 ```
 
 多目标/Pareto 分析：

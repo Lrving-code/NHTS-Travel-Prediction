@@ -108,6 +108,7 @@ Risk: “Causal” without identification will be criticized.
 Current evidence:
 
 - Negative controls and temporal validation exist.
+- Causal guardrail evidence pack now consolidates DAG, leakage audit, random-pressure negative control, pre-COVID placebo, and hybrid-vs-LLM-only controls.
 - No causal identification design yet.
 
 Required fix:
@@ -150,12 +151,21 @@ Required fix:
   - `src/run_stronger_tabular_baselines.py`
   - `outputs/strong_baselines/strong_tabular_baseline_report.md`
   - Main PPT result table now includes CatBoost GPU.
+- Added causal guardrail evidence pack:
+  - `src/build_causal_guardrail_evidence_pack.py`
+  - `outputs/causal_guardrails/causal_guardrail_evidence_report.md`
+  - `outputs/causal_guardrails/causal_guardrail_summary.csv`
+  - `outputs/causal_guardrails/causal_dag.png`
+- Strengthened pure LLM comparison:
+  - LLM-only pressure weighted MAE `2.7175`, weighted bias `-0.3732`.
+  - Primary hybrid gated adapter weighted MAE `2.5023`, weighted bias `-0.0230`.
+  - This supports the claim that LLM event priors need household-model grounding.
 
 ## Next Audit Gate
 
 The next round should not add more slides first. It should strengthen the empirical core:
 
 1. Verify local GPU environment and package support.
-2. Add equity-aware Pareto objective from subgroup metrics.
-3. Add causal DAG and pseudo-event placebo artifact.
-4. Rebuild PPT with a cleaner 10-minute talk path and backup-slide separation.
+2. Add external aggregate validation or frozen event-context RAG to reduce retrospective-world-knowledge concerns.
+3. Add an irrelevant pseudo-event placebo artifact.
+4. Rebuild PPT with a cleaner 10-minute talk path and backup-slide separation if the course deck needs final polishing.

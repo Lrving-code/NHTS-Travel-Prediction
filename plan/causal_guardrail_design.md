@@ -48,6 +48,10 @@ flowchart LR
 
 Already available:
 
+- Integrated evidence pack:
+  - `outputs/causal_guardrails/causal_guardrail_evidence_report.md`
+  - `outputs/causal_guardrails/causal_guardrail_summary.csv`
+  - `outputs/causal_guardrails/causal_dag.png`
 - Random pressure assignment.
 - Global pressure baseline.
 - Temporal transfer validation.
@@ -57,8 +61,12 @@ Already available:
   - This shows event priors need context and strength discipline rather than being treated as a universal downshift.
 - LLM input leakage audit:
   - `outputs/leakage_audit/llm_input_leakage_audit_report.md`
-  - 1327 cohort profiles and 89 batch prompt payloads have zero forbidden field violations.
+  - 1327 cohort profiles, 1327 prompt payload records, 89 batch prompts, and validated LLM feature outputs have zero forbidden field violations.
   - Required guardrail instructions explicitly forbid `CNTTDHH`, `WTHHFIN`, `HOUSEID`, and aggregate 2022 target outcomes.
+- Hybrid-vs-LLM-only control:
+  - Pure LLM pressure captures the downward event direction but has weaker calibration: weighted MAE `2.7175`, weighted bias `-0.3732`.
+  - Primary hybrid gated adapter improves to weighted MAE `2.5023`, weighted bias `-0.0230`.
+  - Interpretation: LLM event priors are useful only after being grounded by a routine household predictor.
 
 Add next:
 

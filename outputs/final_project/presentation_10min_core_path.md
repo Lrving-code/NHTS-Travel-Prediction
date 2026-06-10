@@ -19,7 +19,7 @@ The 10-minute defense should not try to explain every experiment. It should make
 | 4:30-5:30 | 9 Main Results | Primary gated adapter reduces weighted MAE by 42.31% and nearly removes weighted bias. |
 | 5:30-6:10 | 10 Statistical Validation | Bootstrap CI supports that the gain is not just a point-estimate accident. |
 | 6:10-7:10 | 12 Multi-Objective Selection | Main method is selected for balanced accuracy/calibration; low-cost deployment can choose global prior. |
-| 7:10-8:00 | 18 LLM Role | The LLM and XGBoost are complementary; LLM is an event adapter, not a standalone predictor. |
+| 7:10-8:00 | 18 LLM Role | Pure LLM pressure captures the downward direction but is less calibrated; XGBoost grounding makes the hybrid adapter stable. |
 | 8:00-9:05 | 19 Behavior Outputs | The method extends to mode/transit and mode-specific trip volume; purpose is exploratory. |
 | 9:05-10:00 | 23 Conclusion | Summarize contribution, limitations, and next paper-level upgrades. |
 
@@ -50,4 +50,5 @@ Use only if asked:
 - “LLM outputs event priors, not target values.”
 - “The main result is label-free event adaptation under a post-pandemic distribution shift.”
 - “The global event prior is a strong low-cost baseline; the gated LLM adapter is the balanced reporting operating point.”
+- “Pure LLM pressure has the right direction but weaker calibration; the hybrid design is why the final bias is near zero.”
 - “Causal guardrails and negative controls make the LLM component auditable.”

@@ -997,7 +997,17 @@ def add_llm_role_slide(prs: Presentation, logo: bytes | None, values: dict[str, 
     node(slide, 7.15, 4.1, 3.4, 0.8, "Hybrid gated", f"household baseline + event prior\nwMAE {values['gated']:.2f}", COLORS["green"])
     rect(slide, 1.1, 6.1, 10.45, 0.48, COLORS["pale"], COLORS["line"], True)
     text_box(slide, "汇报讲法", 1.3, 6.2, 1.0, 0.2, 9, COLORS["orange"], True)
-    text_box(slide, "LLM 输出的是 s_event，不是 y；最终预测 = 历史 household baseline × 事件折减系数。", 2.35, 6.13, 8.8, 0.32, 12, COLORS["ink"], True)
+    text_box(
+        slide,
+        f"LLM-only has direction but weaker calibration: wMAE {values['llm_only']:.2f} -> {values['gated']:.2f}; wBias {values['llm_only_bias']:+.2f} -> {values['gated_bias']:+.2f}.",
+        2.35,
+        6.13,
+        8.8,
+        0.32,
+        10.5,
+        COLORS["ink"],
+        True,
+    )
 
 
 def add_mode_slide(prs: Presentation, logo: bytes | None, mode: pd.DataFrame, values: dict[str, float]) -> None:

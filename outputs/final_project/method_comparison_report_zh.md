@@ -2,7 +2,7 @@
 
 ## 比较对象
 
-本项目按家庭颗粒度组织为两个行为预测输出：
+本项目按家庭颗粒度组织为三个行为预测输出：
 
 - Trip generation：家庭每日出行次数预测，目标变量是 `CNTTDHH`。
 - Mode composition：家庭层面的出行方式结构预测，由 trip-level `TRPTRANS` 聚合得到。
@@ -23,7 +23,7 @@
 | 方法 | Weighted MAE | Weighted RMSE | Weighted Bias | Weighted R2 | 相对历史预测 MAE 提升 |
 |---|---:|---:|---:|---:|---:|
 | Historical mean | 5.5116 | 6.1251 | 4.4995 | -1.1722 | -27.06% |
-| Traditional supervised baseline | 4.3377 | 5.3169 | 3.6052 | -0.6367 | 0.00% |
+| Historical predictor | 4.3377 | 5.3169 | 3.6052 | -0.6367 | 0.00% |
 | Historical trend shift | 4.1504 | 5.1463 | 3.3485 | -0.5334 | 4.32% |
 | LLM-only pressure | 2.7175 | 3.9876 | -0.3732 | 0.0794 | 37.35% |
 | Global event prior | 2.5223 | 3.7432 | -0.7477 | 0.1888 | 41.85% |
@@ -35,8 +35,20 @@ Trip-generation 结论：
 
 - 主口径使用固定 no-label gated rule：`gated_trip_suppression_a1_d0p15`，weighted MAE `2.5023`，weighted bias `-0.0230`，weighted R2 `0.2480`。
 - LLM-only pressure baseline 的 weighted MAE 是 `2.7175`，说明 LLM 事件先验能给出方向，但需要 historical household predictor 提供个体化 baseline。
+- 相比 LLM-only pressure，hybrid gated adapter 的 weighted MAE 进一步降低 `7.92%`，绝对 weighted bias 降低 `93.83%`。
 - 最低 MAE 是 sensitivity row `llm_trip_suppression_a1p25`：weighted MAE 从 `4.3377` 降到 `2.4820`，降低 `42.78%`；它不作为严格 no-label 主方法的参数选择依据。
 - 家庭颗粒度上，gated correction exact hit `17.7%`，within 2 trips `54.5%`，within 3 trips `71.2%`。
+
+## 更强非 LLM 表格 baseline
+
+| 方法 | Device | Weighted MAE | Weighted Bias | Weighted R2 |
+|---|---|---:|---:|---:|
+| catboost_gpu | gpu | 4.2196 | 3.4873 | -0.5712 |
+| xgboost_stronger_cuda | cuda | 4.4173 | 3.7364 | -0.6990 |
+| xgboost_covariate_shift_reweighted_cuda | cuda | 4.4304 | 3.7523 | -0.7141 |
+| lightgbm_cpu | cpu | 4.4430 | 3.7646 | -0.7269 |
+
+最强非 LLM baseline 是 `catboost_gpu`，weighted MAE `4.2196`，weighted bias `3.4873`。主方法 hybrid adapter 的 weighted MAE 比它低 `40.70%`，说明单纯增强表格模型容量或做 covariate-shift reweighting 仍不能解决 2022 的机制变化。
 
 ## 出行方式结构结果
 
@@ -54,8 +66,8 @@ Mode-composition 结论：
 - 纯 LLM-style correction 相比 2017 mean prior 有改善，但仍弱于 XGBoost。
 - XGBoost + LLM transit prior 把 weighted TV 从 `0.2008` 降到 `0.1985`，总体提升较小。
 - 但公共交通这一项改善明显：transit-share weighted MAE 从 `0.0325` 降到 `0.0269`。
-- LLM-only corrected transit MAE 是 `0.0451`，说明 LLM 知道方向，但需要传统监督模型提供 household-specific baseline。
+- LLM-only corrected transit MAE 是 `0.0451`，说明 LLM 知道方向，但需要历史预测器提供 household-specific baseline。
 
 ## 最终口径
 
-不要把这个项目讲成“LLM 替代传统模型”。更准确的说法是：传统监督模型学习 routine mobility，LLM 提供疫情事件先验，两者结合后能在不使用 2022 标签训练的前提下修正 post-pandemic distribution shift。
+不要把这个项目讲成“LLM 替代传统模型”。更准确的说法是：历史预测器学习 routine mobility，LLM 提供疫情事件先验，两者结合后能在不使用 2022 标签训练的前提下修正 post-pandemic distribution shift。

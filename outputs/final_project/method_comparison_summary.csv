@@ -1,6 +1,6 @@
 task,method,display_name,primary_metric,primary_value,primary_improvement_vs_baseline_pct,secondary_metric,secondary_value,bias_metric,bias_value,fit_metric,fit_value
 trip_count,historical_mean_only,Historical mean,weighted_mae,5.51164356902712,-27.064104985843198,weighted_rmse,6.125141114482981,weighted_bias,4.499490186792657,weighted_r2,-1.1721561047401452
-trip_count,historical_xgboost,Traditional supervised baseline,weighted_mae,4.337687319043563,0.0,weighted_rmse,5.316934312940995,weighted_bias,3.605183709134669,weighted_r2,-0.6367465180201153
+trip_count,historical_xgboost,Historical predictor,weighted_mae,4.337687319043563,0.0,weighted_rmse,5.316934312940995,weighted_bias,3.605183709134669,weighted_r2,-0.6367465180201153
 trip_count,historical_mean_trend_shift,Historical trend shift,weighted_mae,4.150449240826088,4.316541614132758,weighted_rmse,5.146318950759584,weighted_bias,3.3484560369561245,weighted_r2,-0.533388611135309
 trip_count,llm_only_trip_suppression_a1p25,LLM-only pressure,weighted_mae,2.717513370990674,37.35110045714703,weighted_rmse,3.987614222512788,weighted_bias,-0.3732485886307166,weighted_r2,0.079370030598061
 trip_count,global_trip_suppression_a1p25,Global event prior,weighted_mae,2.522331852502907,41.850768232435264,weighted_rmse,3.743187105215461,weighted_bias,-0.7477032340364844,weighted_r2,0.1887739130528118
