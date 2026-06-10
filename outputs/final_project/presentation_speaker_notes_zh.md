@@ -101,3 +101,4 @@ data-only fitting -> pure LLM -> LLM rule tree -> LLM rule + small historical ca
 - B6：老师问“Weighted MAE、bias、within-k accuracy 怎么解释”。
 - B7：老师问“有没有 NHTS 之外的外部验证”。
 - B8：老师问“规则蒸馏、低置信 LLM 回退和我们现在的方法是什么关系”。
+- B9：老师继续追问“cohort-specific LLM prior 比 global prior 多贡献了多少”，用 same-alpha decomposition 图回答。

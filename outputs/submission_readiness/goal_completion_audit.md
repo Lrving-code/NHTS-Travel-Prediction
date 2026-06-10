@@ -25,7 +25,7 @@ Overall status: `ARTIFACT_GATE_PASS`
 | External household microdata replication exists | PASS | PSRC 2017+2019->2023 direct pre/post replication is in the audit. | `outputs/external_validation/psrc_household_external_validation_report.md` |
 | Multi-objective mobility evaluation exists | PASS | Trip count, mode composition, purpose composition, equity, and Pareto evidence are present. | `outputs/multi_objective_pareto/preference_operating_points.csv` |
 | GPU and reproducibility evidence exist | PASS | CUDA execution and environment manifest are recorded. | `outputs/submission_readiness/environment_manifest.json` |
-| 10-minute PPT and backup Q&A are current | PASS | Template deck has 32 slides and includes literature, external-validation, method-spectrum, and LLM-distillation content. | `outputs/final_project/NHTS_Travel_Behavior_Template_Presentation.pptx` |
+| 10-minute PPT and backup Q&A are current | PASS | Template deck has 33 slides and includes literature, external-validation, method-spectrum, LLM-distillation, and cohort-prior defense content. | `outputs/final_project/NHTS_Travel_Behavior_Template_Presentation.pptx` |
 | No-label external validation wording is explicit | PASS | README/final report state that target-year external labels are not used for calibration. | `outputs/final_project/final_project_report.md` |
 | Limitations are explicit | PASS | Quality assessment scopes PSRC as external principle replication, not direct NHTS numerical validation. | `outputs/final_project/project_quality_assessment.md` |
 

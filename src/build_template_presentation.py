@@ -26,6 +26,7 @@ LLM_FEATURE_DIR = PROJECT_ROOT / "outputs" / "llm_event_features"
 PARETO_DIR = PROJECT_ROOT / "outputs" / "multi_objective_pareto"
 FIGURE_DIR = FINAL_DIR / "figures" / "presentation_figures"
 ROBUSTNESS_DIR = PROJECT_ROOT / "outputs" / "robustness_checks"
+COHORT_PRIOR_DIR = PROJECT_ROOT / "outputs" / "cohort_prior_value_analysis"
 ZERO_SHOT_RULE_TREE_PATH = PROJECT_ROOT / "outputs" / "zero_shot_llm_rule_tree_baseline" / "zero_shot_llm_rule_tree_metrics.csv"
 SMALL_DATA_CALIBRATION_PATH = (
     PROJECT_ROOT / "outputs" / "llm_rule_small_data_calibration" / "method_spectrum_metrics.csv"
@@ -470,6 +471,17 @@ def paired_ci_value(paired: pd.DataFrame, metric_name: str) -> tuple[float, floa
         return float("nan"), float("nan"), float("nan")
     row = paired[paired["metric"] == metric_name].iloc[0]
     return float(row["mean"]), float(row["ci95_low"]), float(row["ci95_high"])
+
+
+def cohort_value(quantity: str) -> float:
+    summary_path = COHORT_PRIOR_DIR / "cohort_prior_value_summary.csv"
+    if not summary_path.exists():
+        return float("nan")
+    summary = pd.read_csv(summary_path)
+    rows = summary.loc[summary["quantity"] == quantity, "value"]
+    if rows.empty:
+        return float("nan")
+    return float(rows.iloc[0])
 
 
 def add_title_slide(prs: Presentation, logo: bytes | None, values: dict[str, float]) -> None:
@@ -1296,6 +1308,78 @@ def add_backup_qa_slide(
     story_box(slide, response, "", 0.82, 5.55, 10.95, 1.1, COLORS["blue"])
 
 
+def add_backup_cohort_value_slide(prs: Presentation, logo: bytes | None, values: dict[str, float]) -> None:
+    slide = blank_slide(prs)
+    set_background(slide)
+    add_backup_frame(
+        slide,
+        "Global prior 很强时，cohort LLM 还贡献什么？",
+        "Same-alpha decomposition of global event correction and selective cohort refinement",
+        "B9",
+        logo,
+    )
+    add_picture(slide, COHORT_PRIOR_DIR / "cohort_prior_value_top_groups.png", 0.72, 1.2, 6.45)
+    metric_card(
+        slide,
+        7.55,
+        1.25,
+        1.35,
+        0.82,
+        "Same-alpha gain",
+        f"{values['cohort_global_delta']:.4f}",
+        "wMAE lower",
+        COLORS["green"],
+    )
+    metric_card(
+        slide,
+        9.15,
+        1.25,
+        1.35,
+        0.82,
+        "Subgroup win",
+        f"{values['cohort_subgroup_share']:.1%}",
+        "cells vs global",
+        COLORS["blue"],
+    )
+    metric_card(
+        slide,
+        10.75,
+        1.25,
+        1.35,
+        0.82,
+        "Gate active",
+        f"{values['cohort_gate_weighted']:.1%}",
+        "weighted HHs",
+        COLORS["orange"],
+    )
+    story_box(
+        slide,
+        "正确解释：global event correction 是主体，cohort-specific LLM pressure 只在差异足够大时启用，提供选择性校准增益。",
+        "The safe claim is global event adaptation plus selective cohort refinement, not that cohort ranking explains the full gain.",
+        7.55,
+        2.35,
+        4.55,
+        1.35,
+        COLORS["teal"],
+    )
+    small_table(
+        slide,
+        ["Evidence", "Implication"],
+        [
+            ["primary vs global-a1", f"{values['cohort_global_delta']:.4f} lower wMAE"],
+            ["primary vs global-a1.25", f"{values['cohort_global_a125_delta']:.4f} lower wMAE"],
+            ["where it helps most", "lower-income / zero-vehicle / no-worker cells"],
+            ["boundary", "some high-vehicle/high-income cells prefer global"],
+        ],
+        7.55,
+        4.05,
+        [2.1, 2.45],
+        0.42,
+        12,
+        COLORS["navy2"],
+    )
+
+
 def add_backup_qa_slides(prs: Presentation, logo: bytes | None, values: dict[str, float]) -> None:
     add_backup_qa_slide(
         prs,
@@ -1337,10 +1421,11 @@ def add_backup_qa_slides(prs: Presentation, logo: bytes | None, values: dict[str
         [
             ["Global event prior", "wMAE 2.5223; wBias -0.7477"],
             ["Primary gated adapter", f"wMAE {values['gated']:.4f}; wBias {values['gated_bias']:+.4f}"],
+            ["Same-alpha decomposition", f"{values['cohort_global_delta']:.4f} lower wMAE; {values['cohort_subgroup_share']:.1%} subgroup-cell wins"],
+            ["Gate usage", f"cohort-specific pressure used for {values['cohort_gate_weighted']:.1%} weighted households"],
             ["Pseudo-event ranked", "best placebo wMAE 2.6274"],
-            ["Pseudo-event gated", "best gated placebo wMAE 2.5610"],
         ],
-        "答法：不能夸大成 LLM cohort ranking 独自贡献全部提升。更准确的说法是：LLM event semantics 给出 label-free event correction，gated cohort refinement 改善 calibration 和 robustness。",
+        "答法：不能夸大成 LLM cohort ranking 独自贡献全部提升。更准确的说法是：global event correction 是主体，LLM cohort prior 在差异足够大的家庭上提供 selective refinement，改善 calibration 和 subgroup robustness。",
     )
     add_backup_qa_slide(
         prs,
@@ -1497,6 +1582,10 @@ def create_deck() -> Path:
         "mode_trip_base": mode_trip_base,
         "mode_trip_hybrid": mode_trip_hybrid,
         "mode_trip_gain": pct_delta(mode_trip_base, mode_trip_hybrid) if mode_trip_base == mode_trip_base else float("nan"),
+        "cohort_global_delta": cohort_value("overall_primary_vs_global_a1_mae_delta"),
+        "cohort_global_a125_delta": cohort_value("overall_primary_vs_global_a1p25_mae_delta"),
+        "cohort_subgroup_share": cohort_value("share_subgroup_cells_primary_beats_global_a1"),
+        "cohort_gate_weighted": cohort_value("gated_uses_cohort_prior_share_weighted"),
     }
 
     add_title_slide(prs, logo, values)
@@ -1524,6 +1613,7 @@ def create_deck() -> Path:
     add_contribution_slide(prs, logo)
     add_final_slide(prs, logo, values)
     add_backup_qa_slides(prs, logo, values)
+    add_backup_cohort_value_slide(prs, logo, values)
 
     return save_presentation(prs, OUTPUT_PATH)
 
