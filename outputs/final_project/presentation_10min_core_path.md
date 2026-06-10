@@ -20,8 +20,9 @@ The 10-minute defense should not try to explain every experiment. It should make
 | 5:30-6:10 | 10 Statistical Validation | Bootstrap CI supports that the gain is not just a point-estimate accident. |
 | 6:10-7:10 | 12 Multi-Objective Selection | Main method is selected for balanced accuracy/calibration; low-cost deployment can choose global prior. |
 | 7:10-8:00 | 18 LLM Role | Pure LLM pressure captures the downward direction but is less calibrated; XGBoost grounding makes the hybrid adapter stable. |
-| 8:00-9:05 | 19 Behavior Outputs | The method extends to mode/transit and mode-specific trip volume; purpose is exploratory. |
-| 9:05-10:00 | 23 Conclusion | Summarize contribution, limitations, and next paper-level upgrades. |
+| 8:00-8:45 | 19 Behavior Outputs | The method extends to mode/transit and mode-specific trip volume; purpose is exploratory. |
+| 8:45-9:25 | 21 LLM Distillation & Scaling | LLM knowledge is distilled into event priors; batch prompting and deterministic adapters avoid per-household LLM calls. |
+| 9:25-10:00 | 23 Conclusion | Summarize contribution, limitations, and next paper-level upgrades. |
 
 ## Backup Slides
 
@@ -35,9 +36,9 @@ Use only if asked:
 - Slide 16: Subgroup check.
 - Slide 17: Error insight.
 - Slide 20: Purpose composition.
-- Slide 21: LLM scaling.
 - Slide 22: Research logic.
 - B7: External mechanism validation and BTS compatibility guardrail.
+- B8: How rule distillation and low-confidence LLM fallback fit the proposed method.
 
 ## Lines to Avoid
 
@@ -53,5 +54,6 @@ Use only if asked:
 - “The main result is label-free event adaptation under a post-pandemic distribution shift.”
 - “The global event prior is a strong low-cost baseline; the gated LLM adapter is the balanced reporting operating point.”
 - “Pure LLM pressure has the right direction but weaker calibration; the hybrid design is why the final bias is near zero.”
+- “LLM distillation is used as an event-prior generation layer, not as per-household target prediction.”
 - “Causal guardrails and negative controls make the LLM component auditable.”
 - “External data supports the event mechanisms; PSRC household microdata provides a direct regional pre/post replication, while direct numerical validation of NHTS 2022 remains out of scope.”

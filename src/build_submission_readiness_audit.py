@@ -338,8 +338,9 @@ def audit_presentation() -> list[Check]:
     category = "Presentation readiness"
     checks: list[Check] = []
     slide_count, text = ppt_text("outputs/final_project/NHTS_Travel_Behavior_Template_Presentation.pptx")
-    if slide_count >= 29 and all(term in text for term in ["B1", "B2", "B3", "B4", "B5", "B6"]):
-        checks.append(pass_check(category, "Main deck plus backup", f"Template PPT has {slide_count} slides with B1-B6 backup."))
+    backup_markers = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8"]
+    if slide_count >= 31 and all(term in text for term in backup_markers):
+        checks.append(pass_check(category, "Main deck plus backup", f"Template PPT has {slide_count} slides with B1-B8 backup."))
     elif slide_count >= 23:
         checks.append(
             partial_check(

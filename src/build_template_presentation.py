@@ -1117,37 +1117,58 @@ def add_purpose_slide(prs: Presentation, logo: bytes | None, purpose: pd.DataFra
 def add_scalability_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "14", "LLM 扩展与泛化 / LLM Scaling", "Batch prompting + event-generalizable priors", 21, logo)
-    steps = [
-        ("7,893 households", "2022 rows"),
-        ("1,327 cohorts", "aggregated profiles"),
-        ("89 batch prompts", "batch size 15"),
-        ("validated JSON", "event priors"),
-        ("multi-output adapter", "trips / modes / purposes"),
+    add_frame(
+        slide,
+        "14",
+        "LLM 蒸馏与扩展 / Distillation & Scaling",
+        "把大模型泛化能力转成可审计、低调用量的事件适配器",
+        21,
+        logo,
+    )
+    stages = [
+        ("Direct LLM", "逐户预测成本高，且数值校准弱"),
+        ("Cohort batching", "1,327 cohorts -> 89 prompts"),
+        ("Event-prior distillation", "validated JSON -> s_event"),
+        ("Fixed adapter", "no-label rule; no per-household LLM"),
     ]
-    for idx, (title, note) in enumerate(steps):
-        x = 0.72 + idx * 2.3
-        node(slide, x, 1.55, 1.75, 0.75, title, note, COLORS["teal"] if idx < 2 else COLORS["orange"])
-        if idx < len(steps) - 1:
-            arrow(slide, x + 1.82, 1.82, 0.32, 0.14, COLORS["gray"])
-    metric_card(slide, 1.0, 3.08, 2.4, 0.86, "Request reduction", "93.3%", "1327 -> 89 prompts", COLORS["blue"])
-    metric_card(slide, 3.85, 3.08, 2.4, 0.86, "LLM strength", "generalize", "event mechanisms", COLORS["green"])
-    metric_card(slide, 6.7, 3.08, 2.4, 0.86, "Context", "frozen", "prospective event file", COLORS["purple"])
-    headers = ["风险", "控制方式"]
-    rows = [
-        ["hallucination", "schema + numeric range validation"],
-        ["target leakage", "exclude labels, weights, IDs"],
-        ["request cost", "batch cohort prompting"],
-        ["tuning leakage", "fixed no-label rule"],
-    ]
-    small_table(slide, headers, rows, 1.0, 4.35, [3.2, 6.6], 0.5, 12, COLORS["navy2"])
+    for idx, (title, note) in enumerate(stages):
+        x = 0.72 + idx * 3.05
+        color = COLORS["red"] if idx == 0 else COLORS["teal"] if idx == 1 else COLORS["orange"] if idx == 2 else COLORS["green"]
+        rect(slide, x, 1.26, 2.55, 1.08, COLORS["light"], COLORS["line"], True)
+        rect(slide, x, 1.26, 2.55, 0.055, color)
+        text_box(slide, title, x + 0.14, 1.46, 2.27, 0.24, 12, color, True, PP_ALIGN.CENTER)
+        text_box(slide, note, x + 0.16, 1.78, 2.23, 0.36, 12, COLORS["gray"], False, PP_ALIGN.CENTER)
+        if idx < len(stages) - 1:
+            arrow(slide, x + 2.62, 1.72, 0.28, 0.14, COLORS["gray"])
+
+    metric_card(slide, 0.95, 2.95, 2.35, 0.84, "Household requests", "-98.9%", "7893 -> 89 prompts", COLORS["blue"])
+    metric_card(slide, 3.65, 2.95, 2.35, 0.84, "Batch size", "15", "stable JSON parsing", COLORS["teal"])
+    metric_card(slide, 6.35, 2.95, 2.35, 0.84, "Main inference", "0 LLM", "adapter is deterministic", COLORS["green"])
+    metric_card(slide, 9.05, 2.95, 2.35, 0.84, "Optional fallback", "low-conf", "deployment extension", COLORS["purple"])
+
+    small_table(
+        slide,
+        ["部署层", "在本研究中的角色", "为什么这样设计"],
+        [
+            ["Batch prior", "离线生成 cohort 级疫情先验", "保留 LLM 泛化能力，避免逐户调用"],
+            ["Schema validation", "检查数值范围、字段完整性", "降低 hallucination 和格式错误"],
+            ["Confidence gate", "低置信 cohort 退回 global pressure", "主实验保持 no-label、可复现"],
+            ["LLM fallback", "作为线上扩展，不进入主结果", "有预算时处理边界样本"],
+        ],
+        0.82,
+        4.17,
+        [2.35, 4.15, 4.5],
+        0.42,
+        12,
+        COLORS["navy2"],
+    )
     text_box(
         slide,
-        "LLM 的核心价值不是逐户预测，而是把“疫情/冲击机制”泛化到未标注 cohort，并可迁移到其他事件场景。",
-        1.05,
-        6.55,
-        10.2,
-        0.28,
+        "汇报口径：LLM 不是每户都报答案，而是把 pandemic context 蒸馏成结构化 event priors；主方法在预测阶段是 deterministic adapter，低置信 LLM 回退属于可部署扩展。",
+        0.95,
+        6.48,
+        11.0,
+        0.34,
         12,
         COLORS["ink"],
         True,
@@ -1319,6 +1340,21 @@ def add_backup_qa_slides(prs: Presentation, logo: bytes | None, values: dict[str
             ["Safe claim", "External mechanism + recovery-transfer support"],
         ],
         "答法：我们用 ACS 证明疫情后通勤机制确实发生了远程办公和公共交通下降；用 PSRC 独立 household microdata 做 recovery-transfer 验证；同时用 BTS 做 guardrail，说明 device mobility trips 不能直接当作 NHTS household trip-count 的外部标签。",
+    )
+    add_backup_qa_slide(
+        prs,
+        logo,
+        "B8",
+        "规则蒸馏和低置信 LLM 回退怎么并入本方法？",
+        "How do rule distillation and low-confidence LLM fallback fit into the method?",
+        "它们是同一条技术路线的部署层：LLM 先验被蒸馏成规则，低置信样本可选回退。",
+        [
+            ["Distilled rule layer", "LLM priors -> fixed event adapter, not per-household answers"],
+            ["Batch prompting", "1,327 cohorts -> 89 prompts with batch size 15"],
+            ["Reported experiment", "No target-year labels; low-confidence uses global pressure fallback"],
+            ["Deployable extension", "Online LLM fallback only for uncertain cohorts if cost allows"],
+        ],
+        "答法：可以把“LLM 规则蒸馏 + 置信度回退”理解为我们方法的工程化外壳。论文主结果为了避免 target-year leakage，使用离线 batch 先验和固定 adapter；如果未来做线上系统，可以在低置信 cohort 上再调用 LLM，而不是改变本文主实验口径。",
     )
 
 

@@ -54,7 +54,7 @@ No PARTIAL items were detected.
 | Literature and paper story | 2025-2026 literature grounding | PASS | 1.0 | Literature grounding note contains current anchors. |
 | Literature and paper story | Single paper spine | PASS | 1.0 | paper_logic_chain.md states the event-adaptation spine. |
 | Literature and paper story | Reviewer Q&A backup | PASS | 1.0 | Reviewer Q&A backup document exists. |
-| Presentation readiness | Main deck plus backup | PASS | 1.0 | Template PPT has 30 slides with B1-B6 backup. |
+| Presentation readiness | Main deck plus backup | PASS | 1.0 | Template PPT has 31 slides with B1-B8 backup. |
 | Presentation readiness | Key defense content in deck | PASS | 1.0 | Deck contains literature anchors and method-defense baselines. |
 | Presentation readiness | Speaker notes | PASS | 1.0 | Chinese speaker notes include talk path and backup map. |
 | Reproducibility and GPU | Stronger baseline script | PASS | 1.0 | Strong baseline script and metrics exist. |

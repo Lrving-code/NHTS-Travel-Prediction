@@ -20,7 +20,7 @@ LLM 输出的是结构化事件先验，不直接输出 `CNTTDHH`。
 
 ## 10 分钟主讲路径
 
-正式模板 PPT 的前 23 页是主讲路径。END 之后的 B1-B6 是 backup Q&A，不主动讲，只有在讨论环节老师追问时跳转。
+正式模板 PPT 的前 23 页是主讲路径。END 之后的 B1-B8 是 backup Q&A，不主动讲，只有在讨论环节老师追问时跳转。
 
 建议时间分配：
 
@@ -31,6 +31,12 @@ LLM 输出的是结构化事件先验，不直接输出 `CNTTDHH`。
 - 总结与边界：2 分钟。
 
 如果时间不够，优先保留：研究问题、技术路线、方法比较、主结果、稳健性边界和总结；error distribution、subgroup、mode/purpose 可以快速带过。
+
+## LLM 蒸馏与调用效率怎么讲
+
+推荐口径是：纯 LLM 逐户调用有两个问题，一是成本和延迟随 household 数量线性增加，二是缺少 NHTS 数值校准。我们的做法不是让 LLM 逐户报 `CNTTDHH`，而是先把家庭聚合成 cohort，再用 batch size 15 生成结构化 event priors。主实验一共从 1,327 个 cohorts 压缩到 89 个 prompts，相比 7,893 个 household 逐户调用减少约 98.9% 请求。
+
+蒸馏后的先验进入固定 adapter，所以正式预测阶段不再调用 LLM。低置信度回退可以作为未来线上部署扩展：如果某个 cohort 的事件先验不稳定，可以再触发 LLM 或改用 global pressure fallback。但主结果为了保持 no-label 和可复现，使用的是固定规则，不把在线 LLM fallback 混入 2022 evaluation。
 
 ## 各方法怎么比较
 
@@ -83,3 +89,4 @@ LLM 输出的是结构化事件先验，不直接输出 `CNTTDHH`。
 - B5：老师问“mode/purpose 是不是已经做完了”。
 - B6：老师问“Weighted MAE、bias、within-k accuracy 怎么解释”。
 - B7：老师问“有没有 NHTS 之外的外部验证”。
+- B8：老师问“规则蒸馏、低置信 LLM 回退和我们现在的方法是什么关系”。

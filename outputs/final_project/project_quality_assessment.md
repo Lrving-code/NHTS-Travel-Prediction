@@ -24,7 +24,9 @@
 - BTS daily mobility is useful as a compatibility guardrail but not as an external numeric target: its device-based trips/person do not align with NHTS travel-diary `CNTTDHH`.
 - PSRC household-level microdata adds an independent direct pre/post check: 2017+2019->2023 weighted MAE changes `3.4271 -> 3.2498`, while weighted bias improves from `+1.0532` to `+0.2605` using an ACS-derived remote-work suppression factor. The BTS device-mobility recovery factor is a useful negative guardrail because it worsens the same external transfer.
 
-These numbers are strong enough for a course report because the baseline failure, correction mechanism, and external evidence chain are visible. They can support a paper seed if framed as event adaptation rather than pure prediction SOTA. Exact household-level prediction remains hard, mode composition is still exploratory, and PSRC is a regional replication rather than direct numerical validation of NHTS 2022.
+These numbers are strong enough for a course report because the baseline failure, correction mechanism, and external evidence chain are visible. They can support a paper seed if framed as event adaptation rather than pure prediction SOTA. Exact household-level prediction remains hard, mode composition is still exploratory, and PSRC is a regional survey replication rather than direct numerical validation of NHTS 2022.
+
+Scope statement: PSRC is a regional survey, not direct numerical validation of NHTS 2022; it validates the event-adaptation principle on independent household microdata.
 
 ## External Positioning
 

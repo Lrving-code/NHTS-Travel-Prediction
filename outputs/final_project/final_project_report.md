@@ -54,7 +54,7 @@ We added an external validation and compatibility audit in `outputs/external_val
 | BTS/UMD daily mobility | BTS trips/person changes only `-1.95%` from 2019 to 2022, while NHTS diary `CNTTDHH` has a much larger 2017-to-2022 shift. | Shows BTS device mobility is not a direct numeric label for NHTS household trips. |
 | PSRC household travel survey | 2017+2019->2023 household/day pre/post replication wMAE changes `3.4271 -> 3.2498`; wBias changes `+1.0532 -> +0.2605` using an ACS-derived remote-work suppression factor. | Provides household-level external microdata evidence that event-scale suppression improves transfer on an independent travel survey. |
 
-Interpretation: external data supports the event semantics used by the LLM adapter and now includes a household-level external pre/post replication. The PSRC result is not direct numerical validation of NHTS 2022 household predictions because PSRC is a regional survey with different sampling and diary protocols, but it strengthens the paper claim that fixed event priors can improve label-free transfer under post-pandemic survey shifts.
+Interpretation: external data supports the event semantics used by the LLM adapter and now includes a household-level external pre/post replication. The PSRC result is not direct numerical validation of NHTS 2022 household predictions because PSRC is a regional survey with different sampling and diary protocols, but it strengthens the paper claim that fixed event priors can improve label-free transfer under post-pandemic survey shifts. The external adapter is also no-label: it is specified from ACS event context, without target-year PSRC label calibration.
 
 ## Improvement Over Historical Predictor
 
