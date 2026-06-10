@@ -1,0 +1,4 @@
+stage,method,weighted_mae,weighted_bias,status,alpha,max_iter,n_iter,converged,warning_message,train_rows,design_columns,prediction_cap_from_history,aic,deviance,error_message
+historical_validation_2017,negative_binomial_glm_alpha_0.5_validate_2017,4.967580084162142,2.257597173309749,ok,0.5,100,100,False,,219964,164,90.0,1286937.4714243906,178719.16929351294,
+historical_validation_2017,negative_binomial_glm_alpha_1_validate_2017,,,failed,1.0,100,-1,False,,219964,0,,,,"NaN, inf or invalid value detected in weights, estimation infeasible."
+final_2022_evaluation,negative_binomial_glm_hist_selected,6.1229011964723075,-1.1090941620719887,ok,0.5,100,100,False,,349660,168,88.0,2033735.3753692687,291239.0140388584,

@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import html
+import re
 import subprocess
+import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
-from pptx import Presentation
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -44,18 +46,29 @@ def git_branch() -> str:
     return result.stdout.strip() if result.returncode == 0 else "unknown"
 
 
+def slide_number(path: str) -> int:
+    match = re.search(r"slide(\d+)\.xml", path)
+    return int(match.group(1)) if match else 0
+
+
 def ppt_summary(path: str) -> tuple[int, str]:
     file_path = PROJECT_ROOT / path
     if not file_path.exists():
         return 0, ""
-    presentation = Presentation(file_path)
-    text = "\n".join(
-        shape.text
-        for slide in presentation.slides
-        for shape in slide.shapes
-        if hasattr(shape, "text")
-    )
-    return len(presentation.slides), text
+    with zipfile.ZipFile(file_path) as archive:
+        slide_names = sorted(
+            (
+                name
+                for name in archive.namelist()
+                if re.fullmatch(r"ppt/slides/slide\d+\.xml", name)
+            ),
+            key=slide_number,
+        )
+        text_parts: list[str] = []
+        for name in slide_names:
+            xml = archive.read(name).decode("utf-8", errors="ignore")
+            text_parts.extend(html.unescape(match.group(1)) for match in re.finditer(r"<a:t>(.*?)</a:t>", xml))
+    return len(slide_names), "\n".join(text_parts)
 
 
 def submission_audit_status() -> tuple[float, int, int]:
@@ -171,9 +184,11 @@ def build_requirements() -> list[RequirementEvidence]:
             exists("outputs/strong_baselines/strong_tabular_baseline_metrics.csv")
             and exists("outputs/count_model_baselines/count_model_baseline_metrics.csv")
             and exists("outputs/count_model_baselines/count_model_solver_diagnostics.csv")
+            and exists("outputs/negative_binomial_baseline/negative_binomial_2022_metrics.csv")
+            and exists("outputs/negative_binomial_baseline/negative_binomial_diagnostics.csv")
             and exists("outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_metrics.csv"),
             "Strong baselines and LLM rule-tree ablations exist",
-            "Strong tabular, transparent count-model, zero-shot rule tree, pseudo-label tree, and small-calibration evidence are present.",
+            "Strong tabular, transparent Poisson/Tweedie/negative-binomial count-model, zero-shot rule tree, pseudo-label tree, and small-calibration evidence are present.",
             "outputs/strong_baselines/strong_tabular_baseline_metrics.csv",
         ),
         pass_if(
@@ -296,6 +311,7 @@ def write_report(rows: list[RequirementEvidence]) -> Path:
             "- Final report: `outputs/final_project/final_project_report.md`",
             "- Method comparison: `outputs/final_project/method_comparison_summary.csv`",
             "- Count-model baseline: `outputs/count_model_baselines/count_model_baseline_report.md`",
+            "- Negative-binomial count baseline: `outputs/negative_binomial_baseline/negative_binomial_baseline_report.md`",
             "- Cohort-prior value analysis: `outputs/cohort_prior_value_analysis/cohort_prior_value_report.md`",
             "- Submission audit: `outputs/submission_readiness/submission_readiness_audit.md`",
             "- External PSRC validation: `outputs/external_validation/psrc_household_external_validation_report.md`",

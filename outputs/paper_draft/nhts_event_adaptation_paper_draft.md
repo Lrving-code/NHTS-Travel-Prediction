@@ -2,7 +2,7 @@
 
 ## Abstract
 
-Household travel surveys provide calibrated evidence for transportation planning, but their temporal transfer can fail when rare societal shocks change the behavioral meaning of otherwise stable household covariates. We study this problem using the U.S. National Household Travel Survey (NHTS), training routine-mobility predictors on pre-2022 waves and evaluating on the 2022 post-pandemic recovery wave. A historical XGBoost model substantially overpredicts 2022 household trip generation, with weighted MAE `4.3377` and weighted bias `+3.6052`. Transparent Poisson/Tweedie count-model baselines show the same positive-bias failure mode. We propose a label-free event-aware adaptation framework in which a large language model (LLM) does not directly predict household trips. Instead, it generates cohort-level event priors for mechanisms such as trip suppression, remote-work substitution, transit avoidance, delivery substitution, and recovery sensitivity. These priors are distilled into a fixed no-label event adapter that corrects the historical routine predictor without using 2022 trip-count labels for training or calibration. The primary gated adapter reduces weighted MAE to `2.5023`, reduces weighted RMSE by `32.22%`, and nearly removes systematic overprediction with weighted bias `-0.0230`. We evaluate the method against historical, trend, global-event, random-prior, LLM-only, zero-shot rule-tree, small-history rule-calibration, transparent count-model, and stronger non-LLM baselines, and add leakage audits, placebo controls, cohort-prior value analysis, bootstrap confidence intervals, equity-aware subgroup analysis, mode/purpose extensions, and external mechanism checks with ACS, BTS, and PSRC data. The results suggest that LLMs are most useful in this setting as constrained event-prior generators rather than standalone numerical predictors.
+Household travel surveys provide calibrated evidence for transportation planning, but their temporal transfer can fail when rare societal shocks change the behavioral meaning of otherwise stable household covariates. We study this problem using the U.S. National Household Travel Survey (NHTS), training routine-mobility predictors on pre-2022 waves and evaluating on the 2022 post-pandemic recovery wave. A historical XGBoost model substantially overpredicts 2022 household trip generation, with weighted MAE `4.3377` and weighted bias `+3.6052`. Transparent Poisson/Tweedie/negative-binomial count-model baselines show the same target-year transfer difficulty. We propose a label-free event-aware adaptation framework in which a large language model (LLM) does not directly predict household trips. Instead, it generates cohort-level event priors for mechanisms such as trip suppression, remote-work substitution, transit avoidance, delivery substitution, and recovery sensitivity. These priors are distilled into a fixed no-label event adapter that corrects the historical routine predictor without using 2022 trip-count labels for training or calibration. The primary gated adapter reduces weighted MAE to `2.5023`, reduces weighted RMSE by `32.22%`, and nearly removes systematic overprediction with weighted bias `-0.0230`. We evaluate the method against historical, trend, global-event, random-prior, LLM-only, zero-shot rule-tree, small-history rule-calibration, transparent count-model, and stronger non-LLM baselines, and add leakage audits, placebo controls, cohort-prior value analysis, bootstrap confidence intervals, equity-aware subgroup analysis, mode/purpose extensions, and external mechanism checks with ACS, BTS, and PSRC data. The results suggest that LLMs are most useful in this setting as constrained event-prior generators rather than standalone numerical predictors.
 
 ## 1. Introduction
 
@@ -16,7 +16,7 @@ This framing is motivated by recent mobility research. ELLMob frames event-drive
 
 1. We formulate 2022 NHTS household trip generation as event-driven temporal adaptation rather than ordinary cross-year forecasting.
 2. We introduce a label-free LLM event-prior adapter that corrects a historical household predictor without using 2022 `CNTTDHH` labels for calibration.
-3. We evaluate against a broad method spectrum: historical mean, ordinary XGBoost, trend shift, transparent Poisson/Tweedie count models, CatBoost GPU, LLM-only pressure, global event prior, random prior, zero-shot LLM rule tree, pseudo-label tree, and LLM rule plus historical calibration.
+3. We evaluate against a broad method spectrum: historical mean, ordinary XGBoost, trend shift, transparent Poisson/Tweedie/negative-binomial count models, CatBoost GPU, LLM-only pressure, global event prior, random prior, zero-shot LLM rule tree, pseudo-label tree, and LLM rule plus historical calibration.
 4. We add robustness and credibility checks: leakage audit, prospective event context, placebo events, permutation controls, cohort-prior value analysis, bootstrap confidence intervals, equity-aware subgroup analysis, and external ACS/BTS/PSRC validation.
 5. We extend the behavior system beyond total trip generation to mode composition, mode-specific trip volume, and exploratory purpose composition while keeping trip generation as the main contribution.
 
@@ -87,7 +87,7 @@ The comparison includes:
 - historical mean;
 - ordinary historical XGBoost;
 - historical trend shift;
-- transparent Poisson/Tweedie count models;
+- transparent Poisson/Tweedie/negative-binomial count models;
 - CatBoost GPU and stronger XGBoost/LightGBM tabular baselines;
 - LLM-only pressure;
 - global event prior;
@@ -106,6 +106,7 @@ The comparison includes:
 | Ordinary XGBoost | 4.3377 | 5.3169 | +3.6052 | -0.6367 |
 | Poisson GLM | 4.3368 | 5.4383 | +3.6178 | -0.7123 |
 | Tweedie GLM (p=1.5) | 4.3761 | 5.5757 | +3.6677 | -0.7999 |
+| Negative-binomial GLM (alpha=0.5) | 6.1229 | 15.3423 | -1.1091 | -12.6282 |
 | Historical trend shift | 4.1504 | 5.1463 | +3.3485 | -0.5334 |
 | LLM-only pressure | 2.7175 | 3.9876 | -0.3732 | 0.0794 |
 | Global event prior | 2.5223 | 3.7432 | -0.7477 | 0.1888 |
@@ -114,7 +115,7 @@ The comparison includes:
 | LLM rule + 500-history calibration | 2.7723 | 3.8226 | +0.4627 | 0.1538 |
 | Primary gated adapter | 2.5023 | 3.6038 | -0.0230 | 0.2480 |
 
-The ordinary XGBoost baseline overpredicts strongly. Transparent Poisson/Tweedie count-model baselines also overpredict by more than `+3.6` weighted trips, which suggests that the core failure is not only high-capacity tabular overfitting but a broader historical-transfer mismatch under the 2022 event shift. The primary gated adapter reduces weighted MAE by `42.31%` relative to ordinary XGBoost and by `42.30%` relative to the best count model; it also reduces weighted RMSE by `32.22%` and absolute weighted bias by `99.36%`. The LLM-only pressure baseline is directionally useful but less calibrated, supporting the hypothesis that LLM priors need a historical household baseline.
+The ordinary XGBoost baseline overpredicts strongly. Transparent Poisson/Tweedie count-model baselines also overpredict by more than `+3.6` weighted trips, while the negative-binomial GLM reduces positive bias only by becoming unstable and much less accurate. This suggests that the core failure is not only high-capacity tabular overfitting but a broader historical-transfer mismatch under the 2022 event shift. The primary gated adapter reduces weighted MAE by `42.31%` relative to ordinary XGBoost, by `42.30%` relative to the best transparent count model, and by `59.13%` relative to the negative-binomial GLM; it also reduces weighted RMSE by `32.22%` and absolute weighted bias by `99.36%`. The LLM-only pressure baseline is directionally useful but less calibrated, supporting the hypothesis that LLM priors need a historical household baseline.
 
 ### 5.2 Statistical Validation
 
@@ -136,7 +137,7 @@ The global event prior is strong, so the correct interpretation is event-level a
 - Zero-shot LLM rule tree reaches weighted MAE `2.6019`, and a pseudo-label tree distilled from it reaches `2.6040`; both are weaker and more biased than the primary adapter.
 - LLM rule plus 500 historical calibration reaches weighted MAE `2.7723`, showing that rule distillation plus small historical calibration is coherent but not the best solution for the 2022 event-shift task.
 - CatBoost GPU is the strongest extra non-LLM baseline with weighted MAE `4.2196` and weighted bias `+3.4873`, still far from the primary adapter.
-- Poisson GLM reaches weighted MAE `4.3368` and Tweedie GLM reaches `4.3761`; these are grounded in standard count-data regression practice, and solver diagnostics are recorded so they should be read as transparent count-model baselines rather than exhaustively optimized count-model state of the art.
+- Poisson GLM reaches weighted MAE `4.3368` and Tweedie GLM reaches `4.3761`; a stable negative-binomial GLM check reaches weighted MAE `6.1229` with alpha `0.5`, while alpha `1.0` is solver-infeasible during historical validation. These are grounded in standard count-data regression practice, and solver diagnostics are recorded so they should be read as transparent count-model baselines rather than exhaustively optimized count-model state of the art.
 - Cohort-prior value analysis shows that the primary gated adapter is `0.0508` weighted-MAE lower than a same-alpha global prior and `0.0201` lower than the reported low-cost global prior; it beats same-alpha global prior in `77.8%` of evaluated subgroup cells while using cohort-specific pressure for only `17.5%` of survey-weighted households.
 
 ### 5.4 Behavior-System Outputs
@@ -173,7 +174,7 @@ The strongest alternative explanation is that a global post-pandemic downscaling
 3. The global event prior is strong, so cohort-specific LLM ranking should be described as incremental.
 4. Mode and purpose extensions are useful for planning relevance but are not yet full mode-choice or purpose-choice models.
 5. PSRC is a regional external survey with different sampling and diary protocols, so it validates transfer of the principle rather than exact NHTS numerical accuracy.
-6. The current count-model baselines are transparent Poisson/Tweedie checks with solver warnings recorded; a submission version should add fully tuned negative-binomial or zero-inflated variants if time permits.
+6. The current count-model baselines include Poisson, Tweedie, and a stable negative-binomial GLM check with solver diagnostics recorded; a submission version should still add zero-inflated or more carefully regularized count variants if time permits.
 
 ## 8. Conclusion
 

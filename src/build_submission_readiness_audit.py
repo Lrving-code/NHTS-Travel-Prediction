@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import html
+import re
+import zipfile
 from dataclasses import dataclass
 from pathlib import Path
 
 import pandas as pd
-from pptx import Presentation
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -68,18 +70,29 @@ def contains_text(path: str, terms: list[str]) -> bool:
     return all(term in content for term in terms)
 
 
+def slide_number(path: str) -> int:
+    match = re.search(r"slide(\d+)\.xml", path)
+    return int(match.group(1)) if match else 0
+
+
 def ppt_text(path: str) -> tuple[int, str]:
     file_path = PROJECT_ROOT / path
     if not file_path.exists():
         return 0, ""
-    presentation = Presentation(file_path)
-    text = "\n".join(
-        shape.text
-        for slide in presentation.slides
-        for shape in slide.shapes
-        if hasattr(shape, "text")
-    )
-    return len(presentation.slides), text
+    with zipfile.ZipFile(file_path) as archive:
+        slide_names = sorted(
+            (
+                name
+                for name in archive.namelist()
+                if re.fullmatch(r"ppt/slides/slide\d+\.xml", name)
+            ),
+            key=slide_number,
+        )
+        text_parts: list[str] = []
+        for name in slide_names:
+            xml = archive.read(name).decode("utf-8", errors="ignore")
+            text_parts.extend(html.unescape(match.group(1)) for match in re.finditer(r"<a:t>(.*?)</a:t>", xml))
+    return len(slide_names), "\n".join(text_parts)
 
 
 def pass_check(category: str, item: str, evidence: str, recommendation: str = "Keep.") -> Check:
@@ -162,6 +175,9 @@ def audit_baselines_and_controls() -> list[Check]:
         "Stronger tabular baseline": "outputs/strong_baselines/strong_tabular_baseline_metrics.csv",
         "Transparent count-model baseline": "outputs/count_model_baselines/count_model_baseline_metrics.csv",
         "Count-model solver diagnostics": "outputs/count_model_baselines/count_model_solver_diagnostics.csv",
+        "Negative-binomial count baseline": "outputs/negative_binomial_baseline/negative_binomial_2022_metrics.csv",
+        "Negative-binomial diagnostics": "outputs/negative_binomial_baseline/negative_binomial_diagnostics.csv",
+        "Negative-binomial report": "outputs/negative_binomial_baseline/negative_binomial_baseline_report.md",
         "Zero-shot rule tree": "outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_metrics.csv",
         "Small historical calibration": "outputs/llm_rule_small_data_calibration/method_spectrum_metrics.csv",
         "Irrelevant pseudo-event placebo": "outputs/irrelevant_pseudo_event_placebo/irrelevant_pseudo_event_placebo_metrics.csv",
@@ -213,6 +229,47 @@ def audit_baselines_and_controls() -> list[Check]:
                 "Count-model comparison",
                 "Could not read Poisson GLM or primary adapter metrics.",
                 "Regenerate count-model baselines and final metrics.",
+            )
+        )
+    nb_mae = metric_value(
+        "outputs/negative_binomial_baseline/negative_binomial_2022_metrics.csv",
+        "negative_binomial_glm_hist_selected",
+        "weighted_mae",
+    )
+    nb_bias = metric_value(
+        "outputs/negative_binomial_baseline/negative_binomial_2022_metrics.csv",
+        "negative_binomial_glm_hist_selected",
+        "weighted_bias",
+    )
+    if nb_mae is not None and nb_bias is not None and primary_mae is not None:
+        reduction = (nb_mae - primary_mae) / nb_mae
+        if reduction >= 0.35:
+            checks.append(
+                pass_check(
+                    category,
+                    "Negative-binomial comparison",
+                    (
+                        f"NB GLM wMAE {nb_mae:.4f}, wBias {nb_bias:+.4f}; "
+                        f"primary adapter is {reduction:.2%} lower in wMAE, with diagnostics recorded."
+                    ),
+                )
+            )
+        else:
+            checks.append(
+                partial_check(
+                    category,
+                    "Negative-binomial comparison",
+                    f"NB GLM wMAE {nb_mae:.4f}, wBias {nb_bias:+.4f}; primary adapter reduction {reduction:.2%}.",
+                    "Review whether the negative-binomial check supports the event-shift story.",
+                )
+            )
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Negative-binomial comparison",
+                "Could not read NB GLM or primary adapter metrics.",
+                "Regenerate negative-binomial baseline and final metrics.",
             )
         )
     cohort_value_path = PROJECT_ROOT / "outputs/cohort_prior_value_analysis/cohort_prior_value_summary.csv"

@@ -7,7 +7,7 @@ This file constrains paper and presentation claims to evidence that exists in th
 | Claim | Evidence | Supported wording | Unsafe wording |
 |---|---|---|---|
 | 2022 NHTS is an event-shift target, not an ordinary cross-year transfer target. | `outputs/temporal_transfer_validation/temporal_transfer_validation_report.md`; `outputs/final_project/final_project_report.md` | "2022 shows substantially larger positive transfer bias than pre-COVID transfer checks." | "We prove COVID causally reduced trips for every household." |
-| Historical supervised and count-model baselines overpredict 2022 household trips. | `outputs/final_project/final_metrics_summary.csv`; `outputs/strong_baselines/strong_tabular_baseline_metrics.csv`; `outputs/count_model_baselines/count_model_baseline_metrics.csv` | "Ordinary XGBoost has weighted bias `+3.6052`; CatBoost GPU has weighted bias `+3.4873`; Poisson GLM has weighted bias `+3.6178`." | "Traditional methods cannot model travel demand." |
+| Historical supervised and count-model baselines struggle on 2022 household trips. | `outputs/final_project/final_metrics_summary.csv`; `outputs/strong_baselines/strong_tabular_baseline_metrics.csv`; `outputs/count_model_baselines/count_model_baseline_metrics.csv`; `outputs/negative_binomial_baseline/negative_binomial_2022_metrics.csv`; `outputs/negative_binomial_baseline/negative_binomial_diagnostics.csv` | "Ordinary XGBoost has weighted bias `+3.6052`; CatBoost GPU has weighted bias `+3.4873`; Poisson GLM has weighted bias `+3.6178`; the negative-binomial GLM has weighted MAE `6.1229` with solver diagnostics recorded." | "Traditional methods cannot model travel demand." |
 | The primary method improves trip-count prediction without target-year label calibration. | `outputs/final_project/final_metrics_summary.csv`; `outputs/leakage_audit/llm_input_leakage_audit_report.md`; `plan/prospective_event_context_2022.md` | "The fixed gated adapter reduces weighted MAE from `4.3377` to `2.5023` and moves weighted bias to `-0.0230`." | "The LLM predicts 2022 household trips accurately by itself." |
 | Pure LLM-style prediction is useful but under-calibrated. | `outputs/final_project/final_metrics_summary.csv`; `outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_metrics.csv` | "LLM-only pressure and zero-shot rule tree improve over historical baselines but remain weaker than the hybrid adapter." | "LLM reasoning alone is superior to historical household data." |
 | Most gain is event-level correction; cohort ranking is incremental. | `outputs/final_project/final_metrics_summary.csv`; `outputs/robustness_checks/robustness_check_report.md`; `outputs/irrelevant_pseudo_event_placebo/irrelevant_pseudo_event_placebo_metrics.csv`; `outputs/cohort_prior_value_analysis/cohort_prior_value_summary.csv` | "Global event prior is strong; gated cohort refinement improves calibration and adds selective subgroup value." | "Cohort-specific LLM ranking explains all of the improvement." |
@@ -36,7 +36,11 @@ This file constrains paper and presentation claims to evidence that exists in th
 | Poisson GLM weighted MAE | `4.3368` | `outputs/count_model_baselines/count_model_baseline_metrics.csv` |
 | Poisson GLM weighted bias | `+3.6178` | `outputs/count_model_baselines/count_model_baseline_metrics.csv` |
 | Tweedie GLM weighted MAE | `4.3761` | `outputs/count_model_baselines/count_model_baseline_metrics.csv` |
+| Negative-binomial GLM weighted MAE | `6.1229` | `outputs/negative_binomial_baseline/negative_binomial_2022_metrics.csv` |
+| Negative-binomial GLM weighted bias | `-1.1091` | `outputs/negative_binomial_baseline/negative_binomial_2022_metrics.csv` |
+| Negative-binomial GLM selected alpha | `0.5` | `outputs/negative_binomial_baseline/negative_binomial_diagnostics.csv` |
 | Primary gated MAE reduction vs best count model | `42.30%` | `outputs/count_model_baselines/count_model_baseline_report.md` |
+| Primary gated MAE reduction vs negative-binomial GLM | `59.13%` | `outputs/negative_binomial_baseline/negative_binomial_baseline_report.md` |
 | Primary gated vs same-alpha global weighted MAE delta | `0.0508` | `outputs/cohort_prior_value_analysis/cohort_prior_value_summary.csv` |
 | Primary gated vs reported global weighted MAE delta | `0.0201` | `outputs/cohort_prior_value_analysis/cohort_prior_value_summary.csv` |
 | Share of subgroup cells where primary beats same-alpha global prior | `77.8%` | `outputs/cohort_prior_value_analysis/cohort_prior_value_summary.csv` |
@@ -63,5 +67,5 @@ Avoid:
 - PSRC is external household microdata, but it is regional and not direct NHTS 2022 numeric validation.
 - Purpose composition is implemented but exploratory.
 - The primary adapter is fixed and no-label; any 2022 calibration experiment is an upper-bound or bridge baseline, not the main method.
-- Poisson/Tweedie count models are transparent reviewer-facing baselines with solver diagnostics recorded; do not present them as fully optimized count-model state of the art.
+- Poisson/Tweedie/negative-binomial count models are transparent reviewer-facing baselines with solver diagnostics recorded; do not present them as fully optimized count-model state of the art.
 - LLM pretraining may contain post-pandemic knowledge; the prospective event-context file and leakage audit reduce target-label leakage, but cannot make a pure historical-information claim about the LLM's pretraining corpus.
