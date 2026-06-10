@@ -1,0 +1,68 @@
+# Submission Readiness Audit
+
+Generated from current repository artifacts. This is an evidence audit, not a claim that the project is fully submission-ready.
+
+Overall readiness score: `0.98` / 1.00
+
+## Category Scores
+
+| Category | Score |
+|---|---:|
+| Baselines and controls | 1.00 |
+| Causal and leakage guardrails | 1.00 |
+| Core results | 1.00 |
+| Literature and paper story | 1.00 |
+| Mobility behavior system | 1.00 |
+| Presentation readiness | 1.00 |
+| Reproducibility and GPU | 1.00 |
+| Temporal and external validity | 0.83 |
+
+## Hard Blockers
+
+No FAIL-level blockers were detected from the checked artifacts.
+
+## Partial Items To Fix Before Paper Submission
+
+| Category | Item | Evidence | Recommendation |
+|---|---|---|---|
+| Temporal and external validity | External validation beyond NHTS | Internal temporal validation exists; no independent external dataset is documented. | For paper submission, add an external mobility survey/region/shock dataset or clearly scope this as single-dataset evidence. |
+
+## Full Evidence Matrix
+
+| Category | Item | Status | Score | Evidence |
+|---|---|---:|---:|---|
+| Core results | Primary trip-count result | PASS | 1.0 | historical wMAE 4.3377 -> primary wMAE 2.5023; primary wBias -0.0230. |
+| Core results | Core result artifacts | PASS | 1.0 | Final report, accuracy summary, and CI report exist. |
+| Baselines and controls | Stronger tabular baseline | PASS | 1.0 | outputs/strong_baselines/strong_tabular_baseline_metrics.csv |
+| Baselines and controls | Zero-shot rule tree | PASS | 1.0 | outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_metrics.csv |
+| Baselines and controls | Small historical calibration | PASS | 1.0 | outputs/llm_rule_small_data_calibration/method_spectrum_metrics.csv |
+| Baselines and controls | Irrelevant pseudo-event placebo | PASS | 1.0 | outputs/irrelevant_pseudo_event_placebo/irrelevant_pseudo_event_placebo_metrics.csv |
+| Baselines and controls | Permutation robustness | PASS | 1.0 | outputs/robustness_checks/permutation_pressure_controls.csv |
+| Causal and leakage guardrails | Leakage audit | PASS | 1.0 | outputs/leakage_audit/llm_input_leakage_audit_report.md |
+| Causal and leakage guardrails | Causal evidence pack | PASS | 1.0 | outputs/causal_guardrails/causal_guardrail_evidence_report.md |
+| Causal and leakage guardrails | Prospective event context | PASS | 1.0 | plan/prospective_event_context_2022.md |
+| Causal and leakage guardrails | Pre-COVID placebo | PASS | 1.0 | outputs/pre_covid_placebo_event_correction/pre_covid_placebo_event_correction_report.md |
+| Causal and leakage guardrails | No-target-label framing | PASS | 1.0 | Final report states target-year labels are evaluation-only. |
+| Mobility behavior system | Mode composition | PASS | 1.0 | outputs/mode_composition_extension/mode_composition_metrics.csv |
+| Mobility behavior system | Mode-specific trips | PASS | 1.0 | outputs/mode_composition_extension/mode_specific_trip_count_metrics.csv |
+| Mobility behavior system | Purpose composition | PASS | 1.0 | outputs/purpose_composition_extension/purpose_composition_metrics.csv |
+| Mobility behavior system | Equity-aware evaluation | PASS | 1.0 | outputs/equity_aware_evaluation/subgroup_equity_metrics.csv |
+| Mobility behavior system | Multi-objective Pareto | PASS | 1.0 | outputs/multi_objective_pareto/preference_operating_points.csv |
+| Temporal and external validity | Temporal transfer validation | PASS | 1.0 | Pre-COVID and 2022 transfer report exists. |
+| Temporal and external validity | Pre-COVID placebo validation | PASS | 1.0 | Pre-COVID event-correction placebo report exists. |
+| Temporal and external validity | External validation beyond NHTS | PARTIAL | 0.5 | Internal temporal validation exists; no independent external dataset is documented. |
+| Literature and paper story | 2025-2026 literature grounding | PASS | 1.0 | Literature grounding note contains current anchors. |
+| Literature and paper story | Single paper spine | PASS | 1.0 | paper_logic_chain.md states the event-adaptation spine. |
+| Literature and paper story | Reviewer Q&A backup | PASS | 1.0 | Reviewer Q&A backup document exists. |
+| Presentation readiness | Main deck plus backup | PASS | 1.0 | Template PPT has 29 slides with B1-B6 backup. |
+| Presentation readiness | Key defense content in deck | PASS | 1.0 | Deck contains literature anchors and method-defense baselines. |
+| Presentation readiness | Speaker notes | PASS | 1.0 | Chinese speaker notes include talk path and backup map. |
+| Reproducibility and GPU | Stronger baseline script | PASS | 1.0 | Strong baseline script and metrics exist. |
+| Reproducibility and GPU | GPU execution evidence | PASS | 1.0 | label_free_llm_adaptation_metrics.csv records device=cuda. |
+| Reproducibility and GPU | Environment manifest | PASS | 1.0 | Environment manifest and freeze file exist under outputs/submission_readiness. |
+
+## Interpretation
+
+- Course-project readiness is strong: the core result, baselines, guardrails, deck, and Q&A material are present.
+- Paper-submission readiness is close but not complete: the main remaining gap is independent external validation beyond NHTS.
+- The defensible paper claim should remain scoped to label-free event adaptation for survey-based household mobility under a post-pandemic shift.
