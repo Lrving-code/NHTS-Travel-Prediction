@@ -144,9 +144,11 @@ def build_requirements() -> list[RequirementEvidence]:
         ),
         pass_if(
             exists("outputs/strong_baselines/strong_tabular_baseline_metrics.csv")
+            and exists("outputs/count_model_baselines/count_model_baseline_metrics.csv")
+            and exists("outputs/count_model_baselines/count_model_solver_diagnostics.csv")
             and exists("outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_metrics.csv"),
             "Strong baselines and LLM rule-tree ablations exist",
-            "Strong tabular, zero-shot rule tree, pseudo-label tree, and small-calibration evidence are present.",
+            "Strong tabular, transparent count-model, zero-shot rule tree, pseudo-label tree, and small-calibration evidence are present.",
             "outputs/strong_baselines/strong_tabular_baseline_metrics.csv",
         ),
         pass_if(
@@ -259,6 +261,7 @@ def write_report(rows: list[RequirementEvidence]) -> Path:
             "- Final PPT: `outputs/final_project/NHTS_Travel_Behavior_Template_Presentation.pptx`",
             "- Final report: `outputs/final_project/final_project_report.md`",
             "- Method comparison: `outputs/final_project/method_comparison_summary.csv`",
+            "- Count-model baseline: `outputs/count_model_baselines/count_model_baseline_report.md`",
             "- Submission audit: `outputs/submission_readiness/submission_readiness_audit.md`",
             "- External PSRC validation: `outputs/external_validation/psrc_household_external_validation_report.md`",
             "- Literature grounding: `plan/literature_grounding_2026.md`",

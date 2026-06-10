@@ -17,7 +17,7 @@ Overall status: `ARTIFACT_GATE_PASS`
 | LaTeX manuscript and citation verification package exist | PASS | LaTeX skeleton, core figures, BibTeX, and citation verification log are present. | `outputs/paper_draft/latex/main.tex` |
 | Top-venue adversarial audit is explicit | PASS | Round-2 audit records remaining top-tier risks and safe claims. | `outputs/paper_draft/top_venue_adversarial_audit_round2.md` |
 | Primary NHTS result is documented | PASS | Historical XGBoost to gated adapter improvement is in the audit. | `outputs/final_project/final_metrics_summary.csv` |
-| Strong baselines and LLM rule-tree ablations exist | PASS | Strong tabular, zero-shot rule tree, pseudo-label tree, and small-calibration evidence are present. | `outputs/strong_baselines/strong_tabular_baseline_metrics.csv` |
+| Strong baselines and LLM rule-tree ablations exist | PASS | Strong tabular, transparent count-model, zero-shot rule tree, pseudo-label tree, and small-calibration evidence are present. | `outputs/strong_baselines/strong_tabular_baseline_metrics.csv` |
 | Robustness and placebo controls exist | PASS | Permutation and irrelevant pseudo-event controls are present. | `outputs/robustness_checks/permutation_pressure_controls.csv` |
 | Causal/leakage guardrails are documented | PASS | Causal evidence pack and leakage audit exist. | `outputs/causal_guardrails/causal_guardrail_evidence_report.md` |
 | Temporal validation is documented | PASS | Pre-COVID transfer and placebo event correction reports exist. | `outputs/temporal_transfer_validation/temporal_transfer_validation_report.md` |
@@ -33,6 +33,7 @@ Overall status: `ARTIFACT_GATE_PASS`
 - Final PPT: `outputs/final_project/NHTS_Travel_Behavior_Template_Presentation.pptx`
 - Final report: `outputs/final_project/final_project_report.md`
 - Method comparison: `outputs/final_project/method_comparison_summary.csv`
+- Count-model baseline: `outputs/count_model_baselines/count_model_baseline_report.md`
 - Submission audit: `outputs/submission_readiness/submission_readiness_audit.md`
 - External PSRC validation: `outputs/external_validation/psrc_household_external_validation_report.md`
 - Literature grounding: `plan/literature_grounding_2026.md`

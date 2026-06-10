@@ -32,10 +32,13 @@ No PARTIAL items were detected.
 | Core results | Primary trip-count result | PASS | 1.0 | historical wMAE 4.3377 -> primary wMAE 2.5023; primary wBias -0.0230. |
 | Core results | Core result artifacts | PASS | 1.0 | Final report, accuracy summary, and CI report exist. |
 | Baselines and controls | Stronger tabular baseline | PASS | 1.0 | outputs/strong_baselines/strong_tabular_baseline_metrics.csv |
+| Baselines and controls | Transparent count-model baseline | PASS | 1.0 | outputs/count_model_baselines/count_model_baseline_metrics.csv |
+| Baselines and controls | Count-model solver diagnostics | PASS | 1.0 | outputs/count_model_baselines/count_model_solver_diagnostics.csv |
 | Baselines and controls | Zero-shot rule tree | PASS | 1.0 | outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_metrics.csv |
 | Baselines and controls | Small historical calibration | PASS | 1.0 | outputs/llm_rule_small_data_calibration/method_spectrum_metrics.csv |
 | Baselines and controls | Irrelevant pseudo-event placebo | PASS | 1.0 | outputs/irrelevant_pseudo_event_placebo/irrelevant_pseudo_event_placebo_metrics.csv |
 | Baselines and controls | Permutation robustness | PASS | 1.0 | outputs/robustness_checks/permutation_pressure_controls.csv |
+| Baselines and controls | Count-model comparison | PASS | 1.0 | Poisson GLM wMAE 4.3368, wBias +3.6178; primary adapter is 42.30% lower in wMAE. |
 | Causal and leakage guardrails | Leakage audit | PASS | 1.0 | outputs/leakage_audit/llm_input_leakage_audit_report.md |
 | Causal and leakage guardrails | Causal evidence pack | PASS | 1.0 | outputs/causal_guardrails/causal_guardrail_evidence_report.md |
 | Causal and leakage guardrails | Prospective event context | PASS | 1.0 | plan/prospective_event_context_2022.md |

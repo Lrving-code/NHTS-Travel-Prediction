@@ -160,6 +160,8 @@ def audit_baselines_and_controls() -> list[Check]:
     category = "Baselines and controls"
     required = {
         "Stronger tabular baseline": "outputs/strong_baselines/strong_tabular_baseline_metrics.csv",
+        "Transparent count-model baseline": "outputs/count_model_baselines/count_model_baseline_metrics.csv",
+        "Count-model solver diagnostics": "outputs/count_model_baselines/count_model_solver_diagnostics.csv",
         "Zero-shot rule tree": "outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_metrics.csv",
         "Small historical calibration": "outputs/llm_rule_small_data_calibration/method_spectrum_metrics.csv",
         "Irrelevant pseudo-event placebo": "outputs/irrelevant_pseudo_event_placebo/irrelevant_pseudo_event_placebo_metrics.csv",
@@ -171,6 +173,45 @@ def audit_baselines_and_controls() -> list[Check]:
             checks.append(pass_check(category, item, path))
         else:
             checks.append(fail_check(category, item, f"Missing {path}.", "Run the corresponding baseline/control script."))
+    poisson_mae = metric_value("outputs/count_model_baselines/count_model_baseline_metrics.csv", "poisson_glm_l2", "weighted_mae")
+    poisson_bias = metric_value(
+        "outputs/count_model_baselines/count_model_baseline_metrics.csv",
+        "poisson_glm_l2",
+        "weighted_bias",
+    )
+    primary_mae = metric_value(
+        "outputs/final_project/final_metrics_summary.csv",
+        "gated_trip_suppression_a1_d0p15",
+        "weighted_mae",
+    )
+    if poisson_mae is not None and poisson_bias is not None and primary_mae is not None:
+        reduction = (poisson_mae - primary_mae) / poisson_mae
+        if reduction >= 0.35 and poisson_bias >= 3.0:
+            checks.append(
+                pass_check(
+                    category,
+                    "Count-model comparison",
+                    f"Poisson GLM wMAE {poisson_mae:.4f}, wBias {poisson_bias:+.4f}; primary adapter is {reduction:.2%} lower in wMAE.",
+                )
+            )
+        else:
+            checks.append(
+                partial_check(
+                    category,
+                    "Count-model comparison",
+                    f"Poisson GLM wMAE {poisson_mae:.4f}, wBias {poisson_bias:+.4f}; primary adapter reduction {reduction:.2%}.",
+                    "Review whether the transparent count baseline supports the event-shift story.",
+                )
+            )
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Count-model comparison",
+                "Could not read Poisson GLM or primary adapter metrics.",
+                "Regenerate count-model baselines and final metrics.",
+            )
+        )
     return checks
 
 

@@ -1,0 +1,11 @@
+method,alpha,max_iter,n_iter,convergence_warning,warning_message
+poisson_glm_l2,0.01,1000,1000,True,"lbfgs failed to converge (status=1):
+STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT.
+
+Increase the number of iterations (max_iter) or scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html"
+tweedie_glm_p1p5,0.01,1000,1000,True,"lbfgs failed to converge (status=1):
+STOP: TOTAL NO. OF ITERATIONS REACHED LIMIT.
+
+Increase the number of iterations (max_iter) or scale the data as shown in:
+    https://scikit-learn.org/stable/modules/preprocessing.html"

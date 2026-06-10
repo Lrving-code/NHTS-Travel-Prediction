@@ -7,7 +7,7 @@ This file constrains paper and presentation claims to evidence that exists in th
 | Claim | Evidence | Supported wording | Unsafe wording |
 |---|---|---|---|
 | 2022 NHTS is an event-shift target, not an ordinary cross-year transfer target. | `outputs/temporal_transfer_validation/temporal_transfer_validation_report.md`; `outputs/final_project/final_project_report.md` | "2022 shows substantially larger positive transfer bias than pre-COVID transfer checks." | "We prove COVID causally reduced trips for every household." |
-| Historical supervised models overpredict 2022 household trips. | `outputs/final_project/final_metrics_summary.csv`; `outputs/strong_baselines/strong_tabular_baseline_metrics.csv` | "Ordinary XGBoost has weighted bias `+3.6052`; CatBoost GPU has weighted bias `+3.4873`." | "Traditional methods cannot model travel demand." |
+| Historical supervised and count-model baselines overpredict 2022 household trips. | `outputs/final_project/final_metrics_summary.csv`; `outputs/strong_baselines/strong_tabular_baseline_metrics.csv`; `outputs/count_model_baselines/count_model_baseline_metrics.csv` | "Ordinary XGBoost has weighted bias `+3.6052`; CatBoost GPU has weighted bias `+3.4873`; Poisson GLM has weighted bias `+3.6178`." | "Traditional methods cannot model travel demand." |
 | The primary method improves trip-count prediction without target-year label calibration. | `outputs/final_project/final_metrics_summary.csv`; `outputs/leakage_audit/llm_input_leakage_audit_report.md`; `plan/prospective_event_context_2022.md` | "The fixed gated adapter reduces weighted MAE from `4.3377` to `2.5023` and moves weighted bias to `-0.0230`." | "The LLM predicts 2022 household trips accurately by itself." |
 | Pure LLM-style prediction is useful but under-calibrated. | `outputs/final_project/final_metrics_summary.csv`; `outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_metrics.csv` | "LLM-only pressure and zero-shot rule tree improve over historical baselines but remain weaker than the hybrid adapter." | "LLM reasoning alone is superior to historical household data." |
 | Most gain is event-level correction; cohort ranking is incremental. | `outputs/final_project/final_metrics_summary.csv`; `outputs/robustness_checks/robustness_check_report.md`; `outputs/irrelevant_pseudo_event_placebo/irrelevant_pseudo_event_placebo_metrics.csv` | "Global event prior is strong; gated cohort refinement improves calibration and robustness." | "Cohort-specific LLM ranking explains all of the improvement." |
@@ -33,6 +33,10 @@ This file constrains paper and presentation claims to evidence that exists in th
 | Zero-shot LLM rule tree weighted MAE | `2.6019` | `outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_metrics.csv` |
 | LLM rule + 500 historical calibration weighted MAE | `2.7723` | `outputs/llm_rule_small_data_calibration/method_spectrum_metrics.csv` |
 | CatBoost GPU weighted MAE | `4.2196` | `outputs/strong_baselines/strong_tabular_baseline_metrics.csv` |
+| Poisson GLM weighted MAE | `4.3368` | `outputs/count_model_baselines/count_model_baseline_metrics.csv` |
+| Poisson GLM weighted bias | `+3.6178` | `outputs/count_model_baselines/count_model_baseline_metrics.csv` |
+| Tweedie GLM weighted MAE | `4.3761` | `outputs/count_model_baselines/count_model_baseline_metrics.csv` |
+| Primary gated MAE reduction vs best count model | `42.30%` | `outputs/count_model_baselines/count_model_baseline_report.md` |
 | Transit-share weighted MAE improvement | `0.0325 -> 0.0269` | `outputs/mode_composition_extension/mode_composition_metrics.csv` |
 | Mode-trip volume MAE improvement | `4.8467 -> 3.2802` | `outputs/mode_composition_extension/mode_specific_trip_count_metrics.csv` |
 | PSRC external weighted MAE improvement | `3.4271 -> 3.2498` | `outputs/external_validation/psrc_household_external_validation_metrics.csv` |
@@ -54,4 +58,5 @@ Avoid:
 - PSRC is external household microdata, but it is regional and not direct NHTS 2022 numeric validation.
 - Purpose composition is implemented but exploratory.
 - The primary adapter is fixed and no-label; any 2022 calibration experiment is an upper-bound or bridge baseline, not the main method.
+- Poisson/Tweedie count models are transparent reviewer-facing baselines with solver diagnostics recorded; do not present them as fully optimized count-model state of the art.
 - LLM pretraining may contain post-pandemic knowledge; the prospective event-context file and leakage audit reduce target-label leakage, but cannot make a pure historical-information claim about the LLM's pretraining corpus.

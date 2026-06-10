@@ -15,7 +15,7 @@ The project is strong enough for a course final presentation and has a coherent 
 | Single main story | `plan/paper_logic_chain.md`; LaTeX title/abstract/method | Strong |
 | Label-free target-year setting | leakage audit, prospective context, fixed adapter wording | Strong for target labels |
 | Main empirical result | wMAE `4.3377 -> 2.5023`; bias `+3.6052 -> -0.0230` | Strong |
-| Method spectrum | pure LLM, zero-shot rule tree, rule+history, global prior, random controls | Strong for course/paper rebuttal |
+| Method spectrum | pure LLM, zero-shot rule tree, rule+history, global prior, random controls, Poisson/Tweedie count models | Strong for course/paper rebuttal |
 | Statistical validation | bootstrap CIs and paired improvements | Good |
 | Robustness controls | permutation null, irrelevant pseudo-event, pre-COVID placebo | Good |
 | External evidence | ACS mechanism evidence; PSRC household microdata replication | Good but not definitive |
@@ -33,6 +33,7 @@ The project is strong enough for a course final presentation and has a coherent 
 | Mode/purpose are exploratory | Main gain is trip generation; mode/purpose improvements are uneven | Keep mode/purpose as behavior-system extensions, not primary solved tasks |
 | LaTeX compile environment | MiKTeX BibTeX cannot run in the current elevated shell | Compile in a normal user shell or Overleaf before sending to collaborators/advisor |
 | Classical travel-demand citations | Current references emphasize 2025-2026 LLM mobility, not enough transportation modeling history | Add verified travel-demand, NHTS, and survey-weighting citations |
+| Count-model depth | Poisson/Tweedie baselines are transparent but not fully optimized zero-inflated or negative-binomial travel-demand models | Keep the solver caveat; add tuned count variants for a submission version if time permits |
 
 ## Current Round Fixes
 
@@ -43,13 +44,14 @@ The project is strong enough for a course final presentation and has a coherent 
   - multi-objective / behavior-system evaluation.
 - Added citation-verification and build notes in the LaTeX package.
 - Updated readiness audits so the LaTeX manuscript and verified references are part of the checked artifact set.
+- Added transparent Poisson/Tweedie count-model baselines with solver diagnostics under `outputs/count_model_baselines/`.
 
 ## Recommended Next Experiments
 
 1. **Open-source LLM prior replication.** Use a local model on the RTX 4090 for a smaller cohort subset, then compare event-prior ranking with GPT-5.5-generated priors.
 2. **Cohort-value analysis.** Quantify the incremental gain of cohort-specific LLM priors over global prior by subgroup, income, workers, vehicles, and transit availability.
 3. **External shock replication.** Use PSRC or another household survey to replicate the same no-label adapter around a non-COVID shock or recovery period.
-4. **Classical baseline family.** Add a transparent Poisson/negative-binomial or zero-inflated count model baseline if feasible; this helps transportation reviewers.
+4. **Count-model extension.** The transparent Poisson/Tweedie check is now present; a submission version should add a tuned negative-binomial or zero-inflated variant if feasible.
 5. **Advisor-facing paper version.** Convert `main.tex` into a venue template only after the story and experiments are stable.
 
 ## Safe Top-Line Claim
@@ -61,4 +63,3 @@ Use:
 Avoid:
 
 > LLMs solve post-pandemic household travel prediction or outperform transportation models in general.
-
