@@ -23,10 +23,11 @@ MODE_DIR = PROJECT_ROOT / "outputs" / "mode_composition_extension"
 PURPOSE_DIR = PROJECT_ROOT / "outputs" / "purpose_composition_extension"
 STATS_DIR = PROJECT_ROOT / "outputs" / "statistical_validation"
 LLM_FEATURE_DIR = PROJECT_ROOT / "outputs" / "llm_event_features"
+PARETO_DIR = PROJECT_ROOT / "outputs" / "multi_objective_pareto"
 FIGURE_DIR = FINAL_DIR / "figures" / "presentation_figures"
 ROBUSTNESS_DIR = PROJECT_ROOT / "outputs" / "robustness_checks"
 EMU_PER_INCH = 914400
-TOTAL_SLIDES = 22
+TOTAL_SLIDES = 23
 
 LOGGER = logging.getLogger(__name__)
 
@@ -470,7 +471,7 @@ def add_content_slide(prs: Presentation, logo: bytes | None) -> None:
         ("01", "Background & gap", "疫情冲击、移动不平等与相关研究缺口"),
         ("02", "Problem & data", "家庭层面多输出 travel behavior system"),
         ("03", "Method", "传统监督模型 × LLM event-generalizable priors"),
-        ("04", "Evaluation", "性能比较、置信区间、稳健性检验"),
+        ("04", "Evaluation", "性能比较、Pareto 选择、置信区间、稳健性检验"),
         ("05", "Insights", "出行强度、方式、目的与未来工作"),
     ]
     for idx, (num, title, note) in enumerate(items):
@@ -705,16 +706,17 @@ def add_results_slide(prs: Presentation, logo: bytes | None, trip: pd.DataFrame,
     draw_bar_chart(slide, chart_values, 0.65, 1.28, 6.25, 3.28, 6.0)
     rows = [
         ["Ordinary XGBoost", f"{values['baseline']:.3f}", f"{values['baseline_bias']:+.3f}", f"{values['baseline_r2']:.3f}"],
+        ["CatBoost GPU", f"{values['catboost']:.3f}", f"{values['catboost_bias']:+.3f}", f"{values['catboost_r2']:.3f}"],
         ["LLM-only pressure", f"{values['llm_only']:.3f}", f"{values['llm_only_bias']:+.3f}", f"{values['llm_only_r2']:.3f}"],
         ["Hybrid gated", f"{values['gated']:.3f}", f"{values['gated_bias']:+.3f}", f"{values['gated_r2']:.3f}"],
     ]
-    small_table(slide, ["Method", "wMAE", "wBias", "wR2"], rows, 7.15, 1.28, [2.05, 0.9, 0.9, 0.8], 0.38, 7.8, COLORS["teal"])
+    small_table(slide, ["Method", "wMAE", "wBias", "wR2"], rows, 7.15, 1.28, [2.05, 0.9, 0.9, 0.8], 0.42, 12, COLORS["teal"])
     metric_card(slide, 7.16, 3.32, 2.05, 0.82, "MAE reduction", f"-{values['mae_reduction']:.1%}", "primary vs XGBoost", COLORS["green"])
     metric_card(slide, 9.45, 3.32, 2.05, 0.82, "Bias reduction", "-99.4%", "absolute weighted bias", COLORS["blue"])
     story_box(
         slide,
-        "普通 XGBoost 保留了家庭差异，但把 2022 当作常态延续，产生明显高估；加入事件折减后，wMAE 降到 2.50，bias 接近 0。",
-        "XGBoost preserves household differences but misses the pandemic shift. Event correction lowers wMAE to 2.50 and removes most systematic bias.",
+        "CatBoost GPU 等更强表格模型仍明显高估 2022；加入事件折减后，wMAE 降到 2.50，bias 接近 0。",
+        "Stronger tabular baselines still overpredict 2022. Event correction lowers wMAE to 2.50 and removes most systematic bias.",
         0.82,
         5.35,
         10.95,
@@ -792,10 +794,63 @@ def add_tradeoff_slide(prs: Presentation, logo: bytes | None) -> None:
     )
 
 
+def add_multi_objective_slide(prs: Presentation, logo: bytes | None) -> None:
+    slide = blank_slide(prs)
+    set_background(slide)
+    add_frame(slide, "08C", "多目标选择 / Multi-Objective Selection", "从单一排行榜转向规划目标下的 operating point", 12, logo)
+    add_picture(slide, PARETO_DIR / "trip_pareto_frontier.png", 0.62, 1.18, 5.9)
+    add_picture(slide, PARETO_DIR / "behavior_system_improvement.png", 6.82, 1.2, 5.55)
+    points = read_csv_or_empty(PARETO_DIR / "preference_operating_points.csv")
+    if not points.empty:
+        profile_labels = {
+            "minimum_mae_sensitivity": "Min error",
+            "balanced_course_report": "Balanced / main",
+            "low_cost_deployment": "Low-cost",
+        }
+        method_labels = {
+            "llm_trip_suppression_a1p25": "LLM suppression",
+            "gated_trip_suppression_a1_d0p15": "Gated LLM",
+            "global_trip_suppression_a1": "Global prior",
+        }
+        rows = []
+        show_profiles = ["minimum_mae_sensitivity", "balanced_course_report", "low_cost_deployment"]
+        for row in points[points["profile"].isin(show_profiles)].itertuples(index=False):
+            rows.append(
+                [
+                    profile_labels.get(row.profile, row.profile),
+                    method_labels.get(row.method, str(row.method).replace("_", " ")),
+                    f"{row.weighted_mae:.3f}",
+                    f"{row.abs_weighted_bias:.3f}",
+                    f"{int(row.llm_request_cost)}",
+                ]
+            )
+        small_table(
+            slide,
+            ["Preference", "Selected method", "wMAE", "|bias|", "LLM req."],
+            rows,
+            0.82,
+            5.0,
+            [1.65, 2.15, 0.8, 0.8, 0.9],
+            0.43,
+            12,
+            COLORS["teal"],
+        )
+    story_box(
+        slide,
+        "关键讲法：LLM 不是直接报一个答案，而是把事件机制转成候选修正；最终由规划目标选择 Pareto operating point。",
+        "Key message: the LLM supplies event mechanisms; a deterministic grid/solver selects the operating point under planning objectives.",
+        8.05,
+        5.18,
+        4.1,
+        1.0,
+        COLORS["orange"],
+    )
+
+
 def add_error_distribution_figure_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "08C", "误差分布与容忍度 / Error Distribution and Tolerance", "误差分布看系统性高估，容忍曲线看 household-level 可用性", 12, logo)
+    add_frame(slide, "08D", "误差分布与容忍度 / Error Distribution and Tolerance", "误差分布看系统性高估，容忍曲线看 household-level 可用性", 13, logo)
     add_picture(slide, FIGURE_DIR / "error_distribution.png", 0.65, 1.2, 5.85)
     add_picture(slide, FIGURE_DIR / "tolerance_curve.png", 6.85, 1.2, 5.65)
     story_box(
@@ -813,7 +868,7 @@ def add_error_distribution_figure_slide(prs: Presentation, logo: bytes | None) -
 def add_event_heterogeneity_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "09", "疫情影响异质性 / Event Heterogeneity", "pressure 分层和先验相关性检验事件机制是否合理", 13, logo)
+    add_frame(slide, "09", "疫情影响异质性 / Event Heterogeneity", "pressure 分层和先验相关性检验事件机制是否合理", 14, logo)
     add_picture(slide, FIGURE_DIR / "pressure_quintile_gain.png", 0.65, 1.2, 5.85)
     add_picture(slide, FIGURE_DIR / "event_prior_heatmap.png", 7.0, 1.13, 4.95)
     story_box(
@@ -831,12 +886,12 @@ def add_event_heterogeneity_slide(prs: Presentation, logo: bytes | None) -> None
 def add_subgroup_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "09B", "分组检验 / Subgroup Check", "比较不同家庭群体中的 MAE 改善", 15, logo)
+    add_frame(slide, "09B", "分组稳健性 / Equity-Aware Subgroup Check", "比较不同家庭群体中的 MAE 改善与 worst-subgroup error", 16, logo)
     add_picture(slide, FIGURE_DIR / "subgroup_gain_top.png", 0.72, 1.25, 6.6)
     story_box(
         slide,
-        "分组结果显示，改进不只来自总体均值；多个家庭群体的 MAE 都低于历史 XGBoost，但这里仍是诊断证据，不作因果解释。",
-        "Subgroup results show that gains are not only an aggregate artifact; they remain diagnostic rather than causal evidence.",
+        "分组结果显示，改进不只来自总体均值；worst-subgroup wMAE 从 8.38 降到 4.71，所有纳入分组均优于历史 XGBoost。",
+        "Worst-subgroup wMAE drops from 8.38 to 4.71, and all evaluated subgroups improve over historical XGBoost.",
         7.65,
         1.38,
         4.25,
@@ -847,9 +902,9 @@ def add_subgroup_slide(prs: Presentation, logo: bytes | None) -> None:
         slide,
         ["汇报时怎么讲", "注意边界"],
         [
-            ["作为分组诊断证据", "不解释成因果结论"],
-            ["强调整体改进趋势", "编码细节可放附录"],
-            ["联系规划含义", "哪些家庭更难预测"],
+            ["预测层面 equity", "worst-subgroup error 下降"],
+            ["注意表述边界", "不是因果公平性结论"],
+            ["联系规划含义", "识别更难预测的家庭"],
         ],
         7.65,
         3.15,
@@ -863,7 +918,7 @@ def add_subgroup_slide(prs: Presentation, logo: bytes | None) -> None:
 def add_robustness_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "09A", "稳健性检验 / Robustness Check", "随机置换检验 LLM pressure 是否包含真实排序信息", 14, logo)
+    add_frame(slide, "09A", "稳健性检验 / Robustness Check", "随机置换检验 LLM pressure 是否包含真实排序信息", 15, logo)
     add_picture(slide, ROBUSTNESS_DIR / "permutation_null_mae.png", 0.72, 1.22, 6.2)
     story_box(
         slide,
@@ -896,7 +951,7 @@ def add_robustness_slide(prs: Presentation, logo: bytes | None) -> None:
 def add_error_insight_slide(prs: Presentation, logo: bytes | None, values: dict[str, float]) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "10", "误差洞察 / Error Insight", "主收益来自消除 post-pandemic over-prediction", 16, logo)
+    add_frame(slide, "10", "误差洞察 / Error Insight", "主收益来自消除 post-pandemic over-prediction", 17, logo)
     metric_card(slide, 0.75, 1.28, 2.45, 0.9, "Exact rounded", f"{values['exact']:.1%}", "household accuracy", COLORS["blue"])
     metric_card(slide, 3.48, 1.28, 2.45, 0.9, "Within 2 trips", f"{values['within2']:.1%}", "practical tolerance", COLORS["green"])
     metric_card(slide, 6.21, 1.28, 2.45, 0.9, "Within 3 trips", f"{values['within3']:.1%}", "broad tolerance", COLORS["orange"])
@@ -928,7 +983,7 @@ def add_error_insight_slide(prs: Presentation, logo: bytes | None, values: dict[
 def add_llm_role_slide(prs: Presentation, logo: bytes | None, values: dict[str, float]) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "11", "LLM 的角色 / What the LLM Adds", "LLM 提供事件压力，XGBoost 提供家庭基线", 17, logo)
+    add_frame(slide, "11", "LLM 的角色 / What the LLM Adds", "LLM 提供事件压力，XGBoost 提供家庭基线", 18, logo)
     rect(slide, 1.15, 1.28, 10.35, 4.48, COLORS["light"], COLORS["line"])
     rect(slide, 6.3, 1.28, 0.012, 4.48, COLORS["line"])
     rect(slide, 1.15, 3.52, 10.35, 0.012, COLORS["line"])
@@ -948,7 +1003,7 @@ def add_llm_role_slide(prs: Presentation, logo: bytes | None, values: dict[str, 
 def add_mode_slide(prs: Presentation, logo: bytes | None, mode: pd.DataFrame, values: dict[str, float]) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "12", "综合行为输出 / Behavior Outputs", "从出行次数扩展到方式结构和方式出行量", 18, logo)
+    add_frame(slide, "12", "综合行为输出 / Behavior Outputs", "从出行次数扩展到方式结构和方式出行量", 19, logo)
     modes = ["private", "walk", "bike", "transit", "taxi", "other"]
     for idx, mode_name in enumerate(modes):
         x = 0.78 + idx * 1.2
@@ -980,7 +1035,7 @@ def add_mode_slide(prs: Presentation, logo: bytes | None, mode: pd.DataFrame, va
 def add_purpose_slide(prs: Presentation, logo: bytes | None, purpose: pd.DataFrame) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "13", "出行目的扩展 / Purpose Composition", "第三个行为维度：为什么出行", 19, logo)
+    add_frame(slide, "13", "出行目的扩展 / Purpose Composition", "第三个行为维度：为什么出行", 20, logo)
     add_picture(slide, PURPOSE_DIR / "figures" / "purpose_distribution_shift.png", 0.72, 1.18, 5.75)
     if purpose.empty:
         rows = [["missing", "-", "-", "-"]]
@@ -1009,7 +1064,7 @@ def add_purpose_slide(prs: Presentation, logo: bytes | None, purpose: pd.DataFra
 def add_scalability_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "14", "LLM 扩展与泛化 / LLM Scaling", "Batch prompting + event-generalizable priors", 20, logo)
+    add_frame(slide, "14", "LLM 扩展与泛化 / LLM Scaling", "Batch prompting + event-generalizable priors", 21, logo)
     steps = [
         ("7,893 households", "2022 rows"),
         ("1,327 cohorts", "aggregated profiles"),
@@ -1049,7 +1104,7 @@ def add_scalability_slide(prs: Presentation, logo: bytes | None) -> None:
 def add_contribution_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "15", "研究逻辑链 / Research Logic", "从问题定义到方法优势的完整闭环", 21, logo)
+    add_frame(slide, "15", "研究逻辑链 / Research Logic", "从问题定义到方法优势的完整闭环", 22, logo)
     small_table(
         slide,
         ["环节", "怎么做", "证据 / 结果"],
@@ -1075,7 +1130,7 @@ def add_contribution_slide(prs: Presentation, logo: bytes | None) -> None:
 def add_final_slide(prs: Presentation, logo: bytes | None, values: dict[str, float]) -> None:
     slide = blank_slide(prs)
     set_background(slide, COLORS["navy"])
-    add_frame(slide, "END", "总结 / Conclusion", "传统出行基线 + 疫情事件修正", 22, logo, True)
+    add_frame(slide, "END", "总结 / Conclusion", "传统出行基线 + 疫情事件修正", 23, logo, True)
     rect(slide, 0.82, 1.45, 11.15, 2.2, RGBColor(30, 64, 91), RGBColor(71, 85, 105), True)
     text_box(slide, "我们研究的不是“LLM 直接预测出行次数”，而是：\n当 2022 疫情后分布变化打破历史连续性时，能否用 LLM 的事件泛化能力，为传统 household travel model 提供无标签修正先验。", 1.12, 1.73, 10.5, 0.9, 15, COLORS["white"], True, PP_ALIGN.CENTER)
     metric_card(slide, 1.0, 4.25, 2.45, 0.9, "Accuracy", f"-{values['mae_reduction']:.1%}", "weighted MAE", COLORS["blue"], COLORS["white"])
@@ -1095,6 +1150,7 @@ def create_deck() -> Path:
         prs.slide_height = Inches(7.5)
     clear_template_slides(prs)
     trip, acc, mode, mode_trips, purpose, ci, paired_ci = load_results()
+    strong = read_csv_or_empty(PROJECT_ROOT / "outputs" / "strong_baselines" / "strong_tabular_baseline_metrics.csv")
 
     baseline = metric(trip, "historical_xgboost", "weighted_mae")
     gated = metric(trip, "gated_trip_suppression_a1_d0p15", "weighted_mae")
@@ -1119,11 +1175,23 @@ def create_deck() -> Path:
                 "weighted_total_mode_trip_mae",
             ].iloc[0]
         )
+    if strong.empty or "catboost_gpu" not in set(strong["method"]):
+        catboost_mae = float("nan")
+        catboost_bias = float("nan")
+        catboost_r2 = float("nan")
+    else:
+        catboost_row = strong[strong["method"] == "catboost_gpu"].iloc[0]
+        catboost_mae = float(catboost_row["weighted_mae"])
+        catboost_bias = float(catboost_row["weighted_bias"])
+        catboost_r2 = float(catboost_row["weighted_r2"])
     main_method = "gated_trip_suppression_a1_d0p15"
     values = {
         "baseline": baseline,
         "baseline_bias": metric(trip, "historical_xgboost", "weighted_bias"),
         "baseline_r2": metric(trip, "historical_xgboost", "weighted_r2"),
+        "catboost": catboost_mae,
+        "catboost_bias": catboost_bias,
+        "catboost_r2": catboost_r2,
         "gated": gated,
         "gated_bias": metric(trip, main_method, "weighted_bias"),
         "gated_r2": metric(trip, main_method, "weighted_r2"),
@@ -1158,6 +1226,7 @@ def create_deck() -> Path:
     add_results_slide(prs, logo, trip, values)
     add_statistical_validation_slide(prs, logo, ci, paired_ci)
     add_tradeoff_slide(prs, logo)
+    add_multi_objective_slide(prs, logo)
     add_error_distribution_figure_slide(prs, logo)
     add_event_heterogeneity_slide(prs, logo)
     add_robustness_slide(prs, logo)

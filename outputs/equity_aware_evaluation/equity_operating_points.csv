@@ -1,0 +1,4 @@
+profile,method,score,weighted_mae,abs_weighted_bias,worst_subgroup_weighted_mae,share_subgroups_improved_vs_historical
+equity_first,gated_trip_suppression_a1_d0p15,0.013625211101353937,2.5022798339489665,0.023038008084742212,4.70907790735122,1.0
+balanced_equity,gated_trip_suppression_a1_d0p15,0.009984916967784394,2.5022798339489665,0.023038008084742212,4.70907790735122,1.0
+accuracy_first_core_methods,gated_trip_suppression_a1_d0p15,0.008511495191893372,2.5022798339489665,0.023038008084742212,4.70907790735122,1.0

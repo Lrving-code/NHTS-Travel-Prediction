@@ -16,6 +16,9 @@
 - Best-MAE sensitivity reduction: `42.78%`
 - LLM-only pressure weighted MAE: `2.7175`
 - Gated household accuracy: exact `17.7%`, within 2 trips `54.5%`, within 3 trips `71.2%`
+- Stronger non-LLM baselines still overpredict 2022: best extra baseline is CatBoost GPU with weighted MAE `4.2196` and weighted bias `+3.4873`; the primary gated event adapter is `40.70%` lower in weighted MAE.
+- Equity-aware subgroup evaluation: worst-subgroup weighted MAE improves from `8.3778` under historical XGBoost to `4.7091` under the primary gated event adapter; all evaluated subgroups improve relative to historical XGBoost.
+- Multi-objective analysis: minimum-MAE profile selects `llm_trip_suppression_a1p25`; calibration-first and balanced profiles select the primary `gated_trip_suppression_a1_d0p15`; low-cost deployment selects `global_trip_suppression_a1`.
 
 行为目标 2 是 household-level mode composition：
 
@@ -105,11 +108,30 @@ predicted trips by mode = predicted total trips * predicted mode share
 - `outputs/robustness_checks/permutation_null_mae.png`
 - `outputs/temporal_transfer_validation/temporal_transfer_validation_report.md`
 
+更强非 LLM baseline：
+
+- `src/run_stronger_tabular_baselines.py`
+- `outputs/strong_baselines/strong_tabular_baseline_metrics.csv`
+- `outputs/strong_baselines/strong_tabular_baseline_report.md`
+
 统计验证：
 
 - `outputs/statistical_validation/confidence_interval_report.md`
 - `outputs/statistical_validation/trip_metric_confidence_intervals.csv`
 - `outputs/statistical_validation/paired_improvement_confidence_intervals.csv`
+
+多目标与 Pareto 分析：
+
+- `outputs/multi_objective_pareto/multi_objective_pareto_report.md`
+- `outputs/multi_objective_pareto/preference_operating_points.csv`
+- `outputs/multi_objective_pareto/trip_pareto_frontier.png`
+- `outputs/multi_objective_pareto/behavior_system_improvement.png`
+
+移动不平等与分组稳健性：
+
+- `outputs/equity_aware_evaluation/equity_aware_evaluation_report.md`
+- `outputs/equity_aware_evaluation/equity_summary.csv`
+- `outputs/equity_aware_evaluation/equity_operating_points.csv`
 
 出行方式结构实验：
 
@@ -147,6 +169,9 @@ src/
   run_mode_composition_extension.py
   run_purpose_composition_extension.py
   run_statistical_confidence_intervals.py
+  run_multi_objective_pareto_analysis.py
+  run_equity_aware_evaluation.py
+  run_stronger_tabular_baselines.py
   build_batched_llm_event_prompts.py
   generate_presentation_figures.py
   run_robustness_checks.py
@@ -202,6 +227,21 @@ python src\run_purpose_composition_extension.py --device cuda
 python src\run_statistical_confidence_intervals.py --bootstrap-runs 1000
 ```
 
+多目标/Pareto 分析：
+
+```powershell
+python src\run_multi_objective_pareto_analysis.py
+python src\run_equity_aware_evaluation.py
+```
+
+更强非 LLM baseline。建议先跑 XGBoost 与 covariate-shift reweighted XGBoost，确认 GPU 通道稳定后再单独跑 CatBoost/LightGBM：
+
+```powershell
+python src\run_stronger_tabular_baselines.py --device cuda --methods xgboost,reweighted_xgboost --n-estimators 200 --domain-n-estimators 120
+python src\run_stronger_tabular_baselines.py --device cuda --methods catboost --n-estimators 200
+python src\run_stronger_tabular_baselines.py --device cuda --methods lightgbm --n-estimators 200
+```
+
 LLM batch prompt 准备：
 
 ```powershell
@@ -213,6 +253,7 @@ python src\build_batched_llm_event_prompts.py --batch-size 15 --max-batch-chars 
 ```powershell
 python src\generate_presentation_figures.py
 python src\run_robustness_checks.py
+python src\run_multi_objective_pareto_analysis.py
 python src\build_template_presentation.py
 python src\build_optimized_presentation.py
 ```
