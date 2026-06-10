@@ -64,7 +64,7 @@ LLM 输出的是结构化事件先验，不直接输出 `CNTTDHH`。
 - 不能说我们识别了 COVID 的 causal effect；应该说 causal guardrails 和 mechanism proxy。
 - purpose composition 目前是探索性输出，不作为主贡献。
 - global event prior 很强，所以 contribution 要讲成 event-level adaptation + auditable cohort refinement。
-- 外部验证包括 ACS mechanism-level 证据和 PSRC household-level recovery-transfer microdata。PSRC 的 MAE 增益很小，但 bias 改善明显；BTS 仍作为 device trip count 与 NHTS `CNTTDHH` 不可直接对齐的 guardrail。
+- 外部验证包括 ACS mechanism-level 证据和 PSRC household-level direct pre/post microdata。PSRC 2017+2019->2023 的 wMAE 从 `3.4271` 到 `3.2498`，wBias 从 `+1.0532` 到 `+0.2605`；BTS 仍作为 device trip count 与 household survey target 不可直接对齐的 negative guardrail。
 
 ## 可能被问到的问题
 

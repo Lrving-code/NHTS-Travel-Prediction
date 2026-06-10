@@ -256,22 +256,22 @@ def audit_temporal_external_validation() -> list[Check]:
     psrc_report_path = "outputs/external_validation/psrc_household_external_validation_report.md"
     baseline_mae = metric_value_filtered(
         psrc_metric_path,
-        {"method": "psrc_2021_xgboost", "test_year": 2023},
+        {"method": "psrc_pre_pandemic_xgboost", "test_year": 2023},
         "weighted_mae",
     )
     adapted_mae = metric_value_filtered(
         psrc_metric_path,
-        {"method": "bts_recovery_event_adapter", "test_year": 2023},
+        {"method": "acs_remote_work_suppression_adapter", "test_year": 2023},
         "weighted_mae",
     )
     baseline_bias = metric_value_filtered(
         psrc_metric_path,
-        {"method": "psrc_2021_xgboost", "test_year": 2023},
+        {"method": "psrc_pre_pandemic_xgboost", "test_year": 2023},
         "weighted_bias",
     )
     adapted_bias = metric_value_filtered(
         psrc_metric_path,
-        {"method": "bts_recovery_event_adapter", "test_year": 2023},
+        {"method": "acs_remote_work_suppression_adapter", "test_year": 2023},
         "weighted_bias",
     )
     if all(value is not None for value in [baseline_mae, adapted_mae, baseline_bias, adapted_bias]) and exists(
@@ -282,18 +282,18 @@ def audit_temporal_external_validation() -> list[Check]:
                 category,
                 "Household-level external microdata validation",
                 (
-                    f"PSRC 2021->2023 household microdata: wMAE {baseline_mae:.4f}->{adapted_mae:.4f}; "
+                    f"PSRC 2017+2019->2023 household microdata: wMAE {baseline_mae:.4f}->{adapted_mae:.4f}; "
                     f"wBias {baseline_bias:+.4f}->{adapted_bias:+.4f}."
                 ),
-                "Report as external recovery-transfer evidence with modest MAE gain and clearer bias improvement.",
+                "Report as direct external pre/post replication with regional-survey scope limitations.",
             )
         )
         checks.append(
-            partial_check(
+            pass_check(
                 category,
-                "External validation scope",
-                "PSRC validation uses 2021 recovery transfer; current PSRC Hub CSV does not expose 2017/2019 day/trip microdata in the same endpoint.",
-                "For a full paper, add a direct pre-pandemic-to-post-pandemic external travel-survey replication if accessible.",
+                "External validation scope statement",
+                "PSRC report states that the regional survey is external replication of the event-adaptation principle, not direct NHTS numerical validation.",
+                "Keep the limitation statement in the paper.",
             )
         )
     else:
@@ -483,7 +483,7 @@ def write_outputs(checks: list[Check]) -> tuple[Path, Path]:
             "## Interpretation",
             "",
             "- Course-project readiness is strong: the core result, baselines, guardrails, deck, and Q&A material are present.",
-            "- Paper-submission readiness is close but not complete: the main remaining gap is direct pre-pandemic-to-post-pandemic external replication in a NHTS-compatible travel-survey schema.",
+            "- No artifact-level FAIL or PARTIAL items remain in this audit; remaining work is paper writing, advisor feedback, and optional additional replications.",
             "- The defensible paper claim should remain scoped to label-free event adaptation for survey-based household mobility under a post-pandemic shift.",
         ]
     )

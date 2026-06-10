@@ -1315,7 +1315,7 @@ def add_backup_qa_slides(prs: Presentation, logo: bytes | None, values: dict[str
         [
             ["ACS work from home", "2019 5.7% -> 2022 15.2%; supports remote-work prior"],
             ["ACS public transit", "2019 5.0% -> 2022 3.1%; supports transit-avoidance prior"],
-            ["PSRC microdata", "2021->2023 wMAE 3.6908->3.6855; wBias -1.1480->-0.2646"],
+            ["PSRC microdata", "2017+2019->2023 wMAE 3.4271->3.2498; wBias +1.0532->+0.2605"],
             ["Safe claim", "External mechanism + recovery-transfer support"],
         ],
         "答法：我们用 ACS 证明疫情后通勤机制确实发生了远程办公和公共交通下降；用 PSRC 独立 household microdata 做 recovery-transfer 验证；同时用 BTS 做 guardrail，说明 device mobility trips 不能直接当作 NHTS household trip-count 的外部标签。",

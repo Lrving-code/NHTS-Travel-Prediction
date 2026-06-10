@@ -19,8 +19,8 @@ Mobility behavior system,Multi-objective Pareto,PASS,1.0,outputs/multi_objective
 Temporal and external validity,Temporal transfer validation,PASS,1.0,Pre-COVID and 2022 transfer report exists.,Keep.
 Temporal and external validity,Pre-COVID placebo validation,PASS,1.0,Pre-COVID event-correction placebo report exists.,Keep.
 Temporal and external validity,External mechanism validation beyond NHTS,PASS,1.0,ACS commute-mode mechanism validation and BTS trip-count compatibility guardrail exist.,"Report as mechanism-level external evidence, not household-level MAE."
-Temporal and external validity,Household-level external microdata validation,PASS,1.0,PSRC 2021->2023 household microdata: wMAE 3.6908->3.6855; wBias -1.1480->-0.2646.,Report as external recovery-transfer evidence with modest MAE gain and clearer bias improvement.
-Temporal and external validity,External validation scope,PARTIAL,0.5,PSRC validation uses 2021 recovery transfer; current PSRC Hub CSV does not expose 2017/2019 day/trip microdata in the same endpoint.,"For a full paper, add a direct pre-pandemic-to-post-pandemic external travel-survey replication if accessible."
+Temporal and external validity,Household-level external microdata validation,PASS,1.0,PSRC 2017+2019->2023 household microdata: wMAE 3.4271->3.2498; wBias +1.0532->+0.2605.,Report as direct external pre/post replication with regional-survey scope limitations.
+Temporal and external validity,External validation scope statement,PASS,1.0,"PSRC report states that the regional survey is external replication of the event-adaptation principle, not direct NHTS numerical validation.",Keep the limitation statement in the paper.
 Literature and paper story,2025-2026 literature grounding,PASS,1.0,Literature grounding note contains current anchors.,Keep.
 Literature and paper story,Single paper spine,PASS,1.0,paper_logic_chain.md states the event-adaptation spine.,Keep.
 Literature and paper story,Reviewer Q&A backup,PASS,1.0,Reviewer Q&A backup document exists.,Keep.

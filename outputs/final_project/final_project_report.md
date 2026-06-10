@@ -52,9 +52,9 @@ We added an external validation and compatibility audit in `outputs/external_val
 | ACS commuting brief | Worked-from-home commute share remains much higher in 2022 than 2019: `5.7% -> 15.2%`. | Supports `remote_work_substitution` event prior. |
 | ACS commuting brief | Public-transportation commute share remains lower in 2022 than 2019: `5.0% -> 3.1%`. | Supports `transit_avoidance` event prior. |
 | BTS/UMD daily mobility | BTS trips/person changes only `-1.95%` from 2019 to 2022, while NHTS diary `CNTTDHH` has a much larger 2017-to-2022 shift. | Shows BTS device mobility is not a direct numeric label for NHTS household trips. |
-| PSRC household travel survey | 2021->2023 household/day recovery transfer wMAE changes `3.6908 -> 3.6855`; wBias changes `-1.1480 -> -0.2646` using a BTS-derived recovery factor. | Provides household-level external microdata evidence that event-scale recovery factors improve bias on an independent travel survey. |
+| PSRC household travel survey | 2017+2019->2023 household/day pre/post replication wMAE changes `3.4271 -> 3.2498`; wBias changes `+1.0532 -> +0.2605` using an ACS-derived remote-work suppression factor. | Provides household-level external microdata evidence that event-scale suppression improves transfer on an independent travel survey. |
 
-Interpretation: external data supports the event semantics used by the LLM adapter and now includes a household-level external recovery-transfer check. The PSRC effect is modest in MAE but useful for bias validation. It is still not a direct replication of NHTS 2017-to-2022 transfer, because the current PSRC Hub CSV exposes complete person-day microdata for 2021/2023/2025 rather than matching pre-pandemic 2017/2019 day/trip files.
+Interpretation: external data supports the event semantics used by the LLM adapter and now includes a household-level external pre/post replication. The PSRC result is not direct numerical validation of NHTS 2022 household predictions because PSRC is a regional survey with different sampling and diary protocols, but it strengthens the paper claim that fixed event priors can improve label-free transfer under post-pandemic survey shifts.
 
 ## Improvement Over Historical Predictor
 

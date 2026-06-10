@@ -37,11 +37,17 @@ LOGGER = logging.getLogger(__name__)
 
 PSRC_HOUSEHOLD_ITEM = "7482a3f923894de687ee184256e72013"
 PSRC_DAYS_ITEM = "7cf2cd7f3f324fc290e571ba620bd97a"
+PSRC_DAYS_SERVICE_URL = (
+    "https://services6.arcgis.com/GWxg6t7KXELn1thE/arcgis/rest/services/"
+    "Household_Travel_Survey_Days/FeatureServer/0/query"
+)
 PSRC_DATA_PORTAL_URL = (
     "https://psrc-psregcncl.hub.arcgis.com/datasets/"
     "PSREGCNCL::household-travel-survey-households/about"
 )
 BTS_RESOURCE_URL = "https://data.transportation.gov/resource/aksz-j95y.json"
+ACS_REMOTE_WORK_SUPPRESSION_FACTOR = 0.905
+ACS_REMOTE_WORK_SUPPRESSION_SOURCE = "ACS 2019->2022 worked-from-home share +9.5 percentage points"
 
 NUMERIC_FEATURES: tuple[str, ...] = (
     "hhsize_num",
@@ -58,7 +64,7 @@ CATEGORICAL_FEATURES: tuple[str, ...] = (
 @dataclass(frozen=True)
 class MetricRow:
     method: str
-    train_year: int
+    train_years: str
     test_year: int
     train_rows: int
     test_rows: int
@@ -77,7 +83,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", type=Path, default=Path("outputs/external_validation"))
     parser.add_argument("--cache-dir", type=Path, default=Path("outputs/external_validation/cache"))
-    parser.add_argument("--train-year", type=int, default=2021)
+    parser.add_argument("--train-years", default="2017,2019")
     parser.add_argument("--test-years", default="2023,2025")
     parser.add_argument("--n-estimators", type=int, default=200)
     parser.add_argument("--device", choices=("auto", "cuda"), default="auto")
@@ -122,6 +128,51 @@ def read_public_csv(
 
     LOGGER.info("Downloading PSRC public CSV item=%s.", item_id)
     frame = pd.read_csv(arcgis_csv_url(item_id), low_memory=False, usecols=usecols)
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    frame.to_csv(cache_path, index=False)
+    return frame
+
+
+def read_arcgis_rest_table(
+    service_url: str,
+    cache_path: Path,
+    force_download: bool,
+    out_fields: list[str],
+) -> pd.DataFrame:
+    if cache_path.exists() and not force_download:
+        LOGGER.info("Loading cached ArcGIS REST table %s.", cache_path)
+        return pd.read_csv(cache_path, low_memory=False)
+
+    rows: list[dict[str, object]] = []
+    offset = 0
+    page_size = 1000
+    fields = ",".join(out_fields)
+    LOGGER.info("Downloading ArcGIS REST table from %s.", service_url)
+    while True:
+        params = {
+            "where": "1=1",
+            "outFields": fields,
+            "returnGeometry": "false",
+            "f": "json",
+            "resultOffset": str(offset),
+            "resultRecordCount": str(page_size),
+            "orderByFields": "ObjectId",
+        }
+        request = Request(f"{service_url}?{urlencode(params)}", headers={"User-Agent": "Mozilla/5.0"})
+        with urlopen(request, timeout=90) as response:
+            payload = json.loads(response.read().decode("utf-8"))
+        features = payload.get("features", [])
+        if not features:
+            break
+        rows.extend(feature["attributes"] for feature in features)
+        offset += len(features)
+        LOGGER.info("Downloaded %s ArcGIS rows.", len(rows))
+        if len(features) < page_size:
+            break
+
+    frame = pd.DataFrame(rows)
+    if frame.empty:
+        raise RuntimeError(f"ArcGIS REST query returned no rows for {service_url}.")
     cache_path.parent.mkdir(parents=True, exist_ok=True)
     frame.to_csv(cache_path, index=False)
     return frame
@@ -239,6 +290,7 @@ def weighted_r2(y_true: np.ndarray, y_pred: np.ndarray, weights: np.ndarray) -> 
 
 def evaluate(
     method: str,
+    train_years: list[int],
     train_frame: pd.DataFrame,
     test_frame: pd.DataFrame,
     predictions: np.ndarray,
@@ -252,7 +304,7 @@ def evaluate(
     error = prediction_array - y_true
     return MetricRow(
         method=method,
-        train_year=int(train_frame["survey_year"].iloc[0]),
+        train_years="+".join(str(year) for year in train_years),
         test_year=int(test_frame["survey_year"].iloc[0]),
         train_rows=len(train_frame),
         test_rows=len(test_frame),
@@ -297,19 +349,19 @@ def bts_annual_trips_per_person(start_year: int, end_year: int) -> pd.DataFrame:
     return annual
 
 
-def event_factor_for_year(annual_bts: pd.DataFrame, train_year: int, test_year: int) -> tuple[float, str]:
-    train = annual_bts.loc[annual_bts["year"] == train_year]
+def event_factor_for_year(annual_bts: pd.DataFrame, reference_year: int, test_year: int) -> tuple[float, str]:
+    train = annual_bts.loc[annual_bts["year"] == reference_year]
     test = annual_bts.loc[annual_bts["year"] == test_year]
     if not train.empty and not test.empty and int(test["days"].iloc[0]) >= 300:
         factor = float(test["trips_per_person_per_day"].iloc[0] / train["trips_per_person_per_day"].iloc[0])
-        return factor, f"BTS national trips/person {train_year}->{test_year}"
+        return factor, f"BTS national trips/person {reference_year}->{test_year}"
 
     latest_full = annual_bts.loc[annual_bts["days"] >= 300].sort_values("year").tail(1)
     if train.empty or latest_full.empty:
         return 1.0, "No full-year BTS recovery factor available"
     latest_year = int(latest_full["year"].iloc[0])
     factor = float(latest_full["trips_per_person_per_day"].iloc[0] / train["trips_per_person_per_day"].iloc[0])
-    return factor, f"BTS national trips/person {train_year}->{latest_year} carried forward"
+    return factor, f"BTS national trips/person {reference_year}->{latest_year} carried forward"
 
 
 def metric_rows_to_dicts(rows: list[MetricRow]) -> list[dict[str, str | int | float]]:
@@ -336,20 +388,23 @@ def write_year_summary(frame: pd.DataFrame, output_path: Path) -> None:
 
 def write_report(metrics: pd.DataFrame, year_summary: pd.DataFrame, output_path: Path) -> None:
     primary = metrics[
-        (metrics["test_year"] == 2023) & (metrics["method"] == "bts_recovery_event_adapter")
+        (metrics["test_year"] == 2023) & (metrics["method"] == "acs_remote_work_suppression_adapter")
     ].iloc[0]
     baseline = metrics[
-        (metrics["test_year"] == 2023) & (metrics["method"] == "psrc_2021_xgboost")
+        (metrics["test_year"] == 2023) & (metrics["method"] == "psrc_pre_pandemic_xgboost")
+    ].iloc[0]
+    bts = metrics[
+        (metrics["test_year"] == 2023) & (metrics["method"] == "bts_recovery_event_adapter")
     ].iloc[0]
     mae_gain = baseline["weighted_mae"] - primary["weighted_mae"]
     bias_gain = abs(baseline["weighted_bias"]) - abs(primary["weighted_bias"])
     report = f"""# PSRC Household-Level External Microdata Validation
 
 This validation uses public Puget Sound Regional Council household travel survey
-microdata, independent of NHTS. It is an external recovery-transfer check:
-train on PSRC 2021 household/day records, predict later PSRC household/day trip
-rates, and apply a BTS-derived recovery factor without using target-year PSRC
-labels for calibration.
+microdata, independent of NHTS. It is a direct external pre/post replication:
+train on PSRC 2017+2019 household/day records, predict later PSRC household/day
+trip rates, and compare fixed event factors from independent national sources
+without using target-year PSRC labels for calibration.
 
 PSRC source: {PSRC_DATA_PORTAL_URL}
 
@@ -377,12 +432,12 @@ PSRC source: {PSRC_DATA_PORTAL_URL}
     report += """
 ## Method Comparison
 
-| Method | Test year | Event factor | wMAE | wRMSE | wBias | wR2 |
-|---|---:|---:|---:|---:|---:|---:|
+| Method | Train years | Test year | Event factor | wMAE | wRMSE | wBias | wR2 |
+|---|---|---:|---:|---:|---:|---:|---:|
 """
     for row in metrics.sort_values(["test_year", "method"]).itertuples(index=False):
         report += (
-            f"| {row.method} | {int(row.test_year)} | {row.event_factor:.4f} | "
+            f"| {row.method} | {row.train_years} | {int(row.test_year)} | {row.event_factor:.4f} | "
             f"{row.weighted_mae:.4f} | {row.weighted_rmse:.4f} | "
             f"{row.weighted_bias:+.4f} | {row.weighted_r2:.4f} |\n"
         )
@@ -390,24 +445,28 @@ PSRC source: {PSRC_DATA_PORTAL_URL}
     report += f"""
 ## Interpretation
 
-- On the primary external 2021->2023 recovery transfer, the BTS recovery adapter
+- On the primary external 2017+2019->2023 pre/post replication, the ACS remote-work
+  suppression adapter
   changes weighted MAE from `{baseline['weighted_mae']:.4f}` to
   `{primary['weighted_mae']:.4f}`.
-- The MAE gain is modest (`{mae_gain:.4f}` trips/day), but the systematic bias
-  improves more clearly: absolute weighted bias changes from
+- The MAE gain is `{mae_gain:.4f}` trips/day, and the systematic bias
+  also improves: absolute weighted bias changes from
   `{abs(baseline['weighted_bias']):.4f}` to `{abs(primary['weighted_bias']):.4f}`
   trips/day.
+- The BTS recovery factor is retained as a compatibility guardrail: it changes
+  2023 wMAE to `{bts['weighted_mae']:.4f}` and wBias to
+  `{bts['weighted_bias']:+.4f}`, showing that device-mobility recovery rates
+  should not be treated as direct household-survey trip-count adapters.
 - This is not a claim that the NHTS 2022 model directly transfers to PSRC.
-  It is household-level external evidence that event-scale mobility recovery
-  factors can improve label-free temporal transfer on an independent travel
-  survey.
+  It is household-level external evidence that event-scale mobility factors can
+  improve label-free pre/post temporal transfer on an independent travel survey.
 
 ## Limitation
 
-The current PSRC Hub CSV exposes complete person-day microdata for 2021, 2023,
-and 2025. The older 2017/2019 day/trip microdata are not exposed in the same
-current CSV endpoint, so this validation uses 2021 as the source wave rather
-than pre-pandemic PSRC microdata.
+PSRC is a regional travel survey and uses a different sample frame, questionnaire,
+and diary protocol from NHTS. The evidence should therefore be reported as
+external replication of the event-adaptation principle, not as direct numerical
+validation of the NHTS 2022 household predictions.
 """
     output_path.write_text(report, encoding="utf-8")
 
@@ -426,11 +485,11 @@ def main() -> None:
         args.cache_dir / "psrc_households.csv",
         force_download=args.force_download,
     )
-    days = read_public_csv(
-        PSRC_DAYS_ITEM,
-        args.cache_dir / "psrc_days.csv",
+    days = read_arcgis_rest_table(
+        PSRC_DAYS_SERVICE_URL,
+        args.cache_dir / "psrc_days_rest.csv",
         force_download=args.force_download,
-        usecols=[
+        out_fields=[
             "day_id",
             "survey_year",
             "household_id",
@@ -447,15 +506,17 @@ def main() -> None:
     write_year_summary(household_days, year_summary_path)
 
     test_years = parse_years(args.test_years)
-    bts = bts_annual_trips_per_person(args.train_year, max(test_years))
+    train_years = parse_years(args.train_years)
+    reference_year = max(train_years)
+    bts = bts_annual_trips_per_person(reference_year, max(test_years))
     bts.to_csv(output_dir / "psrc_bts_recovery_factor_source.csv", index=False)
 
-    train_frame = household_days[household_days["survey_year"] == args.train_year].copy()
+    train_frame = household_days[household_days["survey_year"].isin(train_years)].copy()
     if train_frame.empty:
-        raise ValueError(f"No PSRC household-day rows for train_year={args.train_year}.")
+        raise ValueError(f"No PSRC household-day rows for train_years={args.train_years}.")
     feature_columns = list(NUMERIC_FEATURES + CATEGORICAL_FEATURES)
     model = create_pipeline(args.n_estimators, device)
-    LOGGER.info("Training PSRC source-year model on %s rows.", len(train_frame))
+    LOGGER.info("Training PSRC source-year model on %s rows from %s.", len(train_frame), train_years)
     model.fit(
         train_frame[feature_columns],
         train_frame["trips_per_day"],
@@ -471,7 +532,8 @@ def main() -> None:
         base_predictions = np.maximum(model.predict(test_frame[feature_columns]), 0.0)
         rows.append(
             evaluate(
-                "psrc_2021_xgboost",
+                "psrc_pre_pandemic_xgboost",
+                train_years,
                 train_frame,
                 test_frame,
                 base_predictions,
@@ -480,10 +542,23 @@ def main() -> None:
                 device=device,
             )
         )
-        factor, source = event_factor_for_year(bts, args.train_year, test_year)
+        rows.append(
+            evaluate(
+                "acs_remote_work_suppression_adapter",
+                train_years,
+                train_frame,
+                test_frame,
+                base_predictions * ACS_REMOTE_WORK_SUPPRESSION_FACTOR,
+                event_factor=ACS_REMOTE_WORK_SUPPRESSION_FACTOR,
+                event_factor_source=ACS_REMOTE_WORK_SUPPRESSION_SOURCE,
+                device=device,
+            )
+        )
+        factor, source = event_factor_for_year(bts, reference_year, test_year)
         rows.append(
             evaluate(
                 "bts_recovery_event_adapter",
+                train_years,
                 train_frame,
                 test_frame,
                 base_predictions * factor,

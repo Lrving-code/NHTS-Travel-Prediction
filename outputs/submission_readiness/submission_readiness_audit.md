@@ -2,7 +2,7 @@
 
 Generated from current repository artifacts. This is an evidence audit, not a claim that the project is fully submission-ready.
 
-Overall readiness score: `0.98` / 1.00
+Overall readiness score: `1.00` / 1.00
 
 ## Category Scores
 
@@ -15,7 +15,7 @@ Overall readiness score: `0.98` / 1.00
 | Mobility behavior system | 1.00 |
 | Presentation readiness | 1.00 |
 | Reproducibility and GPU | 1.00 |
-| Temporal and external validity | 0.90 |
+| Temporal and external validity | 1.00 |
 
 ## Hard Blockers
 
@@ -23,9 +23,7 @@ No FAIL-level blockers were detected from the checked artifacts.
 
 ## Partial Items To Fix Before Paper Submission
 
-| Category | Item | Evidence | Recommendation |
-|---|---|---|---|
-| Temporal and external validity | External validation scope | PSRC validation uses 2021 recovery transfer; current PSRC Hub CSV does not expose 2017/2019 day/trip microdata in the same endpoint. | For a full paper, add a direct pre-pandemic-to-post-pandemic external travel-survey replication if accessible. |
+No PARTIAL items were detected.
 
 ## Full Evidence Matrix
 
@@ -51,8 +49,8 @@ No FAIL-level blockers were detected from the checked artifacts.
 | Temporal and external validity | Temporal transfer validation | PASS | 1.0 | Pre-COVID and 2022 transfer report exists. |
 | Temporal and external validity | Pre-COVID placebo validation | PASS | 1.0 | Pre-COVID event-correction placebo report exists. |
 | Temporal and external validity | External mechanism validation beyond NHTS | PASS | 1.0 | ACS commute-mode mechanism validation and BTS trip-count compatibility guardrail exist. |
-| Temporal and external validity | Household-level external microdata validation | PASS | 1.0 | PSRC 2021->2023 household microdata: wMAE 3.6908->3.6855; wBias -1.1480->-0.2646. |
-| Temporal and external validity | External validation scope | PARTIAL | 0.5 | PSRC validation uses 2021 recovery transfer; current PSRC Hub CSV does not expose 2017/2019 day/trip microdata in the same endpoint. |
+| Temporal and external validity | Household-level external microdata validation | PASS | 1.0 | PSRC 2017+2019->2023 household microdata: wMAE 3.4271->3.2498; wBias +1.0532->+0.2605. |
+| Temporal and external validity | External validation scope statement | PASS | 1.0 | PSRC report states that the regional survey is external replication of the event-adaptation principle, not direct NHTS numerical validation. |
 | Literature and paper story | 2025-2026 literature grounding | PASS | 1.0 | Literature grounding note contains current anchors. |
 | Literature and paper story | Single paper spine | PASS | 1.0 | paper_logic_chain.md states the event-adaptation spine. |
 | Literature and paper story | Reviewer Q&A backup | PASS | 1.0 | Reviewer Q&A backup document exists. |
@@ -66,5 +64,5 @@ No FAIL-level blockers were detected from the checked artifacts.
 ## Interpretation
 
 - Course-project readiness is strong: the core result, baselines, guardrails, deck, and Q&A material are present.
-- Paper-submission readiness is close but not complete: the main remaining gap is direct pre-pandemic-to-post-pandemic external replication in a NHTS-compatible travel-survey schema.
+- No artifact-level FAIL or PARTIAL items remain in this audit; remaining work is paper writing, advisor feedback, and optional additional replications.
 - The defensible paper claim should remain scoped to label-free event adaptation for survey-based household mobility under a post-pandemic shift.

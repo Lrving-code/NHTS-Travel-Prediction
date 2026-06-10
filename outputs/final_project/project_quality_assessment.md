@@ -4,7 +4,7 @@
 
 作为“大数据与城市规划”课程大作业，本项目已经足够拿出来汇报，而且亮点比较清楚：它不是普通的跨年监督预测，而是把 2022 NHTS 预测定义为 post-pandemic distribution shift，再用 LLM event prior 做 label-free correction。
 
-作为论文，目前还不够。更准确的判断是：可以发展成 workshop / course-paper / short-paper 级别的研究原型；如果要投正式交通规划或数据挖掘论文，需要补 direct pre-pandemic-to-post-pandemic external replication、更加严格的前瞻式事件上下文和更强的 mode-choice 实验。
+作为论文，目前还不够直接说“顶刊稳投”，但已经从 course-paper 原型推进到更完整的 workshop / short-paper seed：核心 NHTS 实验、机制验证、PSRC 外部 pre/post 复刻、稳健性和答辩材料都齐了。如果要投正式交通规划或数据挖掘论文，下一步重点是 paper writing、advisor feedback、额外地区复刻和更强的 mode-choice 实验。
 
 一句话判断：**大作业可以讲，论文还需要补证据链**。当前最适合的题目不是“LLM 提高 NHTS 预测准确率”，而是“在目标年份标签不可用时，如何用 LLM 事件先验修正历史出行模型的 distribution shift”。
 
@@ -22,9 +22,9 @@
 - Household exact rounded accuracy improves from `5.84%` to `17.72%`; weighted within-2-trips coverage improves from `23.39%` to `53.95%`.
 - External mechanism validation supports the event-prior direction: ACS worked-from-home commute share changes from `5.7%` in 2019 to `15.2%` in 2022, while public-transportation commute share changes from `5.0%` to `3.1%`.
 - BTS daily mobility is useful as a compatibility guardrail but not as an external numeric target: its device-based trips/person do not align with NHTS travel-diary `CNTTDHH`.
-- PSRC household-level microdata adds an independent recovery-transfer check: 2021->2023 weighted MAE changes `3.6908 -> 3.6855`, while weighted bias improves from `-1.1480` to `-0.2646` using a BTS-derived recovery factor.
+- PSRC household-level microdata adds an independent direct pre/post check: 2017+2019->2023 weighted MAE changes `3.4271 -> 3.2498`, while weighted bias improves from `+1.0532` to `+0.2605` using an ACS-derived remote-work suppression factor. The BTS device-mobility recovery factor is a useful negative guardrail because it worsens the same external transfer.
 
-These numbers are strong enough for a course report because the baseline failure, correction mechanism, and external evidence chain are visible. They are not enough for a paper if framed as pure prediction SOTA, because exact household-level prediction remains hard, the mode-composition extension is still exploratory, and the PSRC external result is a recovery-transfer validation with modest MAE gain rather than a direct NHTS-style pre/post replication.
+These numbers are strong enough for a course report because the baseline failure, correction mechanism, and external evidence chain are visible. They can support a paper seed if framed as event adaptation rather than pure prediction SOTA. Exact household-level prediction remains hard, mode composition is still exploratory, and PSRC is a regional replication rather than direct numerical validation of NHTS 2022.
 
 ## External Positioning
 
@@ -58,14 +58,14 @@ Current version is not ready for a full paper because:
 2. The LLM context is retrospective; GPT-5.5 may already know COVID-era mobility facts.
 3. The strongest improvement is close to global event downscaling, so cohort-specific LLM ranking should not be overclaimed.
 4. Mode composition improvement is concentrated in transit and does not yet form a complete mode-choice model.
-5. External household validation exists, but it is PSRC 2021->2023 recovery transfer; it is not yet a direct pre-pandemic-to-post-pandemic external replication.
+5. External household validation exists, but it is one regional PSRC replication; a stronger paper would benefit from additional regions or shocks.
 
 Adversarial reviewer concern: the strongest alternative explanation is that most of the gain comes from a global 2022 shock correction, not from rich LLM reasoning. The current version now addresses this with LLM-only, zero-shot rule-tree, random-prior, irrelevant pseudo-event, and global-prior controls. A paper would still need stronger external evidence that cohort-specific semantic priors add value beyond a calibrated shock scalar across multiple shocks or regions.
 
 To make it paper-ready, the next experiments should be:
 
 1. Prospective event-context freezing: use only documents/data available before 2022 NHTS release.
-2. Direct external replication: find a compatible post-pandemic household travel survey with exposed pre-pandemic and post-pandemic trip diaries in the same data schema.
+2. Additional external replication: add another compatible post-pandemic household travel survey or region if accessible.
 3. Cross-region or multi-shock validation: at least one additional event or held-out region.
 4. Stronger baselines: calibrated global shock model, difference-in-differences style correction, CatBoost/LightGBM, and a simple external-feature model.
 5. Mode-choice strengthening: move from transit-share correction toward a complete mode/purpose event adapter.
