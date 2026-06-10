@@ -37,6 +37,7 @@ Use only if asked:
 - Slide 20: Purpose composition.
 - Slide 21: LLM scaling.
 - Slide 22: Research logic.
+- B7: External mechanism validation and BTS compatibility guardrail.
 
 ## Lines to Avoid
 
@@ -44,6 +45,7 @@ Use only if asked:
 - Avoid: “We prove causal effects.”
 - Avoid: “Purpose composition is solved.”
 - Avoid: “Cohort-specific LLM ranking is the only reason for the gain.”
+- Avoid: “BTS device trips prove external household-level trip-count accuracy.”
 
 ## Lines to Use
 
@@ -52,3 +54,4 @@ Use only if asked:
 - “The global event prior is a strong low-cost baseline; the gated LLM adapter is the balanced reporting operating point.”
 - “Pure LLM pressure has the right direction but weaker calibration; the hybrid design is why the final bias is near zero.”
 - “Causal guardrails and negative controls make the LLM component auditable.”
+- “External data supports the event mechanisms, while household-level external MAE remains future work.”

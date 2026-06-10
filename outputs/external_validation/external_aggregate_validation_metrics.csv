@@ -1,0 +1,6 @@
+method,reference_year,target_year,reference_trips_per_person,target_trips_per_person,predicted_shift_pct,bts_shift_pct,absolute_external_error_pct_points,direction_match,note
+nhts_2022_observed_evaluation_only,2017,2022,3.1782734799313697,1.5704676543621428,-0.5058739707962278,-0.01948057746723919,48.63933933289886,True,"Uses 2022 labels only as final evaluation context, never for training."
+historical_xgboost,2017,2022,3.1782734799313697,3.0480125243207867,-0.04098481657827502,-0.01948057746723919,2.1504239111035828,True,External aggregate sanity check; household-level definitions differ from BTS device mobility.
+global_event_prior_a1,2017,2022,3.1782734799313697,1.6208262744558692,-0.49002932419432055,-0.01948057746723919,47.05487467270814,True,External aggregate sanity check; household-level definitions differ from BTS device mobility.
+recovery_event_prior_a1,2017,2022,3.1782734799313697,1.9314122527580997,-0.39230772148663373,-0.01948057746723919,37.28271440193945,True,External aggregate sanity check; household-level definitions differ from BTS device mobility.
+gated_trip_suppression_a1_d0p15,2017,2022,3.1782734799313697,1.561025780270282,-0.5088447265073016,-0.01948057746723919,48.93641490400624,True,External aggregate sanity check; household-level definitions differ from BTS device mobility.

@@ -213,14 +213,34 @@ def audit_temporal_external_validation() -> list[Check]:
         checks.append(pass_check(category, "Pre-COVID placebo validation", "Pre-COVID event-correction placebo report exists."))
     else:
         checks.append(fail_check(category, "Pre-COVID placebo validation", "Missing pre-COVID placebo report.", "Run placebo validation."))
-    checks.append(
-        partial_check(
-            category,
-            "External validation beyond NHTS",
-            "Internal temporal validation exists; no independent external dataset is documented.",
-            "For paper submission, add an external mobility survey/region/shock dataset or clearly scope this as single-dataset evidence.",
+    if exists("outputs/external_validation/external_validation_and_compatibility_report.md") and exists(
+        "outputs/external_validation/acs_commute_mechanism_validation.csv"
+    ):
+        checks.append(
+            pass_check(
+                category,
+                "External mechanism validation beyond NHTS",
+                "ACS commute-mode mechanism validation and BTS trip-count compatibility guardrail exist.",
+                "Report as mechanism-level external evidence, not household-level MAE.",
+            )
         )
-    )
+        checks.append(
+            partial_check(
+                category,
+                "Household-level external microdata validation",
+                "Independent ACS/BTS evidence is aggregate; no NHTS-compatible household external microdata MAE is available.",
+                "For paper submission, add a compatible household travel survey if accessible, or scope the claim as NHTS-centered with external mechanism validation.",
+            )
+        )
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "External validation beyond NHTS",
+                "Internal temporal validation exists; no independent external dataset is documented.",
+                "Run src/run_external_aggregate_validation.py or add an external mobility survey/region/shock dataset.",
+            )
+        )
     return checks
 
 
@@ -399,7 +419,7 @@ def write_outputs(checks: list[Check]) -> tuple[Path, Path]:
             "## Interpretation",
             "",
             "- Course-project readiness is strong: the core result, baselines, guardrails, deck, and Q&A material are present.",
-            "- Paper-submission readiness is close but not complete: the main remaining gap is independent external validation beyond NHTS.",
+            "- Paper-submission readiness is close but not complete: the main remaining gap is household-level external microdata validation beyond NHTS-compatible targets.",
             "- The defensible paper claim should remain scoped to label-free event adaptation for survey-based household mobility under a post-pandemic shift.",
         ]
     )

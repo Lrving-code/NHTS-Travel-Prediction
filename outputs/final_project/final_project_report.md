@@ -43,6 +43,18 @@ Before interpreting 2022 as an event-shift target, we checked routine cross-year
 
 The pre-COVID checks have mean absolute weighted bias `0.9024`, while 2022 has absolute weighted bias `3.7202`. This supports the problem framing: 2022 is a stronger post-pandemic event shift rather than an ordinary transfer year.
 
+## External Mechanism Validation
+
+We added an external validation and compatibility audit in `outputs/external_validation/`. The external evidence is deliberately scoped as mechanism-level validation rather than household-level MAE.
+
+| External source | Finding | Relevance |
+|---|---|---|
+| ACS commuting brief | Worked-from-home commute share remains much higher in 2022 than 2019: `5.7% -> 15.2%`. | Supports `remote_work_substitution` event prior. |
+| ACS commuting brief | Public-transportation commute share remains lower in 2022 than 2019: `5.0% -> 3.1%`. | Supports `transit_avoidance` event prior. |
+| BTS/UMD daily mobility | BTS trips/person changes only `-1.95%` from 2019 to 2022, while NHTS diary `CNTTDHH` has a much larger 2017-to-2022 shift. | Shows BTS device mobility is not a direct numeric label for NHTS household trips. |
+
+Interpretation: external data supports the event semantics used by the LLM adapter, but it does not provide NHTS-compatible household microdata for a direct external accuracy test. The paper claim should therefore remain: label-free event adaptation for NHTS-style household travel survey prediction, with external mechanism support and a clear limitation.
+
 ## Improvement Over Historical Predictor
 
 - Primary strict no-label row: `gated_trip_suppression_a1_d0p15`.

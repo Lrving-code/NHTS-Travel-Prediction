@@ -15,7 +15,7 @@ Overall readiness score: `0.98` / 1.00
 | Mobility behavior system | 1.00 |
 | Presentation readiness | 1.00 |
 | Reproducibility and GPU | 1.00 |
-| Temporal and external validity | 0.83 |
+| Temporal and external validity | 0.88 |
 
 ## Hard Blockers
 
@@ -25,7 +25,7 @@ No FAIL-level blockers were detected from the checked artifacts.
 
 | Category | Item | Evidence | Recommendation |
 |---|---|---|---|
-| Temporal and external validity | External validation beyond NHTS | Internal temporal validation exists; no independent external dataset is documented. | For paper submission, add an external mobility survey/region/shock dataset or clearly scope this as single-dataset evidence. |
+| Temporal and external validity | Household-level external microdata validation | Independent ACS/BTS evidence is aggregate; no NHTS-compatible household external microdata MAE is available. | For paper submission, add a compatible household travel survey if accessible, or scope the claim as NHTS-centered with external mechanism validation. |
 
 ## Full Evidence Matrix
 
@@ -50,11 +50,12 @@ No FAIL-level blockers were detected from the checked artifacts.
 | Mobility behavior system | Multi-objective Pareto | PASS | 1.0 | outputs/multi_objective_pareto/preference_operating_points.csv |
 | Temporal and external validity | Temporal transfer validation | PASS | 1.0 | Pre-COVID and 2022 transfer report exists. |
 | Temporal and external validity | Pre-COVID placebo validation | PASS | 1.0 | Pre-COVID event-correction placebo report exists. |
-| Temporal and external validity | External validation beyond NHTS | PARTIAL | 0.5 | Internal temporal validation exists; no independent external dataset is documented. |
+| Temporal and external validity | External mechanism validation beyond NHTS | PASS | 1.0 | ACS commute-mode mechanism validation and BTS trip-count compatibility guardrail exist. |
+| Temporal and external validity | Household-level external microdata validation | PARTIAL | 0.5 | Independent ACS/BTS evidence is aggregate; no NHTS-compatible household external microdata MAE is available. |
 | Literature and paper story | 2025-2026 literature grounding | PASS | 1.0 | Literature grounding note contains current anchors. |
 | Literature and paper story | Single paper spine | PASS | 1.0 | paper_logic_chain.md states the event-adaptation spine. |
 | Literature and paper story | Reviewer Q&A backup | PASS | 1.0 | Reviewer Q&A backup document exists. |
-| Presentation readiness | Main deck plus backup | PASS | 1.0 | Template PPT has 29 slides with B1-B6 backup. |
+| Presentation readiness | Main deck plus backup | PASS | 1.0 | Template PPT has 30 slides with B1-B6 backup. |
 | Presentation readiness | Key defense content in deck | PASS | 1.0 | Deck contains literature anchors and method-defense baselines. |
 | Presentation readiness | Speaker notes | PASS | 1.0 | Chinese speaker notes include talk path and backup map. |
 | Reproducibility and GPU | Stronger baseline script | PASS | 1.0 | Strong baseline script and metrics exist. |
@@ -64,5 +65,5 @@ No FAIL-level blockers were detected from the checked artifacts.
 ## Interpretation
 
 - Course-project readiness is strong: the core result, baselines, guardrails, deck, and Q&A material are present.
-- Paper-submission readiness is close but not complete: the main remaining gap is independent external validation beyond NHTS.
+- Paper-submission readiness is close but not complete: the main remaining gap is household-level external microdata validation beyond NHTS-compatible targets.
 - The defensible paper claim should remain scoped to label-free event adaptation for survey-based household mobility under a post-pandemic shift.

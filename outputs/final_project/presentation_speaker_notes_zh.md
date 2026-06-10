@@ -64,6 +64,7 @@ LLM 输出的是结构化事件先验，不直接输出 `CNTTDHH`。
 - 不能说我们识别了 COVID 的 causal effect；应该说 causal guardrails 和 mechanism proxy。
 - purpose composition 目前是探索性输出，不作为主贡献。
 - global event prior 很强，所以 contribution 要讲成 event-level adaptation + auditable cohort refinement。
+- 外部验证是 mechanism-level，不是 household-level external MAE。ACS 支持 remote work / transit avoidance 机制，BTS 只能作为 device trip count 与 NHTS `CNTTDHH` 不可直接对齐的 guardrail。
 
 ## 可能被问到的问题
 
@@ -81,3 +82,4 @@ LLM 输出的是结构化事件先验，不直接输出 `CNTTDHH`。
 - B4：老师问“这和最新 LLM mobility/foundation model 工作是什么关系”。
 - B5：老师问“mode/purpose 是不是已经做完了”。
 - B6：老师问“Weighted MAE、bias、within-k accuracy 怎么解释”。
+- B7：老师问“有没有 NHTS 之外的外部验证”。
