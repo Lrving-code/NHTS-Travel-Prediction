@@ -55,13 +55,17 @@ Already available:
   - `outputs/pre_covid_placebo_event_correction/pre_covid_placebo_event_correction_report.md`
   - Full 2022-strength suppression (`alpha=1`) worsens 2017 weighted MAE from `4.1272` to `4.2497`, while stronger `alpha=1.25` worsens it to `4.7632`.
   - This shows event priors need context and strength discipline rather than being treated as a universal downshift.
+- LLM input leakage audit:
+  - `outputs/leakage_audit/llm_input_leakage_audit_report.md`
+  - 1327 cohort profiles and 89 batch prompt payloads have zero forbidden field violations.
+  - Required guardrail instructions explicitly forbid `CNTTDHH`, `WTHHFIN`, `HOUSEID`, and aggregate 2022 target outcomes.
 
 Add next:
 
 - Irrelevant pseudo-event prior:
   - Ask/generate an event prior unrelated to travel suppression, such as generic “digital service adoption pressure,” and verify it should not improve trip-count prediction.
 - Feature leakage audit:
-  - Assert no target, survey weight, household ID, or post-outcome aggregate target statistic is included in LLM prompts.
+  - Extend the current schema audit into a full prompt provenance appendix if writing the paper.
 
 ## Claim Discipline
 

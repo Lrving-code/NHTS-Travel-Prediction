@@ -108,6 +108,7 @@ predicted trips by mode = predicted total trips * predicted mode share
 - `outputs/robustness_checks/permutation_null_mae.png`
 - `outputs/temporal_transfer_validation/temporal_transfer_validation_report.md`
 - `outputs/pre_covid_placebo_event_correction/pre_covid_placebo_event_correction_report.md`
+- `outputs/leakage_audit/llm_input_leakage_audit_report.md`
 
 更强非 LLM baseline：
 
@@ -173,6 +174,7 @@ src/
   run_multi_objective_pareto_analysis.py
   run_equity_aware_evaluation.py
   run_pre_covid_placebo_event_correction.py
+  run_llm_input_leakage_audit.py
   run_stronger_tabular_baselines.py
   build_batched_llm_event_prompts.py
   generate_presentation_figures.py
@@ -235,6 +237,7 @@ python src\run_statistical_confidence_intervals.py --bootstrap-runs 1000
 python src\run_robustness_checks.py
 python src\run_temporal_transfer_validation.py --device cuda
 python src\run_pre_covid_placebo_event_correction.py --device cuda
+python src\run_llm_input_leakage_audit.py
 ```
 
 多目标/Pareto 分析：
