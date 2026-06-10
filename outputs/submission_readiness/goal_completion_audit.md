@@ -1,7 +1,6 @@
 # Goal Completion Audit
 
 Git branch: `feature/label-free-llm-adaptation`
-Git commit: `6c30317`
 
 This document maps the long-running project objective to current repository evidence.
 
@@ -14,6 +13,7 @@ Overall status: `COMPLETE`
 | Adversarial submission readiness audit is clean | PASS | readiness=1.00, FAIL=0, PARTIAL=0 | `outputs/submission_readiness/submission_readiness_audit.md` |
 | Single paper spine is explicit | PASS | paper_logic_chain.md states event-driven temporal adaptation and LLM event-semantic adapter. | `plan/paper_logic_chain.md` |
 | 2025-2026 literature grounding is present | PASS | Literature note covers current LLM/mobility anchors. | `plan/literature_grounding_2026.md` |
+| Paper draft and claim-evidence ledger exist | PASS | Draft manuscript and claim matrix constrain paper-level wording. | `outputs/paper_draft/nhts_event_adaptation_paper_draft.md` |
 | Primary NHTS result is documented | PASS | Historical XGBoost to gated adapter improvement is in the audit. | `outputs/final_project/final_metrics_summary.csv` |
 | Strong baselines and LLM rule-tree ablations exist | PASS | Strong tabular, zero-shot rule tree, pseudo-label tree, and small-calibration evidence are present. | `outputs/strong_baselines/strong_tabular_baseline_metrics.csv` |
 | Robustness and placebo controls exist | PASS | Permutation and irrelevant pseudo-event controls are present. | `outputs/robustness_checks/permutation_pressure_controls.csv` |
@@ -35,7 +35,10 @@ Overall status: `COMPLETE`
 - External PSRC validation: `outputs/external_validation/psrc_household_external_validation_report.md`
 - Literature grounding: `plan/literature_grounding_2026.md`
 - Paper logic chain: `plan/paper_logic_chain.md`
+- Paper draft: `outputs/paper_draft/nhts_event_adaptation_paper_draft.md`
+- Claim-evidence ledger: `outputs/paper_draft/claim_evidence_matrix.md`
+- Paper self-review: `outputs/paper_draft/paper_self_review_2026_06_10.md`
 
 ## Remaining Work
 
-No artifact-level blocker remains in the current audit. Future work is optional extension rather than required closure: paper drafting, advisor feedback, and additional external regional replications.
+No artifact-level blocker remains in the current audit. Future work is optional extension rather than required closure: LaTeX formatting, advisor feedback, and additional external regional replications.

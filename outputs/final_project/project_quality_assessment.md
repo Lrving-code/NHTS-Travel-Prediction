@@ -4,7 +4,7 @@
 
 作为“大数据与城市规划”课程大作业，本项目已经足够拿出来汇报，而且亮点比较清楚：它不是普通的跨年监督预测，而是把 2022 NHTS 预测定义为 post-pandemic distribution shift，再用 LLM event prior 做 label-free correction。
 
-作为论文，目前还不够直接说“顶刊稳投”，但已经从 course-paper 原型推进到更完整的 workshop / short-paper seed：核心 NHTS 实验、机制验证、PSRC 外部 pre/post 复刻、稳健性和答辩材料都齐了。如果要投正式交通规划或数据挖掘论文，下一步重点是 paper writing、advisor feedback、额外地区复刻和更强的 mode-choice 实验。
+作为论文，目前还不够直接说“顶刊稳投”，但已经从 course-paper 原型推进到更完整的 workshop / short-paper seed：核心 NHTS 实验、机制验证、PSRC 外部 pre/post 复刻、稳健性、论文初稿和答辩材料都齐了。如果要投正式交通规划或数据挖掘论文，下一步重点是 LaTeX 化、advisor feedback、额外地区复刻和更强的 mode-choice 实验。
 
 一句话判断：**大作业可以讲，论文还需要补证据链**。当前最适合的题目不是“LLM 提高 NHTS 预测准确率”，而是“在目标年份标签不可用时，如何用 LLM 事件先验修正历史出行模型的 distribution shift”。
 

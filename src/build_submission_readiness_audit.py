@@ -331,6 +331,20 @@ def audit_literature_and_story() -> list[Check]:
         checks.append(pass_check(category, "Reviewer Q&A backup", "Reviewer Q&A backup document exists."))
     else:
         checks.append(partial_check(category, "Reviewer Q&A backup", "Missing Q&A backup.", "Create discussion backup answers."))
+    if exists("outputs/paper_draft/nhts_event_adaptation_paper_draft.md") and contains_text(
+        "outputs/paper_draft/claim_evidence_matrix.md",
+        ["Primary gated weighted MAE", "Unsafe wording", "PSRC external weighted MAE improvement"],
+    ):
+        checks.append(pass_check(category, "Paper draft and claim ledger", "Paper draft and claim-evidence matrix exist."))
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Paper draft and claim ledger",
+                "Missing paper draft or claim-evidence matrix.",
+                "Create outputs/paper_draft/nhts_event_adaptation_paper_draft.md and claim_evidence_matrix.md.",
+            )
+        )
     return checks
 
 
@@ -483,8 +497,8 @@ def write_outputs(checks: list[Check]) -> tuple[Path, Path]:
             "",
             "## Interpretation",
             "",
-            "- Course-project readiness is strong: the core result, baselines, guardrails, deck, and Q&A material are present.",
-            "- No artifact-level FAIL or PARTIAL items remain in this audit; remaining work is paper writing, advisor feedback, and optional additional replications.",
+            "- Course-project readiness is strong: the core result, baselines, guardrails, deck, Q&A material, and paper draft package are present.",
+            "- No artifact-level FAIL or PARTIAL items remain in this audit; remaining work is LaTeX formatting, advisor feedback, and optional additional replications.",
             "- The defensible paper claim should remain scoped to label-free event adaptation for survey-based household mobility under a post-pandemic shift.",
         ]
     )

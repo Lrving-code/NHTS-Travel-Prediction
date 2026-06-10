@@ -32,18 +32,6 @@ def read_text(path: str) -> str:
     return file_path.read_text(encoding="utf-8", errors="replace") if file_path.exists() else ""
 
 
-def git_head() -> str:
-    result = subprocess.run(
-        ["git", "rev-parse", "--short", "HEAD"],
-        cwd=PROJECT_ROOT,
-        check=False,
-        capture_output=True,
-        text=True,
-        timeout=30,
-    )
-    return result.stdout.strip() if result.returncode == 0 else "unknown"
-
-
 def git_branch() -> str:
     result = subprocess.run(
         ["git", "branch", "--show-current"],
@@ -98,6 +86,8 @@ def build_requirements() -> list[RequirementEvidence]:
     readme = read_text("README.md")
     literature = read_text("plan/literature_grounding_2026.md")
     logic = read_text("plan/paper_logic_chain.md")
+    paper_draft = read_text("outputs/paper_draft/nhts_event_adaptation_paper_draft.md")
+    claim_matrix = read_text("outputs/paper_draft/claim_evidence_matrix.md")
 
     return [
         pass_if(
@@ -117,6 +107,13 @@ def build_requirements() -> list[RequirementEvidence]:
             "2025-2026 literature grounding is present",
             "Literature note covers current LLM/mobility anchors.",
             "plan/literature_grounding_2026.md",
+        ),
+        pass_if(
+            all(term in paper_draft for term in ["Abstract", "Method", "Results", "Limitations"])
+            and all(term in claim_matrix for term in ["Primary gated weighted MAE", "Unsafe wording"]),
+            "Paper draft and claim-evidence ledger exist",
+            "Draft manuscript and claim matrix constrain paper-level wording.",
+            "outputs/paper_draft/nhts_event_adaptation_paper_draft.md",
         ),
         pass_if(
             "historical wMAE 4.3377 -> primary wMAE 2.5023" in read_text(
@@ -204,14 +201,12 @@ def build_requirements() -> list[RequirementEvidence]:
 def write_report(rows: list[RequirementEvidence]) -> Path:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     report_path = OUTPUT_DIR / "goal_completion_audit.md"
-    head = git_head()
     branch = git_branch()
     missing = [row for row in rows if row.status != "PASS"]
     lines = [
         "# Goal Completion Audit",
         "",
         f"Git branch: `{branch}`",
-        f"Git commit: `{head}`",
         "",
         "This document maps the long-running project objective to current repository evidence.",
         "",
@@ -237,10 +232,13 @@ def write_report(rows: list[RequirementEvidence]) -> Path:
             "- External PSRC validation: `outputs/external_validation/psrc_household_external_validation_report.md`",
             "- Literature grounding: `plan/literature_grounding_2026.md`",
             "- Paper logic chain: `plan/paper_logic_chain.md`",
+            "- Paper draft: `outputs/paper_draft/nhts_event_adaptation_paper_draft.md`",
+            "- Claim-evidence ledger: `outputs/paper_draft/claim_evidence_matrix.md`",
+            "- Paper self-review: `outputs/paper_draft/paper_self_review_2026_06_10.md`",
             "",
             "## Remaining Work",
             "",
-            "No artifact-level blocker remains in the current audit. Future work is optional extension rather than required closure: paper drafting, advisor feedback, and additional external regional replications.",
+            "No artifact-level blocker remains in the current audit. Future work is optional extension rather than required closure: LaTeX formatting, advisor feedback, and additional external regional replications.",
         ]
     )
     report_path.write_text("\n".join(lines), encoding="utf-8")

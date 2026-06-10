@@ -54,6 +54,7 @@ No PARTIAL items were detected.
 | Literature and paper story | 2025-2026 literature grounding | PASS | 1.0 | Literature grounding note contains current anchors. |
 | Literature and paper story | Single paper spine | PASS | 1.0 | paper_logic_chain.md states the event-adaptation spine. |
 | Literature and paper story | Reviewer Q&A backup | PASS | 1.0 | Reviewer Q&A backup document exists. |
+| Literature and paper story | Paper draft and claim ledger | PASS | 1.0 | Paper draft and claim-evidence matrix exist. |
 | Presentation readiness | Main deck plus backup | PASS | 1.0 | Template PPT has 31 slides with B1-B8 backup. |
 | Presentation readiness | Key defense content in deck | PASS | 1.0 | Deck contains literature anchors and method-defense baselines. |
 | Presentation readiness | Speaker notes | PASS | 1.0 | Chinese speaker notes include talk path and backup map. |
@@ -63,6 +64,6 @@ No PARTIAL items were detected.
 
 ## Interpretation
 
-- Course-project readiness is strong: the core result, baselines, guardrails, deck, and Q&A material are present.
-- No artifact-level FAIL or PARTIAL items remain in this audit; remaining work is paper writing, advisor feedback, and optional additional replications.
+- Course-project readiness is strong: the core result, baselines, guardrails, deck, Q&A material, and paper draft package are present.
+- No artifact-level FAIL or PARTIAL items remain in this audit; remaining work is LaTeX formatting, advisor feedback, and optional additional replications.
 - The defensible paper claim should remain scoped to label-free event adaptation for survey-based household mobility under a post-pandemic shift.

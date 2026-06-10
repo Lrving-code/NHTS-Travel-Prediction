@@ -112,6 +112,9 @@ predicted trips by mode = predicted total trips * predicted mode share
 - `outputs/final_project/figures/presentation_figures/`
 - `plan/reviewer_qa_backup_2026.md`（答辩追问与 backup slides 口径）
 - `outputs/submission_readiness/submission_readiness_audit.md`（投稿/答辩证据链审计）
+- `outputs/paper_draft/nhts_event_adaptation_paper_draft.md`（论文初稿）
+- `outputs/paper_draft/claim_evidence_matrix.md`（claim-evidence 对照表）
+- `outputs/paper_draft/paper_self_review_2026_06_10.md`（论文自审记录）
 
 主实验：
 
@@ -331,7 +334,7 @@ purpose-composition 扩展使用同一组 trip-level files，并额外依赖跨�
 
 ## 重要注意事项
 
-- 当前版本足够作为“大数据与城市规划”课程大作业汇报；如果要发展成论文，应按 `outputs/final_project/project_quality_assessment.md` 继续打磨 paper writing、advisor feedback、额外地区复刻和更强的 mode-choice 实验。
+- 当前版本足够作为“大数据与城市规划”课程大作业汇报；如果要发展成论文，应按 `outputs/final_project/project_quality_assessment.md` 继续推进 LaTeX 化、advisor feedback、额外地区复刻和更强的 mode-choice 实验。
 - 主实验不使用 2022 `CNTTDHH` 标签训练或校准，2022 标签只用于最终 evaluation。
 - 汇报主口径使用固定 `gated_trip_suppression_a1_d0p15` no-label rule；参数扫描结果只放内部附录，不进入公开方法比较主表。
 - 稳健性检验显示 global event pressure 是很强的 baseline；应把贡献表述为 event-level label-free adaptation，cohort-specific LLM ranking 是增量证据，不是唯一或主导来源。
