@@ -91,6 +91,7 @@ def build_requirements() -> list[RequirementEvidence]:
     latex_main = read_text("outputs/paper_draft/latex/main.tex")
     latex_bib = read_text("outputs/paper_draft/latex/references.bib")
     citation_log = read_text("outputs/paper_draft/latex/citation_verification_log.md")
+    top_venue_audit = read_text("outputs/paper_draft/top_venue_adversarial_audit_round2.md")
 
     return [
         pass_if(
@@ -120,11 +121,18 @@ def build_requirements() -> list[RequirementEvidence]:
         ),
         pass_if(
             all(term in latex_main for term in ["\\begin{abstract}", "\\section{Method}", "\\section{Results}", "\\bibliography{references}"])
+            and all(term in latex_main for term in ["fig:workflow", "fig:metric_comparison", "fig:permutation", "fig:multi_objective"])
             and all(term in latex_bib for term in ["wang2026ellmob", "yang2025causalmob", "feng2025agentmove", "long2025unimob"])
             and all(term in citation_log for term in ["DOI BibTeX fetched", "arXiv BibTeX fetched", "Official data source checked"]),
             "LaTeX manuscript and citation verification package exist",
-            "LaTeX skeleton, BibTeX, and citation verification log are present.",
+            "LaTeX skeleton, core figures, BibTeX, and citation verification log are present.",
             "outputs/paper_draft/latex/main.tex",
+        ),
+        pass_if(
+            all(term in top_venue_audit for term in ["Remaining Top-Tier Risks", "Safe Top-Line Claim", "Recommended Next Experiments"]),
+            "Top-venue adversarial audit is explicit",
+            "Round-2 audit records remaining top-tier risks and safe claims.",
+            "outputs/paper_draft/top_venue_adversarial_audit_round2.md",
         ),
         pass_if(
             "historical wMAE 4.3377 -> primary wMAE 2.5023" in read_text(
@@ -231,9 +239,9 @@ def write_report(rows: list[RequirementEvidence]) -> Path:
         "",
         f"Git branch: `{branch}`",
         "",
-        "This document maps the long-running project objective to current repository evidence.",
+        "This document maps the long-running project objective to current repository evidence. It is an artifact gate, not a claim that no further publishability work can improve the project.",
         "",
-        f"Overall status: `{'COMPLETE' if not missing else 'INCOMPLETE'}`",
+        f"Overall status: `{'ARTIFACT_GATE_PASS' if not missing else 'ARTIFACT_GATE_INCOMPLETE'}`",
         "",
         "## Evidence Matrix",
         "",

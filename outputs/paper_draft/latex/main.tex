@@ -10,6 +10,11 @@
 \usepackage{xcolor}
 
 \emergencystretch=3em
+\graphicspath{
+  {../../final_project/figures/}
+  {../../robustness_checks/}
+  {../../multi_objective_pareto/}
+}
 
 \title{Label-Free Event-Aware LLM Adaptation for Post-Pandemic Household Travel Demand Prediction}
 \author{Anonymous Authors}
@@ -56,6 +61,13 @@ ELP-Mob and UniMob reflect related trends in efficient LLM mobility pipelines an
 Broader surveys show that transportation and spatio-temporal modeling are moving toward language-model and foundation-model paradigms \citep{yan2025transportllm,liang2025stfmsurvey}.
 Recent supervised daily-travel work also combines recurrent neural networks and LLMs for travel behavior prediction, but it does not target the no-target-year-label adaptation setting studied here \citep{sharifi2026dailytravel}.
 Our target differs from these settings: the prediction unit is a household survey record, not a GPS trajectory, road sensor, or flow node, and the target-year labels should be unavailable in the intended prospective setting.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=\textwidth]{method_workflow.png}
+    \caption{Framework overview. Historical NHTS waves train a routine household predictor, while the LLM branch converts post-pandemic event context and cohort profiles into structured event priors. The final prediction is produced by a fixed label-free adapter; 2022 labels are used only for final evaluation.}
+    \label{fig:workflow}
+\end{figure}
 
 \paragraph{Contributions.}
 We make four contributions.
@@ -172,6 +184,13 @@ The ordinary XGBoost baseline overpredicts strongly.
 The primary gated adapter reduces \whmae{} by 42.31\%, weighted RMSE by 32.22\%, and absolute weighted bias by 99.36\%.
 The LLM-only pressure baseline is directionally useful but less calibrated, supporting the hypothesis that LLM priors need a historical household baseline.
 
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.92\textwidth]{metric_comparison.png}
+    \caption{Main metric comparison. Historical tabular baselines have large positive bias on 2022, while event-aware adapters reduce weighted MAE and move bias closer to zero.}
+    \label{fig:metric_comparison}
+\end{figure}
+
 \subsection{Statistical Validation}
 
 Household bootstrap resampling gives 95\% confidence intervals:
@@ -190,6 +209,13 @@ Placebo and robustness checks constrain the claim:
     \item CatBoost GPU is the strongest extra non-LLM baseline with \whmae{} 4.2196 and \whbias{} +3.4873.
 \end{itemize}
 
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.78\textwidth]{permutation_null_mae.png}
+    \caption{Permutation robustness check. The real LLM event-pressure assignment yields lower weighted MAE than the random-permutation null distribution, supporting that the event prior contains cohort-level ordering signal beyond arbitrary downscaling.}
+    \label{fig:permutation}
+\end{figure}
+
 \subsection{Behavior-System Outputs}
 
 The method extends beyond total trips.
@@ -197,6 +223,14 @@ Transit-share weighted MAE improves from 0.0325 to 0.0269.
 Total mode-trip MAE improves from 4.8467 to 3.2802 when combining gated trip count with LLM-adjusted mode shares.
 Purpose composition is implemented as an exploratory third dimension, but the LLM prior is not the overall best purpose row.
 These results support a broader household behavior-system framing, while trip generation remains the main contribution.
+
+\begin{figure}[t]
+    \centering
+    \includegraphics[width=0.49\textwidth]{trip_pareto_frontier.png}
+    \includegraphics[width=0.49\textwidth]{behavior_system_improvement.png}
+    \caption{Planning-oriented evaluation. Left: Pareto frontier for trip-generation operating points under accuracy, bias, RMSE, and LLM-request cost. Right: behavior-system improvements across trip generation, mode composition, purpose composition, and mode-specific trip volume.}
+    \label{fig:multi_objective}
+\end{figure}
 
 \subsection{External and Temporal Validation}
 

@@ -55,7 +55,8 @@ No PARTIAL items were detected.
 | Literature and paper story | Single paper spine | PASS | 1.0 | paper_logic_chain.md states the event-adaptation spine. |
 | Literature and paper story | Reviewer Q&A backup | PASS | 1.0 | Reviewer Q&A backup document exists. |
 | Literature and paper story | Paper draft and claim ledger | PASS | 1.0 | Paper draft and claim-evidence matrix exist. |
-| Literature and paper story | LaTeX manuscript and verified references | PASS | 1.0 | LaTeX skeleton, BibTeX, and citation verification log exist. |
+| Literature and paper story | LaTeX manuscript and verified references | PASS | 1.0 | LaTeX skeleton, core figures, BibTeX, and citation verification log exist. |
+| Literature and paper story | Top-venue adversarial audit | PASS | 1.0 | Round-2 top-venue audit states remaining risks and safe claims. |
 | Presentation readiness | Main deck plus backup | PASS | 1.0 | Template PPT has 32 slides with B1-B8 backup. |
 | Presentation readiness | Key defense content in deck | PASS | 1.0 | Deck contains literature anchors, method spectrum, and distillation deployment content. |
 | Presentation readiness | Speaker notes | PASS | 1.0 | Chinese speaker notes include talk path and backup map. |

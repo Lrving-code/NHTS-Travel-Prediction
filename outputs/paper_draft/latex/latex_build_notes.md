@@ -16,6 +16,7 @@ Current status:
 
 - Missing citation keys: none.
 - Unused BibTeX keys: none after adding the daily-travel LLM reference to the related-work paragraph.
+- Core figure labels are present in `main.tex`: `fig:workflow`, `fig:metric_comparison`, `fig:permutation`, and `fig:multi_objective`.
 
 ## Local Compile Attempt
 
@@ -55,4 +56,3 @@ bibtex main
 pdflatex -interaction=nonstopmode main.tex
 pdflatex -interaction=nonstopmode main.tex
 ```
-

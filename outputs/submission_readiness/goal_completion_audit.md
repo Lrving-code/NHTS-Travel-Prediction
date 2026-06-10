@@ -2,9 +2,9 @@
 
 Git branch: `feature/label-free-llm-adaptation`
 
-This document maps the long-running project objective to current repository evidence.
+This document maps the long-running project objective to current repository evidence. It is an artifact gate, not a claim that no further publishability work can improve the project.
 
-Overall status: `COMPLETE`
+Overall status: `ARTIFACT_GATE_PASS`
 
 ## Evidence Matrix
 
@@ -14,7 +14,8 @@ Overall status: `COMPLETE`
 | Single paper spine is explicit | PASS | paper_logic_chain.md states event-driven temporal adaptation and LLM event-semantic adapter. | `plan/paper_logic_chain.md` |
 | 2025-2026 literature grounding is present | PASS | Literature note covers current LLM/mobility anchors. | `plan/literature_grounding_2026.md` |
 | Paper draft and claim-evidence ledger exist | PASS | Draft manuscript and claim matrix constrain paper-level wording. | `outputs/paper_draft/nhts_event_adaptation_paper_draft.md` |
-| LaTeX manuscript and citation verification package exist | PASS | LaTeX skeleton, BibTeX, and citation verification log are present. | `outputs/paper_draft/latex/main.tex` |
+| LaTeX manuscript and citation verification package exist | PASS | LaTeX skeleton, core figures, BibTeX, and citation verification log are present. | `outputs/paper_draft/latex/main.tex` |
+| Top-venue adversarial audit is explicit | PASS | Round-2 audit records remaining top-tier risks and safe claims. | `outputs/paper_draft/top_venue_adversarial_audit_round2.md` |
 | Primary NHTS result is documented | PASS | Historical XGBoost to gated adapter improvement is in the audit. | `outputs/final_project/final_metrics_summary.csv` |
 | Strong baselines and LLM rule-tree ablations exist | PASS | Strong tabular, zero-shot rule tree, pseudo-label tree, and small-calibration evidence are present. | `outputs/strong_baselines/strong_tabular_baseline_metrics.csv` |
 | Robustness and placebo controls exist | PASS | Permutation and irrelevant pseudo-event controls are present. | `outputs/robustness_checks/permutation_pressure_controls.csv` |

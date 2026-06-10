@@ -351,7 +351,17 @@ def audit_literature_and_story() -> list[Check]:
         and exists("outputs/paper_draft/latex/citation_verification_log.md")
         and contains_text(
             "outputs/paper_draft/latex/main.tex",
-            ["Label-Free Event-Aware LLM Adaptation", "2.5023", "Discussion", "Limitations"],
+            [
+                "Label-Free Event-Aware LLM Adaptation",
+                "2.5023",
+                "Discussion",
+                "Limitations",
+                "includegraphics",
+                "fig:workflow",
+                "fig:metric_comparison",
+                "fig:permutation",
+                "fig:multi_objective",
+            ],
         )
         and contains_text(
             "outputs/paper_draft/latex/references.bib",
@@ -363,7 +373,7 @@ def audit_literature_and_story() -> list[Check]:
         )
     )
     if latex_ready:
-        checks.append(pass_check(category, "LaTeX manuscript and verified references", "LaTeX skeleton, BibTeX, and citation verification log exist."))
+        checks.append(pass_check(category, "LaTeX manuscript and verified references", "LaTeX skeleton, core figures, BibTeX, and citation verification log exist."))
     else:
         checks.append(
             partial_check(
@@ -371,6 +381,20 @@ def audit_literature_and_story() -> list[Check]:
                 "LaTeX manuscript and verified references",
                 "Missing LaTeX manuscript package or citation verification evidence.",
                 "Create outputs/paper_draft/latex/main.tex, references.bib, and citation_verification_log.md.",
+            )
+        )
+    if exists("outputs/paper_draft/top_venue_adversarial_audit_round2.md") and contains_text(
+        "outputs/paper_draft/top_venue_adversarial_audit_round2.md",
+        ["Remaining Top-Tier Risks", "Safe Top-Line Claim", "Recommended Next Experiments"],
+    ):
+        checks.append(pass_check(category, "Top-venue adversarial audit", "Round-2 top-venue audit states remaining risks and safe claims."))
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Top-venue adversarial audit",
+                "Missing explicit top-venue adversarial audit.",
+                "Create outputs/paper_draft/top_venue_adversarial_audit_round2.md.",
             )
         )
     return checks
