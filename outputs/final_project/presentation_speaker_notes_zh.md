@@ -1,8 +1,16 @@
 # 中文汇报讲稿
 
+## 题目口径
+
+PPT 新题目是“面向时序迁移的家庭出行预测：模拟选择器与大模型修正框架”，英文题目是 “LLM-Guided Temporal Adaptation for Household Mobility Prediction”。
+
+这个题目避免把项目讲成疫情特例。2022 后疫情恢复期只是一个 target-year temporal shift case；真正的问题是：当目标年出现历史数据没有覆盖的情境变化时，如何让模型具备时序迁移能力。
+
+两方工作可以统一成一条技术路线：一类模块做模拟预测选择器，在多个候选预测或规则之间选择更可信的输出；另一类模块做 LLM-corrected XGBoost，用大模型抽取的目标年情境先验去修正历史模型。汇报时不要讲成两套互相竞争的方案，而是讲成从“选择候选预测”到“修正基础预测器”的 temporal-adaptation framework。
+
 ## 核心主线
 
-我们把 2022 NHTS household travel behavior prediction 定义成 event-driven temporal adaptation 问题。历史模型负责学习 routine mobility，LLM event priors 负责表达疫情带来的 remote work、transit avoidance、delivery substitution 等事件机制。
+我们把 2022 NHTS household travel behavior prediction 定义成 target-year temporal adaptation 问题。历史模型负责学习 routine mobility，LLM context/event priors 负责表达目标年出现的 remote work、transit avoidance、delivery substitution 等情境机制。
 
 现在的项目不是 pure LLM 预测，也不是单纯 XGBoost。主方法是 hybrid gated adapter：先用历史 NHTS 学一个 household baseline，再用 LLM 生成的 event pressure 做事件修正。
 
@@ -16,7 +24,7 @@ LLM 输出的是结构化事件先验，不直接输出 `CNTTDHH`。
 
 ## 一分钟版本
 
-传统历史预测器会明显高估 2022 年家庭出行次数。主口径使用固定 no-label gated rule，weighted MAE 从 `4.3377` 降到 `2.5023`，weighted bias 变成 `-0.0230`，几乎消除了系统性高估。LLM-only pressure baseline 的 weighted MAE 是 `2.7175`。这说明 LLM 不是直接预测 trip count，而是提供疫情事件语义先验，再去修正历史 routine-mobility predictor。
+传统历史预测器会明显高估 2022 年家庭出行次数。主口径使用固定 no-label gated rule，weighted MAE 从 `4.3377` 降到 `2.5023`，weighted bias 变成 `-0.0230`，几乎消除了系统性高估。LLM-only pressure baseline 的 weighted MAE 是 `2.7175`。这说明 LLM 不是直接预测 trip count，而是提供目标年情境语义先验，再去修正历史 routine-mobility predictor。
 
 ## 10 分钟主讲路径
 
@@ -34,13 +42,13 @@ LLM 输出的是结构化事件先验，不直接输出 `CNTTDHH`。
 
 ## 方法谱系怎么讲
 
-这里要把同学的“LLM 知识蒸馏 + 低置信度回退”路线融合进来，而不是讲成两套互相竞争的方案。推荐说法是：
+这里要把“LLM 知识蒸馏 + 低置信度回退”的模拟预测选择器路线融合进来，而不是讲成两套互相竞争的方案。推荐说法是：
 
 ```text
 data-only fitting -> pure LLM -> LLM rule tree -> LLM rule + small historical calibration -> historical model + LLM event adapter
 ```
 
-这条链条说明：纯 LLM 和 LLM rule tree 都能提供事件方向和可解释规则，但缺少真实 NHTS 数值校准；少量历史校准是 data-sparse/cold-start 场景的合理桥梁；当前 2022 NHTS 主任务有多年历史调查数据，因此最强方法是保留 historical household grounding，再用 LLM event prior 修正疫情冲击。
+这条链条说明：纯 LLM 和 LLM rule tree 都能提供情境方向和可解释规则，但缺少真实 NHTS 数值校准；少量历史校准是 data-sparse/cold-start 场景的合理桥梁；当前 2022 NHTS 主任务有多年历史调查数据，因此最强方法是保留 historical household grounding，再用 LLM context prior 修正目标年情境变化。
 
 ## LLM 蒸馏与调用效率怎么讲
 
@@ -50,16 +58,16 @@ data-only fitting -> pure LLM -> LLM rule tree -> LLM rule + small historical ca
 
 ## 各方法怎么比较
 
-- 传统 XGBoost / CatBoost：优势是有 household grounding，问题是不知道 2022 疫情机制变化。普通 historical predictor 的 wMAE 是 `4.3377`，wBias 是 `3.6052`，明显高估。
+- 传统 XGBoost / CatBoost：优势是有 household grounding，问题是不知道目标年情境机制变化。普通 historical predictor 的 wMAE 是 `4.3377`，wBias 是 `3.6052`，明显高估。
 - 更强表格 baseline 仍然不够。最强非 LLM baseline `catboost_gpu` 的 wMAE 是 `4.2196`，wBias 是 `3.4873`。
-- Pure LLM pressure：优势是知道疫情后出行下降方向，问题是缺少家庭数值基线，wMAE `2.7175`，wBias `-0.3732`。
+- Pure LLM pressure：优势是知道目标年出行下降方向，问题是缺少家庭数值基线，wMAE `2.7175`，wBias `-0.3732`。
 - Zero-shot LLM rule tree：已经作为补充 ablation 跑过，wMAE `2.6019`，wBias `-0.4072`，能表达机制方向但校准弱于 hybrid。
 - LLM rule + 500 historical calibration：这是队友路线的 bridge baseline，wMAE `2.7723`，wBias `0.4627`，说明少量历史校准合理但会重新高估 2022。
 - Global event prior：低成本且很强，wMAE `2.5223`，wBias `-0.7477`。这说明主信号确实是 event-level suppression，不能夸大成 cohort LLM ranking 独自贡献全部提升。
 - 我们的 hybrid gated：wMAE `2.5023`，wBias `-0.0230`，wR2 `0.2480`。优势是同时保留 household baseline、event semantics 和 near-zero bias。
 - 如果被追问 global prior 已经很强，补充 same-alpha decomposition：primary gated 比 `global_trip_suppression_a1` 低 `0.0508` wMAE，在 `77.8%` 的 subgroup cells 里更好；但它只在 `17.5%` 的加权家庭上使用 cohort-specific pressure，所以这是 selective refinement，不是说 cohort ranking 解释全部提升。
 
-这就是主方法优势：传统模型有家庭基线但没有疫情机制，pure LLM 有事件方向但校准弱，global rule 太粗；hybrid gated 把三者的优点组合起来。
+这就是主方法优势：传统模型有家庭基线但没有目标年机制，pure LLM 有情境方向但校准弱，global rule 太粗；hybrid gated 把三者的优点组合起来。
 
 ## 指标解释
 

@@ -1,6 +1,6 @@
-# Pandemic-Aware Household Travel Behavior Prediction
+# LLM-Guided Temporal Adaptation for Household Mobility Prediction
 
-本项目研究 2022 年疫情后分布变化下的 NHTS household travel behavior prediction。核心思路是用 NHTS 历史数据训练传统监督模型来学习 routine mobility，再用 LLM 生成的疫情事件先验修正 post-pandemic shift。项目以家庭为单位预测一个综合出行行为系统：出行强度、出行方式结构、出行目的结构，以及派生的各方式出行量。
+本项目研究目标年情境变化下的 NHTS household travel behavior prediction，中文题目为“面向时序迁移的家庭出行预测：模拟选择器与大模型修正框架”。2022 年后疫情恢复期是实验中的 temporal-shift stress test，但方法主线不是疫情特例，而是用 NHTS 历史数据训练传统监督模型来学习 routine mobility，再把 prediction selector、LLM 零样本规则、规则蒸馏和事件先验统一为可审计的 temporal-adaptation branch，用于修正目标年分布变化。项目以家庭为单位预测一个综合出行行为系统：出行强度、出行方式结构、出行目的结构，以及派生的各方式出行量。
 
 ## 当前结论
 
@@ -48,7 +48,7 @@
 
 ## 方法一句话
 
-传统监督模型学习正常时期的 routine mobility，LLM 生成 2022 疫情后 event priors，例如 trip suppression、remote work substitution、transit avoidance、online delivery substitution 和 recovery sensitivity。最终用这些先验修正 routine prediction：
+传统监督模型学习正常时期的 routine mobility，LLM 生成目标年情境先验，例如 trip suppression、remote work substitution、transit avoidance、online delivery substitution 和 recovery sensitivity。最终用这些先验修正 routine prediction：
 
 ```text
 2022 prediction = routine prediction * event correction factor
@@ -56,17 +56,17 @@
 
 注意：LLM 不是直接预测 household trip count，也不是替代 XGBoost。LLM 的角色是 event-prior adapter。
 
-和 pure LLM pressure 相比，hybrid gated 方法更稳：pure LLM 能抓到疫情后出行下降方向，但缺少 household-level routine baseline，容易把总量压得过低；hybrid 方法保留传统模型学到的家庭基础出行需求，再用 LLM event priors 做机制修正。
+和 pure LLM pressure 相比，hybrid gated 方法更稳：pure LLM 能抓到目标年出行下降方向，但缺少 household-level routine baseline，容易把总量压得过低；hybrid 方法保留传统模型学到的家庭基础出行需求，再用 LLM context/event priors 做机制修正。
 
 为什么不直接让 LLM 零样本构建 2022 决策树：决策树需要标签来学习 split threshold 和叶节点数值。没有 2022 `CNTTDHH` 标签时，LLM 只能生成 belief tree 或 synthetic labels，优化目标会变成拟合 LLM 自己的假设，而不是拟合真实 NHTS 行为。仓库已经把这个问题做成补充 ablation：zero-shot LLM rule tree 的 weighted MAE 是 `2.6019`，pseudo-label tree 是 `2.6040`，均弱于 primary hybrid gated adapter 的 `2.5023`，尤其 weighted bias 更不稳。因此本项目把 LLM 限定为 event-prior generator，把数值预测锚定在真实历史 NHTS 训练出的 household model 上。
 
 ## 学术问题与贡献
 
-本项目把 2022 NHTS 预测定义为 **event-driven temporal adaptation** 问题，而不是普通 cross-year prediction。核心观察是：传统监督模型能学习家庭属性和 routine mobility 的关系，但 2022 疫情恢复期引入了 remote work、transit avoidance、online delivery substitution 等事件机制，这些机制没有被传统 household covariates 充分表示。
+本项目把 2022 NHTS 预测定义为 **target-year temporal adaptation** 问题，而不是普通 cross-year prediction。核心观察是：传统监督模型能学习家庭属性和 routine mobility 的关系，但目标年可能引入 remote work、transit avoidance、online delivery substitution 等情境机制，这些机制没有被传统 household covariates 充分表示。
 
 研究问题：
 
-- **RQ1**：历史 household travel model 在 2022 post-pandemic shift 下会出现多大系统性偏差？
+- **RQ1**：历史 household travel model 在目标年 temporal shift 下会出现多大系统性偏差？
 - **RQ2**：不使用 2022 `CNTTDHH` 标签训练/校准时，LLM 生成的 event priors 能否修正这种偏差？
 - **RQ3**：LLM 的作用是替代传统监督模型，还是作为 event-semantic adapter 与传统监督模型互补？
 
@@ -100,13 +100,16 @@
 predicted trips by mode = predicted total trips * predicted mode share
 ```
 
-因此仓库对外表述为一个整体：预测疫情后家庭层面的完整出行行为，包括“出行多少次”“用什么方式出行”“为什么出行”和“每种方式多少次”。
+因此仓库对外表述为一个整体：预测目标年情境变化下家庭层面的完整出行行为，包括“出行多少次”“用什么方式出行”“为什么出行”和“每种方式多少次”。
 
 ## 主要输出
 
 汇报材料：
 
 - `outputs/final_project/NHTS_Travel_Behavior_Template_Presentation.pptx`（当前主汇报版本，含稳健性检验）
+- `outputs/final_project/NHTS_Temporal_Adaptation_0611_Refined_10min.pptx`（融合 0611 版本后重排的 10 分钟主讲版）
+- `outputs/final_project/0611_refined_10min_speaker_notes_zh.md`
+- `outputs/final_project/0611_ppt_review_and_restructure_zh.md`
 - `outputs/final_project/NHTS_Travel_Behavior_Template_Presentation_v2.pptx`
 - `outputs/final_project/NHTS_LLM_Event_Adaptation_Optimized_Presentation.pptx`
 - `outputs/final_project/presentation_speaker_notes_zh.md`
@@ -115,7 +118,7 @@ predicted trips by mode = predicted total trips * predicted mode share
 - `outputs/final_project/method_comparison_report.md`
 - `outputs/final_project/figures/presentation_figures/`
 - `plan/reviewer_qa_backup_2026.md`（答辩追问与 backup slides 口径）
-- `plan/reference_ppt_integration_audit.md`（同学参考 PPT 与本项目主线的整合口径）
+- `plan/reference_ppt_integration_audit.md`（参考方案与本项目主线的整合口径）
 - `outputs/submission_readiness/submission_readiness_audit.md`（投稿/答辩证据链审计）
 - `outputs/paper_draft/nhts_event_adaptation_paper_draft.md`（论文初稿）
 - `outputs/paper_draft/claim_evidence_matrix.md`（claim-evidence 对照表）
