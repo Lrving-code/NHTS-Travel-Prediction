@@ -20,7 +20,7 @@ The project is strong enough for a course final presentation and has a coherent 
 | Robustness controls | permutation null, irrelevant pseudo-event, pre-COVID placebo | Good |
 | Global-vs-cohort decomposition | cohort-prior value analysis: primary beats same-alpha global prior by `0.0508` wMAE and wins in `77.8%` of subgroup cells | Good and appropriately scoped |
 | External evidence | ACS mechanism evidence; PSRC household microdata replication | Good but not definitive |
-| Presentation readiness | 33-slide deck with method-spectrum, cohort-prior defense, and B1-B9 backup Q&A | Strong |
+| Presentation readiness | 35-slide 0611 integrated deck with precise event-prior/calibration title, 2025-2026 literature page, method-spectrum, selector/correction branches, and B1-B10 backup Q&A | Strong |
 | Paper package | Markdown draft + LaTeX skeleton + verified citations + figures | Good first submission draft |
 | Classical grounding | McFadden, Ben-Akiva/Lerman, Cameron/Trivedi, NHTS weighting report | Improved |
 

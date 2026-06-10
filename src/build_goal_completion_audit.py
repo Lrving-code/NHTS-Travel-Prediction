@@ -93,7 +93,7 @@ def pass_if(condition: bool, requirement: str, evidence: str, path: str) -> Requ
 
 def build_requirements() -> list[RequirementEvidence]:
     score, fails, partials = submission_audit_status()
-    slide_count, deck_text = ppt_summary("outputs/final_project/NHTS_Travel_Behavior_Template_Presentation.pptx")
+    slide_count, deck_text = ppt_summary("outputs/final_project/NHTS_Travel_Behavior_0611_Integrated_Presentation.pptx")
     final_report = read_text("outputs/final_project/final_project_report.md")
     quality = read_text("outputs/final_project/project_quality_assessment.md")
     readme = read_text("README.md")
@@ -252,11 +252,13 @@ def build_requirements() -> list[RequirementEvidence]:
             "outputs/submission_readiness/environment_manifest.json",
         ),
         pass_if(
-            slide_count >= 33
+            slide_count >= 35
             and all(
                 term in deck_text
                 for term in [
                     "B9",
+                    "B10",
+                    "大模型事件先验与历史模型校准",
                     "B7",
                     "B8",
                     "PSRC microdata",
@@ -264,13 +266,14 @@ def build_requirements() -> list[RequirementEvidence]:
                     "CausalMob",
                     "AgentMob",
                     "Method Spectrum",
-                    "Distillation & Deployment",
+                    "Selector Branch",
+                    "Prior Generation & Deployment",
                     "Same-alpha decomposition",
                 ]
             ),
             "10-minute PPT and backup Q&A are current",
-            f"Template deck has {slide_count} slides and includes literature, external-validation, method-spectrum, LLM-distillation, and cohort-prior defense content.",
-            "outputs/final_project/NHTS_Travel_Behavior_Template_Presentation.pptx",
+            f"0611 integrated deck has {slide_count} slides and includes precise title, literature, external-validation, method-spectrum, selector branch, prior-generation deployment, and cohort-prior defense content.",
+            "outputs/final_project/NHTS_Travel_Behavior_0611_Integrated_Presentation.pptx",
         ),
         pass_if(
             "no target-year PSRC labels for calibration" in readme
@@ -315,7 +318,8 @@ def write_report(rows: list[RequirementEvidence]) -> Path:
             "",
             "## Delivery Index",
             "",
-            "- Final PPT: `outputs/final_project/NHTS_Travel_Behavior_Template_Presentation.pptx`",
+            "- Final PPT: `outputs/final_project/NHTS_Travel_Behavior_0611_Integrated_Presentation.pptx`",
+            "- Final PPT speaker notes: `outputs/final_project/NHTS_Travel_Behavior_0611_Integrated_Speaker_Notes.md`",
             "- Final report: `outputs/final_project/final_project_report.md`",
             "- Method comparison: `outputs/final_project/method_comparison_summary.csv`",
             "- Count-model baseline: `outputs/count_model_baselines/count_model_baseline_report.md`",

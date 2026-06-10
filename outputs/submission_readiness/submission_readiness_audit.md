@@ -70,9 +70,9 @@ No FAIL-level blockers were detected from the checked artifacts.
 | Literature and paper story | Paper draft and claim ledger | PASS | 1.0 | Paper draft and claim-evidence matrix exist. |
 | Literature and paper story | LaTeX manuscript and verified references | PASS | 1.0 | LaTeX skeleton, core figures, BibTeX, and citation verification log exist. |
 | Literature and paper story | Top-venue adversarial audit | PASS | 1.0 | Round-2 top-venue audit states remaining risks and safe claims. |
-| Presentation readiness | Main deck plus backup | PASS | 1.0 | Template PPT has 33 slides with B1-B9 backup. |
-| Presentation readiness | Key defense content in deck | PASS | 1.0 | Deck contains literature anchors, method spectrum, distillation deployment, and cohort-prior defense content. |
-| Presentation readiness | Speaker notes | PASS | 1.0 | Chinese speaker notes include talk path and backup map. |
+| Presentation readiness | Main deck plus backup | PASS | 1.0 | 0611 integrated PPT has 35 slides with B1-B10 backup. |
+| Presentation readiness | Key defense content in deck | PASS | 1.0 | Integrated deck contains precise title, 2025-2026 literature anchors, method spectrum, selector branch, prior-generation deployment, and cohort-prior defense content. |
+| Presentation readiness | Speaker notes | PASS | 1.0 | Integrated speaker notes include talk path and title-wording guardrails. |
 | Reproducibility and GPU | Stronger baseline script | PASS | 1.0 | Strong baseline script and metrics exist. |
 | Reproducibility and GPU | GPU execution evidence | PASS | 1.0 | label_free_llm_adaptation_metrics.csv records device=cuda. |
 | Reproducibility and GPU | Environment manifest | PASS | 1.0 | Environment manifest and freeze file exist under outputs/submission_readiness. |

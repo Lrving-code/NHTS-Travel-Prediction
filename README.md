@@ -106,7 +106,9 @@ predicted trips by mode = predicted total trips * predicted mode share
 
 汇报材料：
 
-- `outputs/final_project/NHTS_Travel_Behavior_Template_Presentation.pptx`（当前主汇报版本，含稳健性检验）
+- `outputs/final_project/NHTS_Travel_Behavior_0611_Integrated_Presentation.pptx`（当前推荐汇报版本，基于 `refs/0611汇报(1).pptx` 整合，25 页主讲 + 10 页 backup）
+- `outputs/final_project/NHTS_Travel_Behavior_0611_Integrated_Speaker_Notes.md`
+- `outputs/final_project/NHTS_Travel_Behavior_Template_Presentation.pptx`（完整 33 页研究版，含稳健性检验）
 - `outputs/final_project/NHTS_Temporal_Adaptation_0611_Refined_10min.pptx`（融合 0611 版本后重排的 10 分钟主讲版）
 - `outputs/final_project/0611_refined_10min_speaker_notes_zh.md`
 - `outputs/final_project/0611_ppt_review_and_restructure_zh.md`

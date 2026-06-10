@@ -27,13 +27,14 @@ Overall status: `ARTIFACT_GATE_INCOMPLETE`
 | External household microdata replication exists | PASS | PSRC 2017+2019->2023 direct pre/post replication is in the audit. | `outputs/external_validation/psrc_household_external_validation_report.md` |
 | Multi-objective mobility evaluation exists | PASS | Trip count, mode composition, purpose composition, equity, and Pareto evidence are present. | `outputs/multi_objective_pareto/preference_operating_points.csv` |
 | GPU and reproducibility evidence exist | PASS | CUDA execution and environment manifest are recorded. | `outputs/submission_readiness/environment_manifest.json` |
-| 10-minute PPT and backup Q&A are current | PASS | Template deck has 33 slides and includes literature, external-validation, method-spectrum, LLM-distillation, and cohort-prior defense content. | `outputs/final_project/NHTS_Travel_Behavior_Template_Presentation.pptx` |
+| 10-minute PPT and backup Q&A are current | PASS | 0611 integrated deck has 35 slides and includes precise title, literature, external-validation, method-spectrum, selector branch, prior-generation deployment, and cohort-prior defense content. | `outputs/final_project/NHTS_Travel_Behavior_0611_Integrated_Presentation.pptx` |
 | No-label external validation wording is explicit | PASS | README/final report state that target-year external labels are not used for calibration. | `outputs/final_project/final_project_report.md` |
 | Limitations are explicit | PASS | Quality assessment scopes PSRC as external principle replication, not direct NHTS numerical validation. | `outputs/final_project/project_quality_assessment.md` |
 
 ## Delivery Index
 
-- Final PPT: `outputs/final_project/NHTS_Travel_Behavior_Template_Presentation.pptx`
+- Final PPT: `outputs/final_project/NHTS_Travel_Behavior_0611_Integrated_Presentation.pptx`
+- Final PPT speaker notes: `outputs/final_project/NHTS_Travel_Behavior_0611_Integrated_Speaker_Notes.md`
 - Final report: `outputs/final_project/final_project_report.md`
 - Method comparison: `outputs/final_project/method_comparison_summary.csv`
 - Count-model baseline: `outputs/count_model_baselines/count_model_baseline_report.md`
