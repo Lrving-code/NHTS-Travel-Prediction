@@ -179,11 +179,11 @@ def build_requirements() -> list[RequirementEvidence]:
                 exists("src/run_local_llm_prior_replication.py")
                 and "Local/Open-Source LLM Prior Replication Environment Audit" in local_llm_audit
                 and "Environment status: `READY`" in local_llm_report
-                and "Successful local priors: `4`" in local_llm_report
+            and "Successful local priors: `32`" in local_llm_report
                 and exists("outputs/local_llm_prior_replication/local_llm_event_features_normalized.csv")
             ),
-            "Local open-source LLM GPU smoke test exists",
-            "Script, CUDA-ready audit, four successful local priors, and local-vs-reference comparison exist.",
+            "Local open-source LLM GPU sensitivity control exists",
+            "Script, CUDA-ready audit, 32 successful local priors, and local-vs-reference comparison exist.",
             "outputs/local_llm_prior_replication/local_llm_prior_replication_report.md",
         ),
         pass_if(

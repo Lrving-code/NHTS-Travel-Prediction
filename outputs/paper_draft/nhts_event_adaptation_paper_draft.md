@@ -175,7 +175,7 @@ The strongest alternative explanation is that a global post-pandemic downscaling
 4. Mode and purpose extensions are useful for planning relevance but are not yet full mode-choice or purpose-choice models.
 5. PSRC is a regional external survey with different sampling and diary protocols, so it validates transfer of the principle rather than exact NHTS numerical accuracy.
 6. The current count-model baselines include Poisson, Tweedie, and a stable negative-binomial GLM check with solver diagnostics recorded; a submission version should still add zero-inflated or more carefully regularized count variants if time permits.
-7. A local/open-source LLM prior-replication protocol and a four-cohort CUDA smoke test are implemented on the RTX 4090. The local Qwen run produced valid structured priors, but agreement with the GPT-reference priors is limited; therefore, local LLM replication should be presented as a reproducibility and sensitivity control, not as a full-scale replacement for the main prior source.
+7. A local/open-source LLM prior-replication protocol and a 32-cohort CUDA sensitivity control are implemented on the RTX 4090. The local Qwen run produced valid structured priors, but agreement with the GPT-reference priors is limited; therefore, local LLM replication should be presented as a reproducibility and sensitivity control, not as a full-scale replacement for the main prior source.
 
 ## 8. Conclusion
 

@@ -226,14 +226,14 @@ def add_local_llm_backup(prs: Presentation, logo: bytes | None) -> None:
         "B10",
         "开源/本地 LLM 复刻做到哪一步？",
         "What is the status of local open-source LLM replication?",
-        "脚本、环境审计和四 cohort GPU smoke test 已实现；小模型一致性有限，不能声称已完成大规模开源模型替代。",
+        "脚本、环境审计和 32 cohort GPU sensitivity control 已实现；小模型一致性有限，不能声称已完成大规模开源模型替代。",
         [
             ["GPU hardware", "RTX 4090 visible through nvidia-smi"],
             ["Current blocker", "PyTorch CUDA available = False"],
             ["Implemented artifact", "src/run_local_llm_prior_replication.py"],
             ["Paper-safe wording", "protocol + audit implemented; generation pending"],
         ],
-        "答法：这是我们下一步最值得补的实验。只要换成 CUDA-enabled PyTorch，并准备本地 Qwen/Llama 类 instruct model，就能在 32/64 个 cohort 上生成 local priors，再和 GPT-5.5 prior 做 Spearman/Pearson 排序一致性比较。",
+        "答法：32 cohort Qwen 小模型控制实验已跑通，但一致性有限。下一步应换更强 open-source instruct model，或对 local priors 做校准后再和 GPT-5.5 prior 做 Spearman/Pearson 排序一致性比较。",
     )
 
 
@@ -331,7 +331,7 @@ def write_notes() -> None:
         "- 不要说两个方案拼接；要说它们是同一个 temporal-adaptation framework 的两个 operating regimes。",
         "- 不要把总标题写成“知识蒸馏”或“模型蒸馏”；本项目更准确的说法是规则提取、事件先验生成和历史模型校准。",
         "- 不要隐瞒 global prior 很强；应说主贡献是 event-level correction，cohort ranking 是 selective refinement。",
-        "- local/open-source LLM replication 已完成四 cohort GPU smoke test；它是 sensitivity control，不是主先验来源。",
+        "- local/open-source LLM replication 已完成 32 cohort GPU sensitivity control；它是 sensitivity control，不是主先验来源。",
     ]
     NOTES_PATH.write_text("\n".join(lines), encoding="utf-8")
 
