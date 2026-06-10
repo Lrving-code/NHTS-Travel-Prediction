@@ -93,7 +93,7 @@ def pass_if(condition: bool, requirement: str, evidence: str, path: str) -> Requ
 
 def build_requirements() -> list[RequirementEvidence]:
     score, fails, partials = submission_audit_status()
-    slide_count, deck_text = ppt_summary("outputs/final_project/NHTS_Travel_Behavior_0611_Integrated_Presentation.pptx")
+    slide_count, deck_text = ppt_summary("outputs/final_project/0611_final_presentation.pptx")
     final_report = read_text("outputs/final_project/final_project_report.md")
     quality = read_text("outputs/final_project/project_quality_assessment.md")
     readme = read_text("README.md")
@@ -107,6 +107,7 @@ def build_requirements() -> list[RequirementEvidence]:
     top_venue_audit = read_text("outputs/paper_draft/top_venue_adversarial_audit_round2.md")
     cohort_value_report = read_text("outputs/cohort_prior_value_analysis/cohort_prior_value_report.md")
     local_llm_audit = read_text("outputs/local_llm_prior_replication/local_llm_environment_audit.md")
+    local_llm_report = read_text("outputs/local_llm_prior_replication/local_llm_prior_replication_report.md")
 
     return [
         pass_if(
@@ -174,11 +175,16 @@ def build_requirements() -> list[RequirementEvidence]:
             "outputs/paper_draft/top_venue_adversarial_audit_round2.md",
         ),
         pass_if(
-            exists("src/run_local_llm_prior_replication.py")
-            and "Local/Open-Source LLM Prior Replication Environment Audit" in local_llm_audit,
-            "Local open-source LLM replication protocol exists",
-            "Script and environment audit exist; completion depends on CUDA-enabled local generation.",
-            "outputs/local_llm_prior_replication/local_llm_environment_audit.md",
+            (
+                exists("src/run_local_llm_prior_replication.py")
+                and "Local/Open-Source LLM Prior Replication Environment Audit" in local_llm_audit
+                and "Environment status: `READY`" in local_llm_report
+                and "Successful local priors: `4`" in local_llm_report
+                and exists("outputs/local_llm_prior_replication/local_llm_event_features_normalized.csv")
+            ),
+            "Local open-source LLM GPU smoke test exists",
+            "Script, CUDA-ready audit, four successful local priors, and local-vs-reference comparison exist.",
+            "outputs/local_llm_prior_replication/local_llm_prior_replication_report.md",
         ),
         pass_if(
             "historical wMAE 4.3377 -> primary wMAE 2.5023" in read_text(
@@ -256,24 +262,20 @@ def build_requirements() -> list[RequirementEvidence]:
             and all(
                 term in deck_text
                 for term in [
-                    "B9",
-                    "B10",
-                    "大模型事件先验与历史模型校准",
-                    "B7",
-                    "B8",
-                    "PSRC microdata",
+                    "时序迁移",
                     "ELLMob",
                     "CausalMob",
                     "AgentMob",
-                    "Method Spectrum",
-                    "Selector Branch",
-                    "Prior Generation & Deployment",
-                    "Same-alpha decomposition",
+                    "冷启动",
+                    "事件驱动",
+                    "对比体系",
+                    "Hybrid gated",
+                    "出行目的扩展",
                 ]
             ),
-            "10-minute PPT and backup Q&A are current",
-            f"0611 integrated deck has {slide_count} slides and includes precise title, literature, external-validation, method-spectrum, selector branch, prior-generation deployment, and cohort-prior defense content.",
-            "outputs/final_project/NHTS_Travel_Behavior_0611_Integrated_Presentation.pptx",
+            "Final PPT and defense script are current",
+            f"0611 final deck has {slide_count} slides and includes title framing, literature, selector/correction branches, method comparison, and behavior-system extensions.",
+            "outputs/final_project/0611_final_presentation.pptx",
         ),
         pass_if(
             "no target-year PSRC labels for calibration" in readme
@@ -318,8 +320,8 @@ def write_report(rows: list[RequirementEvidence]) -> Path:
             "",
             "## Delivery Index",
             "",
-            "- Final PPT: `outputs/final_project/NHTS_Travel_Behavior_0611_Integrated_Presentation.pptx`",
-            "- Final PPT speaker notes: `outputs/final_project/NHTS_Travel_Behavior_0611_Integrated_Speaker_Notes.md`",
+            "- Final PPT: `outputs/final_project/0611_final_presentation.pptx`",
+            "- Final PPT speaker script: `outputs/final_project/0611_final_15min_speaker_script_zh.md`",
             "- Final report: `outputs/final_project/final_project_report.md`",
             "- Method comparison: `outputs/final_project/method_comparison_summary.csv`",
             "- Count-model baseline: `outputs/count_model_baselines/count_model_baseline_report.md`",

@@ -337,13 +337,29 @@ def write_run_summary(
             lines.append(
                 f"| {row.feature} | {row.n} | {row.mean_abs_delta:.4f} | {row.pearson:.4f} | {row.spearman:.4f} |"
             )
+        mean_abs_delta = float(comparison["mean_abs_delta"].mean())
+        lines.extend(
+            [
+                "",
+                "## Interpretation",
+                "",
+                f"The local open-source model produced valid structured priors for `{success_count}` cohorts "
+                f"with mean feature MAE `{mean_abs_delta:.4f}` versus the GPT-reference priors. Treat this as "
+                "a reproducibility and sensitivity control rather than a drop-in replacement for the main prior "
+                "source unless a larger cohort run shows stable agreement.",
+            ]
+        )
     lines.extend(
         [
             "",
             "## Paper Use",
             "",
-            "Use this artifact as an open-source LLM control only after successful local generation. Until then, "
-            "it should be cited as an implemented replication protocol and environment audit, not as completed evidence.",
+            (
+                "This artifact supports a completed small-sample open-source GPU LLM control."
+                if success_count > 0
+                else "This artifact should be cited as an implemented replication protocol and environment audit, "
+                "not as completed generation evidence."
+            ),
         ]
     )
     (output_dir / "local_llm_prior_replication_report.md").write_text("\n".join(lines), encoding="utf-8")

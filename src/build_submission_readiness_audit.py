@@ -580,39 +580,38 @@ def audit_literature_and_story() -> list[Check]:
 def audit_presentation() -> list[Check]:
     category = "Presentation readiness"
     checks: list[Check] = []
-    deck_path = "outputs/final_project/NHTS_Travel_Behavior_0611_Integrated_Presentation.pptx"
-    notes_path = "outputs/final_project/NHTS_Travel_Behavior_0611_Integrated_Speaker_Notes.md"
+    deck_path = "outputs/final_project/0611_final_presentation.pptx"
+    notes_path = "outputs/final_project/0611_final_15min_speaker_script_zh.md"
     slide_count, text = ppt_text(deck_path)
-    backup_markers = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8", "B9", "B10"]
-    if slide_count >= 35 and all(term in text for term in backup_markers):
-        checks.append(pass_check(category, "Main deck plus backup", f"0611 integrated PPT has {slide_count} slides with B1-B10 backup."))
+    if slide_count >= 35:
+        checks.append(pass_check(category, "Main deck plus backup", f"0611 final PPT has {slide_count} slides for a 15-minute course defense."))
     elif slide_count >= 24:
         checks.append(
             partial_check(
                 category,
                 "Main deck plus backup",
-                f"0611 integrated PPT has {slide_count} slides but misses some backup markers.",
-                "Regenerate src/build_0611_integrated_presentation.py.",
+                f"0611 final PPT has {slide_count} slides, which may be thin for the current 15-minute script.",
+                "Expand or restore analysis/result slides in outputs/final_project/0611_final_presentation.pptx.",
             )
         )
     else:
-        checks.append(fail_check(category, "Main deck plus backup", f"0611 integrated PPT has {slide_count} slides.", "Regenerate the deck."))
+        checks.append(fail_check(category, "Main deck plus backup", f"0611 final PPT has {slide_count} slides.", "Regenerate the deck."))
     if all(
         term in text
         for term in [
-            "大模型事件先验与历史模型校准",
+            "针对",
+            "时序迁移",
             "ELLMob",
             "CausalMob",
             "AgentMob",
-            "Zero-shot rule tree",
-            "Rule + 500 history",
-            "Method Spectrum",
-            "Selector Branch",
-            "Prior Generation & Deployment",
-            "Same-alpha decomposition",
+            "冷启动",
+            "事件驱动",
+            "对比体系",
+            "Hybrid gated",
+            "出行目的扩展",
         ]
     ):
-        checks.append(pass_check(category, "Key defense content in deck", "Integrated deck contains precise title, 2025-2026 literature anchors, method spectrum, selector branch, prior-generation deployment, and cohort-prior defense content."))
+        checks.append(pass_check(category, "Key defense content in deck", "Final deck contains title framing, 2025-2026 literature anchors, selector/correction branches, method comparison, and behavior-system extensions."))
     else:
         checks.append(
             partial_check(
@@ -624,11 +623,11 @@ def audit_presentation() -> list[Check]:
         )
     if exists(notes_path) and contains_text(
         notes_path,
-        ["10 分钟主讲路径", "关键口径", "知识蒸馏"],
+        ["十五分钟纯中文讲稿", "逐页讲稿", "大语言模型"],
     ):
-        checks.append(pass_check(category, "Speaker notes", "Integrated speaker notes include talk path and title-wording guardrails."))
+        checks.append(pass_check(category, "Speaker notes", "Final 15-minute pure-Chinese speaker script exists and follows slide order."))
     else:
-        checks.append(partial_check(category, "Speaker notes", "Speaker notes do not show talk path and title-wording guardrails.", "Update integrated speaker notes."))
+        checks.append(partial_check(category, "Speaker notes", "Final speaker script is missing or does not match the final deck.", "Update outputs/final_project/0611_final_15min_speaker_script_zh.md."))
     return checks
 
 

@@ -106,8 +106,10 @@ predicted trips by mode = predicted total trips * predicted mode share
 
 汇报材料：
 
-- `outputs/final_project/NHTS_Travel_Behavior_0611_Integrated_Presentation.pptx`（当前推荐汇报版本，基于 `refs/0611汇报(1).pptx` 整合，25 页主讲 + 10 页 backup）
-- `outputs/final_project/NHTS_Travel_Behavior_0611_Integrated_Speaker_Notes.md`
+- `outputs/final_project/0611_final_presentation.pptx`（当前最终汇报版本，复制自 `refs/0611汇报最终.pptx`，用于 15 分钟课程答辩）
+- `outputs/final_project/0611_final_15min_speaker_script_zh.md`（最终版 15 分钟纯中文讲稿）
+- `outputs/final_project/NHTS_Travel_Behavior_0611_Integrated_Presentation.pptx`（上一版 35 页集成稿，可作为备份材料）
+- `outputs/final_project/NHTS_Travel_Behavior_0611_Integrated_Speaker_Notes.md`（上一版讲稿备份）
 - `outputs/final_project/NHTS_Travel_Behavior_Template_Presentation.pptx`（完整 33 页研究版，含稳健性检验）
 - `outputs/final_project/NHTS_Temporal_Adaptation_0611_Refined_10min.pptx`（融合 0611 版本后重排的 10 分钟主讲版）
 - `outputs/final_project/0611_refined_10min_speaker_notes_zh.md`
@@ -331,9 +333,14 @@ python src\run_negative_binomial_count_baseline.py
 
 ```powershell
 python src\run_local_llm_prior_replication.py --audit-only --limit 12 --overwrite
-# GPU-ready PyTorch + 本地/可下载模型就绪后再运行：
-python src\run_local_llm_prior_replication.py --model-id Qwen/Qwen2.5-1.5B-Instruct --limit 64 --allow-download --overwrite
+# GPU-ready PyTorch + 本地/可下载模型就绪后，先跑小样本 smoke test：
+python src\run_local_llm_prior_replication.py --model-id Qwen/Qwen2.5-1.5B-Instruct --limit 4 --selection even --max-input-tokens 2048 --max-new-tokens 160 --allow-download --overwrite
+# 通过后再扩展到更大的分层样本：
+python src\run_local_llm_prior_replication.py --model-id Qwen/Qwen2.5-1.5B-Instruct --limit 64 --selection even --allow-download --overwrite
 ```
+
+当前仓库已记录一个 4090 上的四 cohort 本地 Qwen smoke test：
+`outputs/local_llm_prior_replication/local_llm_prior_replication_report.md`。该实验验证了开源本地模型生成链路，但与主参考先验一致性有限，因此只作为 reproducibility/sensitivity control，不作为主结果先验来源。
 
 LLM batch prompt 准备：
 
@@ -378,7 +385,7 @@ purpose-composition 扩展使用同一组 trip-level files，并额外依赖跨�
 - 主实验不使用 2022 `CNTTDHH` 标签训练或校准，2022 标签只用于最终 evaluation。
 - 汇报主口径使用固定 `gated_trip_suppression_a1_d0p15` no-label rule；参数扫描结果只放内部附录，不进入公开方法比较主表。
 - Count-model baseline 是 reviewer-facing transparent baseline，不是 exhaustively optimized zero-inflated/negative-binomial state of the art；Poisson/Tweedie solver warning 已记录在 `outputs/count_model_baselines/count_model_solver_diagnostics.csv`，negative-binomial GLM 的 alpha 失败和未收敛信息记录在 `outputs/negative_binomial_baseline/negative_binomial_diagnostics.csv`。
-- 本地/open-source LLM prior replication 已有脚本和环境审计入口；当前审计显示机器有 RTX 4090，但当前 Python 环境是 CPU-only PyTorch，因此不能把 local LLM control 表述为已完成实验。
+- 本地/open-source LLM prior replication 已在 RTX 4090 上跑通四 cohort Qwen smoke test；当前只能表述为可复现性与敏感性控制实验，不能表述为已完成的大规模开源模型替代方案。
 - 稳健性检验显示 global event pressure 是很强的 baseline；应把贡献表述为 event-level label-free adaptation + selective cohort refinement，cohort-specific LLM ranking 是增量证据，不是唯一或主导来源。
 - 外部验证现在包括 mechanism-level ACS/BTS 证据和 PSRC household-level direct pre/post microdata。PSRC 的结果支持 event-adaptation principle，但不要把它表述为 NHTS 2022 数值预测的直接外部验证。
 - mode-composition 是探索性扩展：总体 weighted TV 改善较小，最清楚的结果是 transit-share weighted MAE 和 mode-specific trip volume 改善。

@@ -226,7 +226,7 @@ def add_local_llm_backup(prs: Presentation, logo: bytes | None) -> None:
         "B10",
         "开源/本地 LLM 复刻做到哪一步？",
         "What is the status of local open-source LLM replication?",
-        "脚本和环境审计已经实现；当前 Python 环境是 CPU-only PyTorch，不能声称已完成 GPU local run。",
+        "脚本、环境审计和四 cohort GPU smoke test 已实现；小模型一致性有限，不能声称已完成大规模开源模型替代。",
         [
             ["GPU hardware", "RTX 4090 visible through nvidia-smi"],
             ["Current blocker", "PyTorch CUDA available = False"],
@@ -331,7 +331,7 @@ def write_notes() -> None:
         "- 不要说两个方案拼接；要说它们是同一个 temporal-adaptation framework 的两个 operating regimes。",
         "- 不要把总标题写成“知识蒸馏”或“模型蒸馏”；本项目更准确的说法是规则提取、事件先验生成和历史模型校准。",
         "- 不要隐瞒 global prior 很强；应说主贡献是 event-level correction，cohort ranking 是 selective refinement。",
-        "- local/open-source LLM replication 目前是 protocol + environment audit，当前环境被 CPU-only PyTorch 阻塞，不能作为已完成结果。",
+        "- local/open-source LLM replication 已完成四 cohort GPU smoke test；它是 sensitivity control，不是主先验来源。",
     ]
     NOTES_PATH.write_text("\n".join(lines), encoding="utf-8")
 

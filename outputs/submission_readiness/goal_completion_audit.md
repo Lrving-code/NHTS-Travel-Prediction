@@ -4,20 +4,20 @@ Git branch: `feature/label-free-llm-adaptation`
 
 This document maps the long-running project objective to current repository evidence. It is an artifact gate, not a claim that no further publishability work can improve the project.
 
-Overall status: `ARTIFACT_GATE_INCOMPLETE`
+Overall status: `ARTIFACT_GATE_PASS`
 
 ## Evidence Matrix
 
 | Requirement | Status | Evidence | Path |
 |---|---|---|---|
-| Adversarial submission readiness audit is clean | MISSING | readiness=0.99, FAIL=0, PARTIAL=1 | `outputs/submission_readiness/submission_readiness_audit.md` |
+| Adversarial submission readiness audit is clean | PASS | readiness=1.00, FAIL=0, PARTIAL=0 | `outputs/submission_readiness/submission_readiness_audit.md` |
 | Single paper spine is explicit | PASS | paper_logic_chain.md states event-driven temporal adaptation and LLM event-semantic adapter. | `plan/paper_logic_chain.md` |
 | 2025-2026 literature grounding is present | PASS | Literature note covers current LLM/mobility anchors. | `plan/literature_grounding_2026.md` |
 | Paper draft and claim-evidence ledger exist | PASS | Draft manuscript and claim matrix constrain paper-level wording. | `outputs/paper_draft/nhts_event_adaptation_paper_draft.md` |
 | LaTeX manuscript and citation verification package exist | PASS | LaTeX skeleton, core figures, BibTeX, and citation verification log are present. | `outputs/paper_draft/latex/main.tex` |
 | Classical travel-demand and survey-weighting grounding is present | PASS | LaTeX cites verified discrete-choice, count-data, and NHTS weighting references. | `outputs/paper_draft/latex/references.bib` |
 | Top-venue adversarial audit is explicit | PASS | Round-2 audit records remaining top-tier risks and safe claims. | `outputs/paper_draft/top_venue_adversarial_audit_round2.md` |
-| Local open-source LLM replication protocol exists | PASS | Script and environment audit exist; completion depends on CUDA-enabled local generation. | `outputs/local_llm_prior_replication/local_llm_environment_audit.md` |
+| Local open-source LLM GPU smoke test exists | PASS | Script, CUDA-ready audit, four successful local priors, and local-vs-reference comparison exist. | `outputs/local_llm_prior_replication/local_llm_prior_replication_report.md` |
 | Primary NHTS result is documented | PASS | Historical XGBoost to gated adapter improvement is in the audit. | `outputs/final_project/final_metrics_summary.csv` |
 | Strong baselines and LLM rule-tree ablations exist | PASS | Strong tabular, transparent Poisson/Tweedie/negative-binomial count-model, zero-shot rule tree, pseudo-label tree, and small-calibration evidence are present. | `outputs/strong_baselines/strong_tabular_baseline_metrics.csv` |
 | Robustness and placebo controls exist | PASS | Permutation, irrelevant pseudo-event, and cohort-prior value controls are present. | `outputs/robustness_checks/permutation_pressure_controls.csv` |
@@ -27,14 +27,14 @@ Overall status: `ARTIFACT_GATE_INCOMPLETE`
 | External household microdata replication exists | PASS | PSRC 2017+2019->2023 direct pre/post replication is in the audit. | `outputs/external_validation/psrc_household_external_validation_report.md` |
 | Multi-objective mobility evaluation exists | PASS | Trip count, mode composition, purpose composition, equity, and Pareto evidence are present. | `outputs/multi_objective_pareto/preference_operating_points.csv` |
 | GPU and reproducibility evidence exist | PASS | CUDA execution and environment manifest are recorded. | `outputs/submission_readiness/environment_manifest.json` |
-| 10-minute PPT and backup Q&A are current | PASS | 0611 integrated deck has 35 slides and includes precise title, literature, external-validation, method-spectrum, selector branch, prior-generation deployment, and cohort-prior defense content. | `outputs/final_project/NHTS_Travel_Behavior_0611_Integrated_Presentation.pptx` |
+| Final PPT and defense script are current | PASS | 0611 final deck has 38 slides and includes title framing, literature, selector/correction branches, method comparison, and behavior-system extensions. | `outputs/final_project/0611_final_presentation.pptx` |
 | No-label external validation wording is explicit | PASS | README/final report state that target-year external labels are not used for calibration. | `outputs/final_project/final_project_report.md` |
 | Limitations are explicit | PASS | Quality assessment scopes PSRC as external principle replication, not direct NHTS numerical validation. | `outputs/final_project/project_quality_assessment.md` |
 
 ## Delivery Index
 
-- Final PPT: `outputs/final_project/NHTS_Travel_Behavior_0611_Integrated_Presentation.pptx`
-- Final PPT speaker notes: `outputs/final_project/NHTS_Travel_Behavior_0611_Integrated_Speaker_Notes.md`
+- Final PPT: `outputs/final_project/0611_final_presentation.pptx`
+- Final PPT speaker script: `outputs/final_project/0611_final_15min_speaker_script_zh.md`
 - Final report: `outputs/final_project/final_project_report.md`
 - Method comparison: `outputs/final_project/method_comparison_summary.csv`
 - Count-model baseline: `outputs/count_model_baselines/count_model_baseline_report.md`

@@ -2,7 +2,7 @@
 
 Generated from current repository artifacts. This is an evidence audit, not a claim that the project is fully submission-ready.
 
-Overall readiness score: `0.99` / 1.00
+Overall readiness score: `1.00` / 1.00
 
 ## Category Scores
 
@@ -14,7 +14,7 @@ Overall readiness score: `0.99` / 1.00
 | Literature and paper story | 1.00 |
 | Mobility behavior system | 1.00 |
 | Presentation readiness | 1.00 |
-| Reproducibility and GPU | 0.88 |
+| Reproducibility and GPU | 1.00 |
 | Temporal and external validity | 1.00 |
 
 ## Hard Blockers
@@ -23,9 +23,7 @@ No FAIL-level blockers were detected from the checked artifacts.
 
 ## Partial Items To Fix Before Paper Submission
 
-| Category | Item | Evidence | Recommendation |
-|---|---|---|---|
-| Reproducibility and GPU | Local open-source LLM prior replication | Protocol and environment audit exist, but status is BLOCKED_TORCH_CPU. | Install CUDA-enabled PyTorch or run the local model in a GPU-ready environment, then regenerate local priors. |
+No PARTIAL items were detected.
 
 ## Full Evidence Matrix
 
@@ -70,16 +68,16 @@ No FAIL-level blockers were detected from the checked artifacts.
 | Literature and paper story | Paper draft and claim ledger | PASS | 1.0 | Paper draft and claim-evidence matrix exist. |
 | Literature and paper story | LaTeX manuscript and verified references | PASS | 1.0 | LaTeX skeleton, core figures, BibTeX, and citation verification log exist. |
 | Literature and paper story | Top-venue adversarial audit | PASS | 1.0 | Round-2 top-venue audit states remaining risks and safe claims. |
-| Presentation readiness | Main deck plus backup | PASS | 1.0 | 0611 integrated PPT has 35 slides with B1-B10 backup. |
-| Presentation readiness | Key defense content in deck | PASS | 1.0 | Integrated deck contains precise title, 2025-2026 literature anchors, method spectrum, selector branch, prior-generation deployment, and cohort-prior defense content. |
-| Presentation readiness | Speaker notes | PASS | 1.0 | Integrated speaker notes include talk path and title-wording guardrails. |
+| Presentation readiness | Main deck plus backup | PASS | 1.0 | 0611 final PPT has 38 slides for a 15-minute course defense. |
+| Presentation readiness | Key defense content in deck | PASS | 1.0 | Final deck contains title framing, 2025-2026 literature anchors, selector/correction branches, method comparison, and behavior-system extensions. |
+| Presentation readiness | Speaker notes | PASS | 1.0 | Final 15-minute pure-Chinese speaker script exists and follows slide order. |
 | Reproducibility and GPU | Stronger baseline script | PASS | 1.0 | Strong baseline script and metrics exist. |
 | Reproducibility and GPU | GPU execution evidence | PASS | 1.0 | label_free_llm_adaptation_metrics.csv records device=cuda. |
 | Reproducibility and GPU | Environment manifest | PASS | 1.0 | Environment manifest and freeze file exist under outputs/submission_readiness. |
-| Reproducibility and GPU | Local open-source LLM prior replication | PARTIAL | 0.5 | Protocol and environment audit exist, but status is BLOCKED_TORCH_CPU. |
+| Reproducibility and GPU | Local open-source LLM prior replication | PASS | 1.0 | Local LLM environment is READY and normalized local prior features exist. |
 
 ## Interpretation
 
 - Course-project readiness is strong: the core result, baselines, guardrails, deck, Q&A material, and paper draft package are present.
-- No FAIL-level blockers remain, but PARTIAL items should be resolved before a serious paper submission.
+- No artifact-level FAIL or PARTIAL items remain in this audit; remaining work is advisor feedback, optional additional replications, and a full LaTeX/BibTeX compile in a normal non-elevated TeX environment.
 - The defensible paper claim should remain scoped to label-free event adaptation for survey-based household mobility under a post-pandemic shift.
