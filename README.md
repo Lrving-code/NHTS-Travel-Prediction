@@ -325,6 +325,14 @@ python src\run_count_model_baselines.py --max-iter 1000 --alpha 0.01
 python src\run_negative_binomial_count_baseline.py
 ```
 
+本地/open-source LLM prior replication 审计与小样本复刻：
+
+```powershell
+python src\run_local_llm_prior_replication.py --audit-only --limit 12 --overwrite
+# GPU-ready PyTorch + 本地/可下载模型就绪后再运行：
+python src\run_local_llm_prior_replication.py --model-id Qwen/Qwen2.5-1.5B-Instruct --limit 64 --allow-download --overwrite
+```
+
 LLM batch prompt 准备：
 
 ```powershell
@@ -368,6 +376,7 @@ purpose-composition 扩展使用同一组 trip-level files，并额外依赖跨�
 - 主实验不使用 2022 `CNTTDHH` 标签训练或校准，2022 标签只用于最终 evaluation。
 - 汇报主口径使用固定 `gated_trip_suppression_a1_d0p15` no-label rule；参数扫描结果只放内部附录，不进入公开方法比较主表。
 - Count-model baseline 是 reviewer-facing transparent baseline，不是 exhaustively optimized zero-inflated/negative-binomial state of the art；Poisson/Tweedie solver warning 已记录在 `outputs/count_model_baselines/count_model_solver_diagnostics.csv`，negative-binomial GLM 的 alpha 失败和未收敛信息记录在 `outputs/negative_binomial_baseline/negative_binomial_diagnostics.csv`。
+- 本地/open-source LLM prior replication 已有脚本和环境审计入口；当前审计显示机器有 RTX 4090，但当前 Python 环境是 CPU-only PyTorch，因此不能把 local LLM control 表述为已完成实验。
 - 稳健性检验显示 global event pressure 是很强的 baseline；应把贡献表述为 event-level label-free adaptation + selective cohort refinement，cohort-specific LLM ranking 是增量证据，不是唯一或主导来源。
 - 外部验证现在包括 mechanism-level ACS/BTS 证据和 PSRC household-level direct pre/post microdata。PSRC 的结果支持 event-adaptation principle，但不要把它表述为 NHTS 2022 数值预测的直接外部验证。
 - mode-composition 是探索性扩展：总体 weighted TV 改善较小，最清楚的结果是 transit-share weighted MAE 和 mode-specific trip volume 改善。

@@ -15,6 +15,7 @@ This file constrains paper and presentation claims to evidence that exists in th
 | External evidence supports event mechanisms but does not directly validate NHTS 2022 numeric predictions. | `outputs/external_validation/external_validation_and_compatibility_report.md`; `outputs/external_validation/psrc_household_external_validation_report.md`; `outputs/final_project/project_quality_assessment.md` | "ACS supports remote-work and transit-avoidance priors; PSRC provides a regional household-survey replication of the adaptation principle." | "PSRC proves the NHTS 2022 predictions are externally correct." |
 | The behavior system extends beyond trip counts, but trip generation is the main result. | `outputs/mode_composition_extension/mode_composition_metrics.csv`; `outputs/mode_composition_extension/mode_specific_trip_count_metrics.csv`; `outputs/purpose_composition_extension/purpose_composition_metrics.csv` | "Transit-share and mode-trip volume improve; purpose composition is exploratory." | "The project solves full mode choice and purpose choice." |
 | The LLM design is efficient and auditable. | `outputs/final_project/llm_distillation_deployment_notes.md`; `outputs/llm_event_features/`; `outputs/final_project/NHTS_Travel_Behavior_Template_Presentation.pptx` | "7,893 households are aggregated to 1,327 cohorts and processed in 89 batch prompts; inference uses a deterministic adapter." | "The system asks the LLM for every household prediction." |
+| Local/open-source LLM replication is prepared but not yet completed. | `src/run_local_llm_prior_replication.py`; `outputs/local_llm_prior_replication/local_llm_environment_audit.md` | "A local LLM replication protocol and environment audit are implemented; current CUDA generation is blocked by CPU-only PyTorch." | "We have completed an open-source GPU LLM replication." |
 
 ## Numeric Claims To Reuse
 
@@ -68,4 +69,5 @@ Avoid:
 - Purpose composition is implemented but exploratory.
 - The primary adapter is fixed and no-label; any 2022 calibration experiment is an upper-bound or bridge baseline, not the main method.
 - Poisson/Tweedie/negative-binomial count models are transparent reviewer-facing baselines with solver diagnostics recorded; do not present them as fully optimized count-model state of the art.
+- Local/open-source LLM replication is currently an implemented protocol plus environment audit, not a completed evidence row.
 - LLM pretraining may contain post-pandemic knowledge; the prospective event-context file and leakage audit reduce target-label leakage, but cannot make a pure historical-information claim about the LLM's pretraining corpus.

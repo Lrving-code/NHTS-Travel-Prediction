@@ -273,6 +273,7 @@ Third, the global event prior is strong, so cohort-specific LLM ranking should b
 Fourth, mode and purpose extensions are useful for planning relevance but are not yet full mode-choice or purpose-choice models.
 Fifth, PSRC is a regional external survey with different sampling and diary protocols, so it validates transfer of the principle rather than exact \nhts{} numerical accuracy.
 Sixth, the current count-model baselines include transparent Poisson, Tweedie, and stable negative-binomial GLM checks with solver diagnostics recorded; a submission version should still add zero-inflated or more carefully regularized count variants if time permits.
+Seventh, a local/open-source LLM prior-replication protocol and environment audit are implemented, but the current Python environment has CPU-only PyTorch despite an available RTX 4090; local LLM replication should not be presented as completed evidence until CUDA-enabled generation outputs exist.
 
 \section{Conclusion}
 
@@ -293,6 +294,7 @@ The numerical results in this draft are backed by repository artifacts:
     \item \texttt{outputs/llm\_rule\_small\_data\_calibration/}
     \item \texttt{outputs/count\_model\_baselines/}
     \item \texttt{outputs/negative\_binomial\_baseline/}
+    \item \texttt{outputs/local\_llm\_prior\_replication/}
     \item \texttt{outputs/external\_validation/}
 \end{itemize}
 

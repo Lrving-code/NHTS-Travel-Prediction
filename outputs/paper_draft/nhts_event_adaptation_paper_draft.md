@@ -175,6 +175,7 @@ The strongest alternative explanation is that a global post-pandemic downscaling
 4. Mode and purpose extensions are useful for planning relevance but are not yet full mode-choice or purpose-choice models.
 5. PSRC is a regional external survey with different sampling and diary protocols, so it validates transfer of the principle rather than exact NHTS numerical accuracy.
 6. The current count-model baselines include Poisson, Tweedie, and a stable negative-binomial GLM check with solver diagnostics recorded; a submission version should still add zero-inflated or more carefully regularized count variants if time permits.
+7. A local/open-source LLM prior-replication protocol and environment audit are implemented, but the current Python environment has CPU-only PyTorch despite an available RTX 4090; therefore, local LLM replication should not be presented as completed evidence until CUDA-enabled generation outputs exist.
 
 ## 8. Conclusion
 

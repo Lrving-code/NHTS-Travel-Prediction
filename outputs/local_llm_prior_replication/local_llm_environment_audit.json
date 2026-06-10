@@ -1,0 +1,14 @@
+{
+  "accelerate_installed": false,
+  "bitsandbytes_installed": false,
+  "gpu_name": "NVIDIA GeForce RTX 4090",
+  "nvidia_smi_available": true,
+  "recommendation": "Install a CUDA-enabled PyTorch build in the project environment before claiming GPU local-LLM replication, for example the official PyTorch CUDA wheel matching the installed driver.",
+  "recommended_status": "BLOCKED_TORCH_CPU",
+  "torch_cuda_available": false,
+  "torch_cuda_version": "None",
+  "torch_installed": true,
+  "torch_version": "2.8.0",
+  "transformers_installed": true,
+  "transformers_version": "4.44.2"
+}

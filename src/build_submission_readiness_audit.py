@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import html
+import json
 import re
 import zipfile
 from dataclasses import dataclass
@@ -28,6 +29,13 @@ class Check:
 
 def read_text(path: Path) -> str:
     return path.read_text(encoding="utf-8") if path.exists() else ""
+
+
+def read_json(path: str) -> dict[str, object]:
+    file_path = PROJECT_ROOT / path
+    if not file_path.exists():
+        return {}
+    return json.loads(file_path.read_text(encoding="utf-8"))
 
 
 def exists(path: str) -> bool:
@@ -662,6 +670,36 @@ def audit_reproducibility_and_gpu() -> list[Check]:
                 "Run src/build_environment_manifest.py before paper submission.",
             )
         )
+    local_audit = read_json("outputs/local_llm_prior_replication/local_llm_environment_audit.json")
+    local_status = str(local_audit.get("recommended_status", "missing"))
+    if local_status == "READY" and exists(
+        "outputs/local_llm_prior_replication/local_llm_event_features_normalized.csv"
+    ):
+        checks.append(
+            pass_check(
+                category,
+                "Local open-source LLM prior replication",
+                "Local LLM environment is READY and normalized local prior features exist.",
+            )
+        )
+    elif local_audit:
+        checks.append(
+            partial_check(
+                category,
+                "Local open-source LLM prior replication",
+                f"Protocol and environment audit exist, but status is {local_status}.",
+                "Install CUDA-enabled PyTorch or run the local model in a GPU-ready environment, then regenerate local priors.",
+            )
+        )
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Local open-source LLM prior replication",
+                "No local LLM replication audit artifact was found.",
+                "Run src/run_local_llm_prior_replication.py --audit-only before paper submission.",
+            )
+        )
     return checks
 
 
@@ -725,15 +763,22 @@ def write_outputs(checks: list[Check]) -> tuple[Path, Path]:
     for row in frame.itertuples(index=False):
         lines.append(f"| {row.category} | {row.item} | {row.status} | {row.score:.1f} | {row.evidence} |")
 
-    lines.extend(
-        [
-            "",
-            "## Interpretation",
-            "",
-            "- Course-project readiness is strong: the core result, baselines, guardrails, deck, Q&A material, and paper draft package are present.",
-            "- No artifact-level FAIL or PARTIAL items remain in this audit; remaining work is advisor feedback, optional additional replications, and a full LaTeX/BibTeX compile in a normal non-elevated TeX environment.",
-            "- The defensible paper claim should remain scoped to label-free event adaptation for survey-based household mobility under a post-pandemic shift.",
-        ]
+    lines.extend(["", "## Interpretation", ""])
+    lines.append(
+        "- Course-project readiness is strong: the core result, baselines, guardrails, deck, Q&A material, and paper draft package are present."
+    )
+    if blockers.empty and partial.empty:
+        lines.append(
+            "- No artifact-level FAIL or PARTIAL items remain in this audit; remaining work is advisor feedback, optional additional replications, and a full LaTeX/BibTeX compile in a normal non-elevated TeX environment."
+        )
+    elif blockers.empty:
+        lines.append(
+            "- No FAIL-level blockers remain, but PARTIAL items should be resolved before a serious paper submission."
+        )
+    else:
+        lines.append("- FAIL-level blockers remain and should be resolved before sharing a submission package.")
+    lines.append(
+        "- The defensible paper claim should remain scoped to label-free event adaptation for survey-based household mobility under a post-pandemic shift."
     )
     report_path.write_text("\n".join(lines), encoding="utf-8")
     return report_path, score_path

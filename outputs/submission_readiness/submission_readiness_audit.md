@@ -2,7 +2,7 @@
 
 Generated from current repository artifacts. This is an evidence audit, not a claim that the project is fully submission-ready.
 
-Overall readiness score: `1.00` / 1.00
+Overall readiness score: `0.99` / 1.00
 
 ## Category Scores
 
@@ -14,7 +14,7 @@ Overall readiness score: `1.00` / 1.00
 | Literature and paper story | 1.00 |
 | Mobility behavior system | 1.00 |
 | Presentation readiness | 1.00 |
-| Reproducibility and GPU | 1.00 |
+| Reproducibility and GPU | 0.88 |
 | Temporal and external validity | 1.00 |
 
 ## Hard Blockers
@@ -23,7 +23,9 @@ No FAIL-level blockers were detected from the checked artifacts.
 
 ## Partial Items To Fix Before Paper Submission
 
-No PARTIAL items were detected.
+| Category | Item | Evidence | Recommendation |
+|---|---|---|---|
+| Reproducibility and GPU | Local open-source LLM prior replication | No local LLM replication audit artifact was found. | Run src/run_local_llm_prior_replication.py --audit-only before paper submission. |
 
 ## Full Evidence Matrix
 
@@ -74,9 +76,10 @@ No PARTIAL items were detected.
 | Reproducibility and GPU | Stronger baseline script | PASS | 1.0 | Strong baseline script and metrics exist. |
 | Reproducibility and GPU | GPU execution evidence | PASS | 1.0 | label_free_llm_adaptation_metrics.csv records device=cuda. |
 | Reproducibility and GPU | Environment manifest | PASS | 1.0 | Environment manifest and freeze file exist under outputs/submission_readiness. |
+| Reproducibility and GPU | Local open-source LLM prior replication | PARTIAL | 0.5 | No local LLM replication audit artifact was found. |
 
 ## Interpretation
 
 - Course-project readiness is strong: the core result, baselines, guardrails, deck, Q&A material, and paper draft package are present.
-- No artifact-level FAIL or PARTIAL items remain in this audit; remaining work is advisor feedback, optional additional replications, and a full LaTeX/BibTeX compile in a normal non-elevated TeX environment.
+- No FAIL-level blockers remain, but PARTIAL items should be resolved before a serious paper submission.
 - The defensible paper claim should remain scoped to label-free event adaptation for survey-based household mobility under a post-pandemic shift.

@@ -106,6 +106,7 @@ def build_requirements() -> list[RequirementEvidence]:
     citation_log = read_text("outputs/paper_draft/latex/citation_verification_log.md")
     top_venue_audit = read_text("outputs/paper_draft/top_venue_adversarial_audit_round2.md")
     cohort_value_report = read_text("outputs/cohort_prior_value_analysis/cohort_prior_value_report.md")
+    local_llm_audit = read_text("outputs/local_llm_prior_replication/local_llm_environment_audit.md")
 
     return [
         pass_if(
@@ -171,6 +172,13 @@ def build_requirements() -> list[RequirementEvidence]:
             "Top-venue adversarial audit is explicit",
             "Round-2 audit records remaining top-tier risks and safe claims.",
             "outputs/paper_draft/top_venue_adversarial_audit_round2.md",
+        ),
+        pass_if(
+            exists("src/run_local_llm_prior_replication.py")
+            and "Local/Open-Source LLM Prior Replication Environment Audit" in local_llm_audit,
+            "Local open-source LLM replication protocol exists",
+            "Script and environment audit exist; completion depends on CUDA-enabled local generation.",
+            "outputs/local_llm_prior_replication/local_llm_environment_audit.md",
         ),
         pass_if(
             "historical wMAE 4.3377 -> primary wMAE 2.5023" in read_text(
@@ -313,6 +321,7 @@ def write_report(rows: list[RequirementEvidence]) -> Path:
             "- Count-model baseline: `outputs/count_model_baselines/count_model_baseline_report.md`",
             "- Negative-binomial count baseline: `outputs/negative_binomial_baseline/negative_binomial_baseline_report.md`",
             "- Cohort-prior value analysis: `outputs/cohort_prior_value_analysis/cohort_prior_value_report.md`",
+            "- Local/open-source LLM replication audit: `outputs/local_llm_prior_replication/local_llm_environment_audit.md`",
             "- Submission audit: `outputs/submission_readiness/submission_readiness_audit.md`",
             "- External PSRC validation: `outputs/external_validation/psrc_household_external_validation_report.md`",
             "- Literature grounding: `plan/literature_grounding_2026.md`",

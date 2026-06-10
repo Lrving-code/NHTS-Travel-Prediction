@@ -30,7 +30,7 @@ The project is strong enough for a course final presentation and has a coherent 
 |---|---|---|
 | One main shock year | A single 2022 NHTS target can look like a hand-tuned event correction | Add at least one more exogenous mobility shock or regional shock replication with the same no-label protocol |
 | Strong global prior | If global downscaling is already close, the LLM-specific contribution may look incremental | Current cohort-prior analysis addresses this for subgroup cells; still frame as selective refinement, not dominant source of gain |
-| LLM pretraining leakage | GPT-style models may know post-pandemic mobility facts | Run or document a local open-source LLM control with explicit pretraining cutoff if feasible |
+| LLM pretraining/vendor leakage | GPT-style models may know post-pandemic mobility facts, and a single proprietary endpoint may limit reproducibility | Local/open-source LLM replication protocol and environment audit are now implemented; complete a CUDA-enabled local run before claiming this control as evidence |
 | No full causal identification | Current causal guardrails are negative controls, not causal effect estimates | Avoid causal-effect claims; keep causal language to guardrails and mechanism plausibility |
 | Mode/purpose are exploratory | Main gain is trip generation; mode/purpose improvements are uneven | Keep mode/purpose as behavior-system extensions, not primary solved tasks |
 | LaTeX compile environment | MiKTeX BibTeX cannot run in the current elevated shell | Compile in a normal user shell or Overleaf before sending to collaborators/advisor |
@@ -47,12 +47,13 @@ The project is strong enough for a course final presentation and has a coherent 
 - Updated readiness audits so the LaTeX manuscript and verified references are part of the checked artifact set.
 - Added transparent Poisson/Tweedie count-model baselines with solver diagnostics under `outputs/count_model_baselines/`.
 - Added a stable negative-binomial GLM check with alpha-selection diagnostics under `outputs/negative_binomial_baseline/`.
+- Added local/open-source LLM prior-replication protocol and environment audit under `outputs/local_llm_prior_replication/`; current status is `BLOCKED_TORCH_CPU` because the machine has an RTX 4090 but the active Python environment uses CPU-only PyTorch.
 - Added cohort-prior value analysis under `outputs/cohort_prior_value_analysis/`, showing selective subgroup gains over same-alpha and reported global priors.
 - Added verified classical travel-demand, count-data, and NHTS survey-weighting citations to `references.bib`, `main.tex`, and `citation_verification_log.md`.
 
 ## Recommended Next Experiments
 
-1. **Open-source LLM prior replication.** Use a local model on the RTX 4090 for a smaller cohort subset, then compare event-prior ranking with GPT-5.5-generated priors.
+1. **Open-source LLM prior replication.** The script and audit now exist; install CUDA-enabled PyTorch or run in a GPU-ready environment, then generate a smaller cohort subset and compare event-prior ranking with GPT-5.5-generated priors.
 2. **Cohort-value extension.** The core subgroup analysis is now present; a paper version should add confidence intervals for the subgroup gains and cleaner codebook labels.
 3. **External shock replication.** Use PSRC or another household survey to replicate the same no-label adapter around a non-COVID shock or recovery period.
 4. **Count-model extension.** The transparent Poisson/Tweedie/negative-binomial checks are now present; a submission version should add zero-inflated or more carefully regularized count variants if feasible.
