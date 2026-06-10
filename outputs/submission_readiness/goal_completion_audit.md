@@ -17,7 +17,7 @@ Overall status: `ARTIFACT_GATE_INCOMPLETE`
 | LaTeX manuscript and citation verification package exist | PASS | LaTeX skeleton, core figures, BibTeX, and citation verification log are present. | `outputs/paper_draft/latex/main.tex` |
 | Classical travel-demand and survey-weighting grounding is present | PASS | LaTeX cites verified discrete-choice, count-data, and NHTS weighting references. | `outputs/paper_draft/latex/references.bib` |
 | Top-venue adversarial audit is explicit | PASS | Round-2 audit records remaining top-tier risks and safe claims. | `outputs/paper_draft/top_venue_adversarial_audit_round2.md` |
-| Local open-source LLM replication protocol exists | MISSING | Script and environment audit exist; completion depends on CUDA-enabled local generation. | `outputs/local_llm_prior_replication/local_llm_environment_audit.md` |
+| Local open-source LLM replication protocol exists | PASS | Script and environment audit exist; completion depends on CUDA-enabled local generation. | `outputs/local_llm_prior_replication/local_llm_environment_audit.md` |
 | Primary NHTS result is documented | PASS | Historical XGBoost to gated adapter improvement is in the audit. | `outputs/final_project/final_metrics_summary.csv` |
 | Strong baselines and LLM rule-tree ablations exist | PASS | Strong tabular, transparent Poisson/Tweedie/negative-binomial count-model, zero-shot rule tree, pseudo-label tree, and small-calibration evidence are present. | `outputs/strong_baselines/strong_tabular_baseline_metrics.csv` |
 | Robustness and placebo controls exist | PASS | Permutation, irrelevant pseudo-event, and cohort-prior value controls are present. | `outputs/robustness_checks/permutation_pressure_controls.csv` |
