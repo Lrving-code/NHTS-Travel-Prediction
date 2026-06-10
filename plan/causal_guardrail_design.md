@@ -51,13 +51,15 @@ Already available:
 - Random pressure assignment.
 - Global pressure baseline.
 - Temporal transfer validation.
+- Pre-COVID placebo event correction:
+  - `outputs/pre_covid_placebo_event_correction/pre_covid_placebo_event_correction_report.md`
+  - Full 2022-strength suppression (`alpha=1`) worsens 2017 weighted MAE from `4.1272` to `4.2497`, while stronger `alpha=1.25` worsens it to `4.7632`.
+  - This shows event priors need context and strength discipline rather than being treated as a universal downshift.
 
 Add next:
 
 - Irrelevant pseudo-event prior:
   - Ask/generate an event prior unrelated to travel suppression, such as generic “digital service adoption pressure,” and verify it should not improve trip-count prediction.
-- Pre-COVID placebo:
-  - Apply the event-adaptation logic to a pre-COVID target year where no pandemic mechanism exists.
 - Feature leakage audit:
   - Assert no target, survey weight, household ID, or post-outcome aggregate target statistic is included in LLM prompts.
 

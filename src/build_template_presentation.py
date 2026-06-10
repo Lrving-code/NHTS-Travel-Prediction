@@ -937,7 +937,7 @@ def add_robustness_slide(prs: Presentation, logo: bytes | None) -> None:
             ["global rule 是否已经足够？", "它很强；LLM 排序提供增量价值"],
             ["是否用了 2022 标签？", "LLM 输入排除目标值、权重和 ID"],
             ["LLM 能否替代传统模型？", "不能；hybrid 明显更稳"],
-            ["方式结构是否已经解决？", "还没有；主要是 transit 维度更清楚"],
+            ["是否只是通用下调？", "pre-COVID placebo 中 full suppression 会过度修正"],
         ],
         7.45,
         3.25,
