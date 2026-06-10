@@ -92,6 +92,7 @@ def build_requirements() -> list[RequirementEvidence]:
     latex_bib = read_text("outputs/paper_draft/latex/references.bib")
     citation_log = read_text("outputs/paper_draft/latex/citation_verification_log.md")
     top_venue_audit = read_text("outputs/paper_draft/top_venue_adversarial_audit_round2.md")
+    cohort_value_report = read_text("outputs/cohort_prior_value_analysis/cohort_prior_value_report.md")
 
     return [
         pass_if(
@@ -153,10 +154,17 @@ def build_requirements() -> list[RequirementEvidence]:
         ),
         pass_if(
             exists("outputs/robustness_checks/permutation_pressure_controls.csv")
-            and exists("outputs/irrelevant_pseudo_event_placebo/irrelevant_pseudo_event_placebo_metrics.csv"),
+            and exists("outputs/irrelevant_pseudo_event_placebo/irrelevant_pseudo_event_placebo_metrics.csv")
+            and exists("outputs/cohort_prior_value_analysis/cohort_prior_value_summary.csv"),
             "Robustness and placebo controls exist",
-            "Permutation and irrelevant pseudo-event controls are present.",
+            "Permutation, irrelevant pseudo-event, and cohort-prior value controls are present.",
             "outputs/robustness_checks/permutation_pressure_controls.csv",
+        ),
+        pass_if(
+            "same-alpha global prior" in cohort_value_report and "77.8%" in cohort_value_report,
+            "Strong global-prior risk is quantified",
+            "Cohort-prior value analysis reports same-alpha global comparison and subgroup-cell win share.",
+            "outputs/cohort_prior_value_analysis/cohort_prior_value_report.md",
         ),
         pass_if(
             exists("outputs/causal_guardrails/causal_guardrail_evidence_report.md")
@@ -262,6 +270,7 @@ def write_report(rows: list[RequirementEvidence]) -> Path:
             "- Final report: `outputs/final_project/final_project_report.md`",
             "- Method comparison: `outputs/final_project/method_comparison_summary.csv`",
             "- Count-model baseline: `outputs/count_model_baselines/count_model_baseline_report.md`",
+            "- Cohort-prior value analysis: `outputs/cohort_prior_value_analysis/cohort_prior_value_report.md`",
             "- Submission audit: `outputs/submission_readiness/submission_readiness_audit.md`",
             "- External PSRC validation: `outputs/external_validation/psrc_household_external_validation_report.md`",
             "- Literature grounding: `plan/literature_grounding_2026.md`",

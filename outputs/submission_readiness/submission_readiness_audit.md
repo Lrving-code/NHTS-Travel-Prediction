@@ -38,7 +38,11 @@ No PARTIAL items were detected.
 | Baselines and controls | Small historical calibration | PASS | 1.0 | outputs/llm_rule_small_data_calibration/method_spectrum_metrics.csv |
 | Baselines and controls | Irrelevant pseudo-event placebo | PASS | 1.0 | outputs/irrelevant_pseudo_event_placebo/irrelevant_pseudo_event_placebo_metrics.csv |
 | Baselines and controls | Permutation robustness | PASS | 1.0 | outputs/robustness_checks/permutation_pressure_controls.csv |
+| Baselines and controls | Cohort-prior value analysis | PASS | 1.0 | outputs/cohort_prior_value_analysis/cohort_prior_value_summary.csv |
+| Baselines and controls | Cohort-prior value report | PASS | 1.0 | outputs/cohort_prior_value_analysis/cohort_prior_value_report.md |
+| Baselines and controls | Cohort-prior value figure | PASS | 1.0 | outputs/cohort_prior_value_analysis/cohort_prior_value_top_groups.png |
 | Baselines and controls | Count-model comparison | PASS | 1.0 | Poisson GLM wMAE 4.3368, wBias +3.6178; primary adapter is 42.30% lower in wMAE. |
+| Baselines and controls | Cohort-prior incremental value | PASS | 1.0 | Primary gated adapter beats same-alpha global prior by 0.0508 wMAE and wins in 77.8% of evaluated subgroup cells. |
 | Causal and leakage guardrails | Leakage audit | PASS | 1.0 | outputs/leakage_audit/llm_input_leakage_audit_report.md |
 | Causal and leakage guardrails | Causal evidence pack | PASS | 1.0 | outputs/causal_guardrails/causal_guardrail_evidence_report.md |
 | Causal and leakage guardrails | Prospective event context | PASS | 1.0 | plan/prospective_event_context_2022.md |

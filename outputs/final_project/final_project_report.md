@@ -131,11 +131,12 @@ We ran additional robustness checks in `outputs/robustness_checks/`.
 
 - 500-run permutation control for the primary gated rule: actual weighted MAE `2.5023`, random-permutation mean `2.5808`, empirical p-value `0.0020`.
 - Same-alpha global pressure remains strong: primary gated weighted MAE `2.5023` vs global-a1 weighted MAE `2.5531`.
+- Cohort-prior value analysis: primary gated is `0.0508` weighted-MAE lower than same-alpha global pressure and `0.0201` lower than the reported global-a1.25 baseline. It beats same-alpha global pressure in `77.8%` of evaluated subgroup cells, while the gate uses cohort-specific pressure for only `17.5%` of survey-weighted households.
 - LLM rule + small historical calibration is a coherent bridge baseline but not a replacement: 500-row calibration weighted MAE `2.7723`.
 - Irrelevant pseudo-event placebo controls are weaker than the primary method: best ranked pseudo-event weighted MAE `2.6274`, best gated pseudo-event weighted MAE `2.5610`.
 - Leakage scan passes for LLM-facing profile/feature files: they exclude `HOUSEID`, `CNTTDHH`, and `WTHHFIN`.
 
-Interpretation for the course report: the dominant contribution is event-level label-free adaptation. Cohort-specific LLM ranking provides measurable incremental signal, but it should not be described as the sole source of improvement.
+Interpretation for the course report: the dominant contribution is event-level label-free adaptation. Cohort-specific LLM ranking provides measurable selective refinement, especially for subgroup cells such as lower-income, zero-vehicle, and no-worker households, but it should not be described as the sole source of improvement.
 
 ## Figures
 

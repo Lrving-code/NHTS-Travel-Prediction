@@ -21,6 +21,7 @@
 - Stronger non-LLM baselines still overpredict 2022: best extra baseline is CatBoost GPU with weighted MAE `4.2196` and weighted bias `+3.4873`; the primary gated event adapter is `40.70%` lower in weighted MAE.
 - Transparent count-model baselines show the same transfer failure: Poisson GLM weighted MAE `4.3368` and weighted bias `+3.6178`; Tweedie GLM weighted MAE `4.3761` and weighted bias `+3.6677`. The primary gated event adapter is `42.30%` lower in weighted MAE than the best count model.
 - Irrelevant pseudo-event placebo controls do not reproduce the main result: the best ranked pseudo-event weighted MAE is `2.6274`, and the best gated pseudo-event weighted MAE is `2.5610`.
+- Cohort-prior value analysis: the primary gated adapter is `0.0508` weighted-MAE lower than a same-alpha global prior and `0.0201` lower than the reported low-cost `global_trip_suppression_a1p25`; it beats same-alpha global prior in `77.8%` of evaluated subgroup cells. The gate uses cohort-specific pressure for `17.5%` of survey-weighted households, so the paper-safe interpretation is "global event correction plus selective cohort refinement."
 - Equity-aware subgroup evaluation: worst-subgroup weighted MAE improves from `8.3778` under historical XGBoost to `4.7091` under the primary gated event adapter; all evaluated subgroups improve relative to historical XGBoost.
 - Multi-objective analysis: calibration-first and balanced profiles select the primary `gated_trip_suppression_a1_d0p15`; low-cost deployment selects `global_trip_suppression_a1`.
 - External mechanism validation: ACS commute statistics show worked-from-home share stayed much higher in 2022 than 2019 (`5.7% -> 15.2%`) and public-transportation commute share stayed lower (`5.0% -> 3.1%`), supporting the remote-work and transit-avoidance event priors. BTS daily mobility is retained as a compatibility guardrail: its device-based trip counts should not be used as direct numeric labels for NHTS household `CNTTDHH`.
@@ -79,6 +80,7 @@
 - 实现 LLM rule + small historical calibration 中间 baseline，回应“先由 LLM 提取规则、再用少量历史数据校准”的合作方案。
 - 实现 Poisson/Tweedie count-model baseline，回应交通需求建模审稿人对透明计数模型的 baseline 要求。
 - 通过 irrelevant pseudo-event placebo 检验机制相关性：任意 distribution-matched cohort score 不能替代 post-pandemic event prior。
+- 通过 cohort-prior value analysis 解释 strong global prior 风险：global prior 是主要 event correction，cohort-specific LLM ranking 是选择性增量，而不是全部改进来源。
 
 最新文献定位：
 
@@ -136,6 +138,9 @@ predicted trips by mode = predicted total trips * predicted mode share
 - `outputs/robustness_checks/robustness_check_report.md`
 - `outputs/robustness_checks/permutation_pressure_controls.csv`
 - `outputs/robustness_checks/permutation_null_mae.png`
+- `outputs/cohort_prior_value_analysis/cohort_prior_value_report.md`
+- `outputs/cohort_prior_value_analysis/cohort_prior_value_summary.csv`
+- `outputs/cohort_prior_value_analysis/cohort_prior_value_top_groups.png`
 - `outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_report_zh.md`
 - `outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_metrics.csv`
 - `outputs/llm_rule_small_data_calibration/llm_rule_small_data_calibration_report_zh.md`
@@ -219,6 +224,7 @@ src/
   run_zero_shot_llm_rule_tree_baseline.py
   run_llm_rule_small_data_calibration.py
   run_irrelevant_pseudo_event_placebo.py
+  run_cohort_prior_value_analysis.py
   run_llm_input_leakage_audit.py
   build_causal_guardrail_evidence_pack.py
   run_external_aggregate_validation.py
@@ -289,6 +295,7 @@ python src\run_temporal_transfer_validation.py --device cuda
 python src\run_pre_covid_placebo_event_correction.py --device cuda
 python src\run_llm_input_leakage_audit.py
 python src\build_causal_guardrail_evidence_pack.py
+python src\run_cohort_prior_value_analysis.py
 python src\run_external_aggregate_validation.py --device cuda
 python src\run_psrc_external_household_validation.py --device cuda
 ```
@@ -357,7 +364,7 @@ purpose-composition 扩展使用同一组 trip-level files，并额外依赖跨�
 - 主实验不使用 2022 `CNTTDHH` 标签训练或校准，2022 标签只用于最终 evaluation。
 - 汇报主口径使用固定 `gated_trip_suppression_a1_d0p15` no-label rule；参数扫描结果只放内部附录，不进入公开方法比较主表。
 - Count-model baseline 是 reviewer-facing transparent baseline，不是 exhaustively optimized zero-inflated/negative-binomial 模型；solver warning 已记录在 `outputs/count_model_baselines/count_model_solver_diagnostics.csv`。
-- 稳健性检验显示 global event pressure 是很强的 baseline；应把贡献表述为 event-level label-free adaptation，cohort-specific LLM ranking 是增量证据，不是唯一或主导来源。
+- 稳健性检验显示 global event pressure 是很强的 baseline；应把贡献表述为 event-level label-free adaptation + selective cohort refinement，cohort-specific LLM ranking 是增量证据，不是唯一或主导来源。
 - 外部验证现在包括 mechanism-level ACS/BTS 证据和 PSRC household-level direct pre/post microdata。PSRC 的结果支持 event-adaptation principle，但不要把它表述为 NHTS 2022 数值预测的直接外部验证。
 - mode-composition 是探索性扩展：总体 weighted TV 改善较小，最清楚的结果是 transit-share weighted MAE 和 mode-specific trip volume 改善。
 - purpose-composition 是综合目标扩展和边界实验：它说明项目可以预测“为什么出行”，但当前 LLM purpose prior 还不是整体最优。

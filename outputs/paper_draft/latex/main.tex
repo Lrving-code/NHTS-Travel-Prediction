@@ -38,6 +38,7 @@ Instead, it generates cohort-level event priors for mechanisms such as trip supp
 These priors are distilled into a fixed no-label event adapter that corrects the historical routine predictor without using 2022 trip-count labels for training or calibration.
 The primary gated adapter reduces \whmae{} to 2.5023, reduces weighted RMSE by 32.22\%, and nearly removes systematic overprediction with \whbias{} -0.0230.
 We evaluate the method against historical, trend, global-event, random-prior, LLM-only, zero-shot rule-tree, small-history rule-calibration, transparent count-model, and stronger non-LLM baselines.
+We further add cohort-prior value analysis to separate event-level downscaling from selective cohort refinement.
 The results suggest that LLMs are most useful in this survey setting as constrained event-prior generators rather than standalone numerical predictors.
 \end{abstract}
 
@@ -75,7 +76,7 @@ We make four contributions.
 First, we formulate 2022 \nhts{} household trip generation as event-driven temporal adaptation rather than ordinary cross-year forecasting.
 Second, we introduce a label-free LLM event-prior adapter that corrects a historical household predictor without using 2022 \texttt{CNTTDHH} labels for calibration.
 Third, we evaluate against a broad method spectrum, including historical mean, ordinary XGBoost, trend shift, transparent Poisson/Tweedie count models, CatBoost GPU, LLM-only pressure, global event prior, random prior, zero-shot LLM rule tree, pseudo-label tree, and LLM rule plus historical calibration.
-Fourth, we add leakage audits, placebo controls, bootstrap confidence intervals, equity-aware subgroup analysis, mode/purpose extensions, and external mechanism checks with ACS and PSRC data \citep{burrows2024commuting,psrc2024regionaltravelstudy}.
+Fourth, we add leakage audits, placebo controls, cohort-prior value analysis, bootstrap confidence intervals, equity-aware subgroup analysis, mode/purpose extensions, and external mechanism checks with ACS and PSRC data \citep{burrows2024commuting,psrc2024regionaltravelstudy}.
 
 \section{Problem Definition}
 
@@ -212,6 +213,7 @@ Placebo and robustness checks constrain the claim:
     \item LLM rule plus 500 historical calibration reaches \whmae{} 2.7723, showing that rule distillation plus small historical calibration is coherent but not the best solution for the 2022 event-shift task.
     \item CatBoost GPU is the strongest extra non-LLM baseline with \whmae{} 4.2196 and \whbias{} +3.4873.
     \item Poisson GLM reaches \whmae{} 4.3368 and Tweedie GLM reaches 4.3761; solver diagnostics are recorded, so these should be read as transparent count-model baselines rather than exhaustively optimized count-model state of the art.
+    \item Cohort-prior value analysis shows that the primary gated adapter is 0.0508 \whmae{} lower than a same-alpha global prior and 0.0201 lower than the reported low-cost global prior; it beats same-alpha global prior in 77.8\% of evaluated subgroup cells while using cohort-specific pressure for only 17.5\% of survey-weighted households.
 \end{itemize}
 
 \begin{figure}[t]
@@ -254,7 +256,9 @@ The hybrid adapter works because it constrains the LLM to a narrow semantic role
 
 The strongest alternative explanation is that a global post-pandemic downscaling scalar captures most of the benefit.
 The experiments partly confirm this: the global event prior is strong.
-The contribution should therefore be framed carefully as label-free event adaptation with auditable cohort refinement, not as evidence that rich LLM reasoning alone dominates.
+The cohort-prior value analysis refines the interpretation rather than overturning it.
+The final gated adapter uses cohort-specific pressure selectively and provides small but consistent MAE/calibration gains over global controls, especially in lower-income, zero-vehicle, and no-worker subgroup cells.
+The contribution should therefore be framed carefully as label-free event adaptation with selective auditable cohort refinement, not as evidence that rich LLM reasoning alone dominates.
 Placebo controls, zero-shot rule-tree baselines, small-calibration baselines, and subgroup checks provide evidence that the event prior is meaningful, but additional regional and shock replications would strengthen the paper.
 
 \section{Limitations}
@@ -281,6 +285,7 @@ The numerical results in this draft are backed by repository artifacts:
     \item \texttt{outputs/final\_project/final\_metrics\_summary.csv}
     \item \texttt{outputs/statistical\_validation/}
     \item \texttt{outputs/robustness\_checks/}
+    \item \texttt{outputs/cohort\_prior\_value\_analysis/}
     \item \texttt{outputs/zero\_shot\_llm\_rule\_tree\_baseline/}
     \item \texttt{outputs/llm\_rule\_small\_data\_calibration/}
     \item \texttt{outputs/count\_model\_baselines/}

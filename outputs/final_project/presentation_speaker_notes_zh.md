@@ -57,6 +57,7 @@ data-only fitting -> pure LLM -> LLM rule tree -> LLM rule + small historical ca
 - LLM rule + 500 historical calibration：这是队友路线的 bridge baseline，wMAE `2.7723`，wBias `0.4627`，说明少量历史校准合理但会重新高估 2022。
 - Global event prior：低成本且很强，wMAE `2.5223`，wBias `-0.7477`。这说明主信号确实是 event-level suppression，不能夸大成 cohort LLM ranking 独自贡献全部提升。
 - 我们的 hybrid gated：wMAE `2.5023`，wBias `-0.0230`，wR2 `0.2480`。优势是同时保留 household baseline、event semantics 和 near-zero bias。
+- 如果被追问 global prior 已经很强，补充 same-alpha decomposition：primary gated 比 `global_trip_suppression_a1` 低 `0.0508` wMAE，在 `77.8%` 的 subgroup cells 里更好；但它只在 `17.5%` 的加权家庭上使用 cohort-specific pressure，所以这是 selective refinement，不是说 cohort ranking 解释全部提升。
 
 这就是主方法优势：传统模型有家庭基线但没有疫情机制，pure LLM 有事件方向但校准弱，global rule 太粗；hybrid gated 把三者的优点组合起来。
 

@@ -42,11 +42,13 @@ Evidence:
 - Global event prior weighted MAE: `2.5223`.
 - Primary gated adapter weighted MAE: `2.5023`.
 - Primary bias: `-0.0230`, compared with global event prior bias `-0.7477`.
+- Same-alpha decomposition: primary gated is `0.0508` weighted-MAE lower than `global_trip_suppression_a1`, and it beats same-alpha global prior in `77.8%` of evaluated subgroup cells.
+- The gate uses cohort-specific pressure for `17.5%` of survey-weighted households; the rest falls back to the global event prior.
 - Irrelevant pseudo-event controls are weaker: best ranked pseudo-event weighted MAE `2.6274`; best gated pseudo-event weighted MAE `2.5610`.
 
 Response:
 
-We should not overclaim that cohort ranking explains all gains. The clean claim is that LLM event semantics give a label-free event correction, while the gated cohort refinement improves calibration and robustness.
+We should not overclaim that cohort ranking explains all gains. The clean claim is that LLM event semantics give a label-free event correction, while the gated cohort refinement selectively improves calibration and subgroup robustness where cohort priors differ meaningfully from the global event pressure.
 
 ## Q4. How is this different from 2025-2026 mobility foundation-model work?
 

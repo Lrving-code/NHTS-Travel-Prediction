@@ -166,6 +166,9 @@ def audit_baselines_and_controls() -> list[Check]:
         "Small historical calibration": "outputs/llm_rule_small_data_calibration/method_spectrum_metrics.csv",
         "Irrelevant pseudo-event placebo": "outputs/irrelevant_pseudo_event_placebo/irrelevant_pseudo_event_placebo_metrics.csv",
         "Permutation robustness": "outputs/robustness_checks/permutation_pressure_controls.csv",
+        "Cohort-prior value analysis": "outputs/cohort_prior_value_analysis/cohort_prior_value_summary.csv",
+        "Cohort-prior value report": "outputs/cohort_prior_value_analysis/cohort_prior_value_report.md",
+        "Cohort-prior value figure": "outputs/cohort_prior_value_analysis/cohort_prior_value_top_groups.png",
     }
     checks = []
     for item, path in required.items():
@@ -210,6 +213,56 @@ def audit_baselines_and_controls() -> list[Check]:
                 "Count-model comparison",
                 "Could not read Poisson GLM or primary adapter metrics.",
                 "Regenerate count-model baselines and final metrics.",
+            )
+        )
+    cohort_value_path = PROJECT_ROOT / "outputs/cohort_prior_value_analysis/cohort_prior_value_summary.csv"
+    if cohort_value_path.exists():
+        cohort_summary = pd.read_csv(cohort_value_path).set_index("quantity")
+        required_quantities = {
+            "overall_primary_vs_global_a1_mae_delta",
+            "share_subgroup_cells_primary_beats_global_a1",
+        }
+        if required_quantities.issubset(set(cohort_summary.index)):
+            delta = float(cohort_summary.loc["overall_primary_vs_global_a1_mae_delta", "value"])
+            subgroup_share = float(
+                cohort_summary.loc["share_subgroup_cells_primary_beats_global_a1", "value"]
+            )
+            if delta > 0.0 and subgroup_share >= 0.5:
+                checks.append(
+                    pass_check(
+                        category,
+                        "Cohort-prior incremental value",
+                        (
+                            f"Primary gated adapter beats same-alpha global prior by {delta:.4f} wMAE "
+                            f"and wins in {subgroup_share:.1%} of evaluated subgroup cells."
+                        ),
+                    )
+                )
+            else:
+                checks.append(
+                    partial_check(
+                        category,
+                        "Cohort-prior incremental value",
+                        f"Same-alpha global delta {delta:.4f}; subgroup-cell win share {subgroup_share:.1%}.",
+                        "Keep the global-prior caveat prominent and avoid claiming cohort-specific dominance.",
+                    )
+                )
+        else:
+            checks.append(
+                partial_check(
+                    category,
+                    "Cohort-prior incremental value",
+                    "Cohort-prior summary lacks the same-alpha global comparison row.",
+                    "Regenerate src/run_cohort_prior_value_analysis.py.",
+                )
+            )
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Cohort-prior incremental value",
+                "Missing cohort-prior value summary.",
+                "Run src/run_cohort_prior_value_analysis.py.",
             )
         )
     return checks

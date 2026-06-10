@@ -18,6 +18,7 @@ The project is strong enough for a course final presentation and has a coherent 
 | Method spectrum | pure LLM, zero-shot rule tree, rule+history, global prior, random controls, Poisson/Tweedie count models | Strong for course/paper rebuttal |
 | Statistical validation | bootstrap CIs and paired improvements | Good |
 | Robustness controls | permutation null, irrelevant pseudo-event, pre-COVID placebo | Good |
+| Global-vs-cohort decomposition | cohort-prior value analysis: primary beats same-alpha global prior by `0.0508` wMAE and wins in `77.8%` of subgroup cells | Good and appropriately scoped |
 | External evidence | ACS mechanism evidence; PSRC household microdata replication | Good but not definitive |
 | Presentation readiness | 32-slide deck with method-spectrum and backup Q&A | Strong |
 | Paper package | Markdown draft + LaTeX skeleton + verified citations + figures | Good first submission draft |
@@ -27,7 +28,7 @@ The project is strong enough for a course final presentation and has a coherent 
 | Risk | Why a strict reviewer may object | Required improvement |
 |---|---|---|
 | One main shock year | A single 2022 NHTS target can look like a hand-tuned event correction | Add at least one more exogenous mobility shock or regional shock replication with the same no-label protocol |
-| Strong global prior | If global downscaling is already close, the LLM-specific contribution may look incremental | Report where cohort-specific LLM priors beat global priors, with subgroup and mechanism-level effect sizes |
+| Strong global prior | If global downscaling is already close, the LLM-specific contribution may look incremental | Current cohort-prior analysis addresses this for subgroup cells; still frame as selective refinement, not dominant source of gain |
 | LLM pretraining leakage | GPT-style models may know post-pandemic mobility facts | Run or document a local open-source LLM control with explicit pretraining cutoff if feasible |
 | No full causal identification | Current causal guardrails are negative controls, not causal effect estimates | Avoid causal-effect claims; keep causal language to guardrails and mechanism plausibility |
 | Mode/purpose are exploratory | Main gain is trip generation; mode/purpose improvements are uneven | Keep mode/purpose as behavior-system extensions, not primary solved tasks |
@@ -45,11 +46,12 @@ The project is strong enough for a course final presentation and has a coherent 
 - Added citation-verification and build notes in the LaTeX package.
 - Updated readiness audits so the LaTeX manuscript and verified references are part of the checked artifact set.
 - Added transparent Poisson/Tweedie count-model baselines with solver diagnostics under `outputs/count_model_baselines/`.
+- Added cohort-prior value analysis under `outputs/cohort_prior_value_analysis/`, showing selective subgroup gains over same-alpha and reported global priors.
 
 ## Recommended Next Experiments
 
 1. **Open-source LLM prior replication.** Use a local model on the RTX 4090 for a smaller cohort subset, then compare event-prior ranking with GPT-5.5-generated priors.
-2. **Cohort-value analysis.** Quantify the incremental gain of cohort-specific LLM priors over global prior by subgroup, income, workers, vehicles, and transit availability.
+2. **Cohort-value extension.** The core subgroup analysis is now present; a paper version should add confidence intervals for the subgroup gains and cleaner codebook labels.
 3. **External shock replication.** Use PSRC or another household survey to replicate the same no-label adapter around a non-COVID shock or recovery period.
 4. **Count-model extension.** The transparent Poisson/Tweedie check is now present; a submission version should add a tuned negative-binomial or zero-inflated variant if feasible.
 5. **Advisor-facing paper version.** Convert `main.tex` into a venue template only after the story and experiments are stable.
