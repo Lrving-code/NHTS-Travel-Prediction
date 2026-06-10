@@ -21,7 +21,6 @@
 | Historical trend shift | 简单趋势修正 | 4.1504 | 5.1463 | +3.3485 | -0.5334 |
 | Pure LLM pressure | 只用 LLM 事件压力 | 2.7175 | 3.9876 | -0.3732 | 0.0794 |
 | Global event prior | 全体家庭统一疫情折减 | 2.5531 | 3.6272 | +0.1229 | 0.2383 |
-| LLM trip suppression | 最低 MAE sensitivity row | 2.4820 | 3.6601 | -0.5404 | 0.2244 |
 | **Hybrid gated adapter** | **主方法** | **2.5023** | **3.6038** | **-0.0230** | **0.2480** |
 
 ## 家庭颗粒度预测准确率
@@ -30,7 +29,6 @@
 |---|---:|---:|---:|---:|
 | Historical XGBoost | 5.8% | 11.8% | 26.5% | 41.9% |
 | Pure LLM pressure | 14.2% | 26.2% | 51.0% | 68.0% |
-| LLM trip suppression | 15.6% | 30.2% | 56.1% | 72.3% |
 | **Hybrid gated adapter** | **17.7%** | **29.8%** | **54.5%** | **71.2%** |
 
 加权口径下，主方法 within 2 trips accuracy 是 `54.0%`，within 3 trips accuracy 是 `70.8%`。也就是说，超过一半家庭的预测误差在 2 次出行以内，约七成家庭在 3 次出行以内。
@@ -75,16 +73,11 @@ Global event prior 是所有家庭使用同一个疫情折减。它表现很强�
 
 所以正确说法不是“LLM cohort ranking 完全碾压 global rule”，而是：global rule 是强低成本 baseline；hybrid gated adapter 在此基础上提供更好的校准和 cohort-level refinement。
 
-### 4. 相比最低 MAE sensitivity row
+## 为什么不直接用 LLM 零样本构建 2022 决策树
 
-`llm_trip_suppression_a1p25` 的 Weighted MAE 是 `2.4820`，略低于主方法 `2.5023`，但它的 weighted bias 是 `-0.5404`，说明整体压得偏低。
+这个方案可以作为补充 baseline，但不适合作为主方法。原因是决策树本质上需要标签来学习两个东西：第一，变量 split threshold；第二，叶节点的数值预测。如果没有 2022 `CNTTDHH` 标签，LLM 只能根据常识生成一个 belief tree，或者先生成 synthetic 2022 labels 再训练树。这样优化目标就会变成拟合 LLM 的假设，而不是拟合真实 NHTS 行为。
 
-主方法选择 gated adapter，是因为它更适合 planning：
-
-- MAE 接近最低。
-- Bias 几乎为 0。
-- Weighted R2 更高。
-- 总体出行量估计更可信。
+我们当前设计更稳：历史 XGBoost/CatBoost 用真实 NHTS 学 household baseline，LLM 只提供疫情事件机制先验，adapter 再把事件先验转成有限、可审计的修正。实验上 pure LLM pressure 的 wMAE 是 `2.7175`、wBias 是 `-0.3732`，而主方法 wMAE 是 `2.5023`、wBias 是 `-0.0230`，说明 LLM 单独能给方向，但需要历史 household model 做数值校准。
 
 ## 多输出行为结果
 

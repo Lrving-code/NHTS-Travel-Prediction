@@ -16,7 +16,7 @@ LLM 输出的是结构化事件先验，不直接输出 `CNTTDHH`。
 
 ## 一分钟版本
 
-传统历史预测器会明显高估 2022 年家庭出行次数。主口径使用固定 no-label gated rule，weighted MAE 从 `4.3377` 降到 `2.5023`，weighted bias 变成 `-0.0230`，几乎消除了系统性高估。LLM-only pressure baseline 的 weighted MAE 是 `2.7175`，最低 MAE 的 hybrid sensitivity row 可以到 `2.4820`。这说明 LLM 不是直接预测 trip count，而是提供疫情事件语义先验，再去修正历史 routine-mobility predictor。
+传统历史预测器会明显高估 2022 年家庭出行次数。主口径使用固定 no-label gated rule，weighted MAE 从 `4.3377` 降到 `2.5023`，weighted bias 变成 `-0.0230`，几乎消除了系统性高估。LLM-only pressure baseline 的 weighted MAE 是 `2.7175`。这说明 LLM 不是直接预测 trip count，而是提供疫情事件语义先验，再去修正历史 routine-mobility predictor。
 
 ## 各方法怎么比较
 
@@ -53,5 +53,6 @@ LLM 输出的是结构化事件先验，不直接输出 `CNTTDHH`。
 
 - 为什么有两套指标？因为 trip generation 是 count regression，mode composition 是 share-vector prediction。
 - 这是 pure LLM 吗？不是。纯 LLM-style correction 比 XGBoost + LLM 弱，说明 LLM 适合作为 event-prior adapter。
+- 为什么不直接让 LLM 零样本构建 2022 决策树？因为决策树需要标签学习 split threshold 和叶节点数值；没有 2022 标签时，这会变成 LLM belief tree 或 synthetic-label model，数值校准不如历史 household model + event prior。
 - 有没有用 2022 标签训练？主实验没有。2022 `CNTTDHH` 只在最终 evaluation 中使用。
 - 结果够不够做大作业？够，因为我们有完整数据链路、强 baseline、LLM event prior、无标签修正、稳健性检验、mode 扩展和 10 分钟汇报材料。

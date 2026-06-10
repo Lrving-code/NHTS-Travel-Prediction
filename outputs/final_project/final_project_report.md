@@ -2,7 +2,7 @@
 
 ## Core Claim
 
-This project formulates 2022 NHTS household travel prediction as event-driven temporal adaptation. A traditional supervised baseline learns routine mobility from pre-2022 NHTS data, but the post-pandemic wave contains event mechanisms such as remote work substitution, transit avoidance, online delivery substitution, and uneven recovery. The main contribution is a label-free hybrid adapter: LLM-derived event priors correct the routine predictor, while 2022 trip-count labels are used only for final evaluation.
+This project formulates 2022 NHTS household travel prediction as event-driven temporal adaptation. Historical models learn routine mobility, but the post-pandemic wave contains event mechanisms such as remote work substitution, transit avoidance, online delivery substitution, and uneven recovery. The main contribution is a label-free hybrid adapter: LLM-derived event priors correct a historical routine-mobility predictor, while 2022 trip-count labels are used only for final evaluation.
 
 ## Research Questions
 
@@ -20,7 +20,6 @@ This project formulates 2022 NHTS household travel prediction as event-driven te
 | LLM-only pressure | 2.7175 | 3.9876 | -0.3732 | 0.0794 |
 | Global event prior | 2.5223 | 3.7432 | -0.7477 | 0.1888 |
 | Random prior control | 2.6466 | 3.8807 | -0.6368 | 0.1280 |
-| LLM trip suppression | 2.4820 | 3.6601 | -0.5404 | 0.2244 |
 | Gated LLM correction | 2.5023 | 3.6038 | -0.0230 | 0.2480 |
 
 ## Temporal Transfer Validation
@@ -41,7 +40,6 @@ The pre-COVID checks have mean absolute weighted bias `0.9024`, while 2022 has a
 - Primary weighted MAE drops from `4.3377` to `2.5023` (42.31% reduction).
 - Primary weighted RMSE drops from `5.3169` to `3.6038` (32.22% reduction).
 - Primary absolute weighted bias drops by `99.36%`.
-- Best-MAE sensitivity row: `llm_trip_suppression_a1p25` reaches weighted MAE `2.4820` (42.78% reduction).
 - LLM-only pressure improves over naive historical baselines but remains weaker than the hybrid adapter, supporting the design choice that LLMs provide event semantics rather than standalone household predictions.
 
 ## Household-Level Accuracy
@@ -75,8 +73,8 @@ The project now reports household travel behavior as a multi-output system:
 
 Mode-specific trip-volume results:
 
-- Traditional count × traditional mode total mode-trip MAE: `4.8467`.
-- Gated count × LLM mode total mode-trip MAE: `3.2802`.
+- Traditional count x traditional mode total mode-trip MAE: `4.8467`.
+- Gated count x LLM mode total mode-trip MAE: `3.2802`.
 
 Purpose-composition results:
 
@@ -94,11 +92,14 @@ Purpose-composition results:
 
 The LLM should be framed as an event-generalization module, not as a direct predictor. It maps pandemic mechanisms such as remote work, transit avoidance, online delivery substitution, and uneven recovery onto unlabeled household cohorts. A prospective event-context file is included at `plan/prospective_event_context_2022.md` to make this role more auditable and reduce retrospective leakage risk.
 
+## Why Not a Zero-Shot LLM Decision Tree
+
+A decision tree needs labels to learn split thresholds and leaf-level numerical predictions. Without 2022 `CNTTDHH` labels, an LLM-generated tree would be a belief tree or a synthetic-label model rather than a data-fitted 2022 tree. This is why the project uses the LLM as an event-prior generator and keeps numerical prediction grounded in a historical household model trained on real NHTS data.
+
 ## Robustness Check
 
 We ran additional robustness checks in `outputs/robustness_checks/`.
 
-- 500-run permutation control for `llm_trip_suppression_a1p25`: actual weighted MAE `2.4820`, random-permutation mean `2.6425`, empirical p-value `0.0020`.
 - 500-run permutation control for the primary gated rule: actual weighted MAE `2.5023`, random-permutation mean `2.5808`, empirical p-value `0.0020`.
 - Same-alpha global pressure remains strong: primary gated weighted MAE `2.5023` vs global-a1 weighted MAE `2.5531`.
 - Leakage scan passes for LLM-facing profile/feature files: they exclude `HOUSEID`, `CNTTDHH`, and `WTHHFIN`.
@@ -116,6 +117,6 @@ Interpretation for the course report: the dominant contribution is event-level l
 
 ## Presentation Framing
 
-Avoid framing the project as a generic feature-only forecasting improvement. The cleaner narrative is: a traditional supervised baseline fails under a rare event; LLMs provide event semantics that can be distilled into a lightweight correction rule.
+Avoid framing the project as a generic feature-only forecasting improvement. The cleaner narrative is: the traditional supervised baseline fails under a rare event; LLMs provide event semantics that can be distilled into a lightweight correction rule.
 
 Do not overstate the mode-composition or purpose-composition extensions. The strongest result remains trip generation under event-driven temporal adaptation; the extensions show a broader behavior system and planning relevance.

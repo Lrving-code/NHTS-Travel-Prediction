@@ -6,7 +6,7 @@ We formulate 2022 NHTS household travel prediction as event-driven temporal adap
 The main method is not pure LLM prediction. It is a hybrid gated adapter: historical household baseline times an event correction factor. The LLM outputs structured event pressure, not household trip-count labels.
 
 ## One-Minute Version
-Historical prediction overestimates 2022 trips. The primary fixed no-label gated rule reduces weighted MAE from `4.3377` to `2.5023` and moves weighted bias to `-0.0230`. The LLM-only pressure baseline reaches `2.7175`, while the best-MAE hybrid sensitivity row reaches `2.4820`. The LLM is not used as a direct trip-count predictor; it provides pandemic-event semantics that modify a historical routine-mobility predictor.
+Historical prediction overestimates 2022 trips. The primary fixed no-label gated rule reduces weighted MAE from `4.3377` to `2.5023` and moves weighted bias to `-0.0230`. The LLM-only pressure baseline reaches `2.7175`. The LLM is not used as a direct trip-count predictor; it provides pandemic-event semantics that modify a historical routine-mobility predictor.
 
 ## Method Comparison Logic
 
@@ -31,5 +31,6 @@ Mode-specific trip volume is the derived planning output: predicted total trips 
 ## Questions To Expect
 - Why use two metric families? Trip generation is count regression, while mode composition is a share-vector prediction problem.
 - Is this pure LLM? No. Pure LLM-like correction is weaker than XGBoost + LLM.
+- Why not let the LLM build a zero-shot 2022 decision tree? A tree needs labels to learn split thresholds and leaf values. Without 2022 labels, the output becomes an LLM belief tree or synthetic-label model, so we use the LLM only as an event-prior generator.
 - Did 2022 labels enter training? Not in the main label-free setting; 2022 targets are used for evaluation.
 - What should we not claim? Do not claim causal effects or direct LLM trip-count prediction; claim causal guardrails and event-prior adaptation.

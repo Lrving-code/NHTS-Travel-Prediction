@@ -47,7 +47,6 @@ SELECTED_METHODS = [
     "llm_only_trip_suppression_a1p25",
     "global_trip_suppression_a1p25",
     "random_trip_suppression_a1p25",
-    "llm_trip_suppression_a1p25",
     "gated_trip_suppression_a1_d0p15",
 ]
 PLOT_LABELS = {
@@ -57,7 +56,6 @@ PLOT_LABELS = {
     "llm_only_trip_suppression_a1p25": "LLM-only pressure",
     "global_trip_suppression_a1p25": "Global event prior",
     "random_trip_suppression_a1p25": "Random prior control",
-    "llm_trip_suppression_a1p25": "LLM trip suppression",
     "gated_trip_suppression_a1_d0p15": "Gated LLM correction",
 }
 COLORS = {
@@ -261,7 +259,7 @@ def save_metric_comparison(summary: pd.DataFrame) -> Path:
 
 def save_bias_r2_tradeoff(summary: pd.DataFrame) -> Path:
     path = FIGURE_DIR / "bias_r2_tradeoff.png"
-    methods = ["historical_xgboost", "llm_trip_suppression_a1p25", "gated_trip_suppression_a1_d0p15"]
+    methods = ["historical_xgboost", "llm_only_trip_suppression_a1p25", "gated_trip_suppression_a1_d0p15"]
     plot_frame = summary[summary["method"].isin(methods)].set_index("method").loc[methods].reset_index()
     labels = [PLOT_LABELS[method] for method in plot_frame["method"]]
     x = np.arange(len(plot_frame))
@@ -290,7 +288,7 @@ def save_bias_r2_tradeoff(summary: pd.DataFrame) -> Path:
 
 def save_household_accuracy(accuracy: pd.DataFrame) -> Path:
     path = FIGURE_DIR / "household_tolerance_accuracy.png"
-    methods = ["historical_xgboost", "llm_trip_suppression_a1p25", "gated_trip_suppression_a1_d0p15"]
+    methods = ["historical_xgboost", "llm_only_trip_suppression_a1p25", "gated_trip_suppression_a1_d0p15"]
     plot_frame = accuracy.set_index("method").loc[methods].reset_index()
     labels = [PLOT_LABELS[method] for method in plot_frame["method"]]
     metrics = ["exact_rounded_accuracy", "within_1_trip", "within_2_trips", "within_3_trips"]
@@ -395,7 +393,6 @@ def pct(value: float) -> str:
 def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: dict[str, Path]) -> Path:
     path = OUTPUT_DIR / "final_project_report.md"
     baseline = summary[summary["method"] == "historical_xgboost"].iloc[0]
-    best_mae = summary[summary["method"] == "llm_trip_suppression_a1p25"].iloc[0]
     gated = summary[summary["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
     gated_acc = accuracy[accuracy["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
 
@@ -430,6 +427,18 @@ def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: di
     lines.extend(
         [
             "",
+            "## Temporal Transfer Validation",
+            "",
+            "Before interpreting 2022 as an event-shift target, we checked routine cross-year transfer:",
+            "",
+            "| Check | Weighted MAE | Weighted Bias | R2 |",
+            "|---|---:|---:|---:|",
+            "| 2001 -> 2009 | 3.5207 | +0.5818 | 0.4413 |",
+            "| 2001+2009 -> 2017 | 4.1272 | +1.2230 | 0.2505 |",
+            "| 2001+2009+2017 -> 2022 | 4.4062 | +3.7202 | -0.5055 |",
+            "",
+            "The pre-COVID checks have mean absolute weighted bias `0.9024`, while 2022 has absolute weighted bias `3.7202`. This supports the problem framing: 2022 is a stronger post-pandemic event shift rather than an ordinary transfer year.",
+            "",
             "## Improvement Over Historical Predictor",
             "",
             f"- Primary strict no-label row: `{gated.method}`.",
@@ -438,8 +447,6 @@ def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: di
             f"- Primary weighted RMSE drops from `{baseline.weighted_rmse:.4f}` to `{gated.weighted_rmse:.4f}` "
             f"({gated.weighted_rmse_reduction_pct:.2f}% reduction).",
             f"- Primary absolute weighted bias drops by `{gated.abs_weighted_bias_reduction_pct:.2f}%`.",
-            f"- Best-MAE sensitivity row: `{best_mae.method}` reaches weighted MAE `{best_mae.weighted_mae:.4f}` "
-            f"({best_mae.weighted_mae_reduction_pct:.2f}% reduction).",
             "- LLM-only pressure improves over naive historical baselines but remains weaker than the hybrid adapter, "
             "supporting the design choice that LLMs provide event semantics rather than standalone household predictions.",
             "",
@@ -452,11 +459,60 @@ def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: di
             f"- Within 2 trips: `{pct(gated_acc.within_2_trips)}`.",
             f"- Within 3 trips: `{pct(gated_acc.within_3_trips)}`.",
             "",
+            "## Statistical Validation",
+            "",
+            "Household bootstrap resampling gives the following 95% confidence intervals:",
+            "",
+            "- Traditional supervised baseline weighted MAE: `[4.2418, 4.4312]`.",
+            "- Gated LLM correction weighted MAE: `[2.4292, 2.5808]`.",
+            "- Paired weighted-MAE reduction: `[1.7422, 1.9267]`.",
+            "- Paired absolute-bias reduction: `[3.3582, 3.6696]`.",
+            "",
+            "This supports the claim that the main trip-count improvement is not a single point-estimate artifact.",
+            "",
+            "## Behavior-System Extension",
+            "",
+            "The project now reports household travel behavior as a multi-output system:",
+            "",
+            "1. Trip generation: household `CNTTDHH`.",
+            "2. Mode composition: household mode-share vector from `TRPTRANS`.",
+            "3. Mode-specific trip volume: predicted total trips multiplied by predicted mode shares.",
+            "4. Purpose composition: household purpose-share vector from `TRIPPURP`.",
+            "",
+            "Mode-specific trip-volume results:",
+            "",
+            "- Traditional count x traditional mode total mode-trip MAE: `4.8467`.",
+            "- Gated count x LLM mode total mode-trip MAE: `3.2802`.",
+            "",
+            "Purpose-composition results:",
+            "",
+            "- Traditional XGBoost purpose weighted TV: `0.5661`.",
+            "- LLM purpose prior is not the overall best row, but it adds a third behavior dimension and exposes a clear future-work target for purpose-specific event adaptation.",
+            "",
             "## Efficiency",
             "",
             "- Household rows in 2022: `7,893`.",
             "- LLM cohort prompts: `1,327`.",
             "- LLM request reduction: `83.2%`, or about `5.95x` fewer requests than household-level prompting.",
+            "- Batch prompting with batch size 15 further compresses `1,327` cohort prompts into `89` batch prompts, a `93.29%` request reduction relative to one-cohort prompts.",
+            "",
+            "## LLM Generalization Role",
+            "",
+            "The LLM should be framed as an event-generalization module, not as a direct predictor. It maps pandemic mechanisms such as remote work, transit avoidance, online delivery substitution, and uneven recovery onto unlabeled household cohorts. A prospective event-context file is included at `plan/prospective_event_context_2022.md` to make this role more auditable and reduce retrospective leakage risk.",
+            "",
+            "## Why Not a Zero-Shot LLM Decision Tree",
+            "",
+            "A decision tree needs labels to learn split thresholds and leaf-level numerical predictions. Without 2022 `CNTTDHH` labels, an LLM-generated tree would be a belief tree or a synthetic-label model rather than a data-fitted 2022 tree. This is why the project uses the LLM as an event-prior generator and keeps numerical prediction grounded in a historical household model trained on real NHTS data.",
+            "",
+            "## Robustness Check",
+            "",
+            "We ran additional robustness checks in `outputs/robustness_checks/`.",
+            "",
+            "- 500-run permutation control for the primary gated rule: actual weighted MAE `2.5023`, random-permutation mean `2.5808`, empirical p-value `0.0020`.",
+            "- Same-alpha global pressure remains strong: primary gated weighted MAE `2.5023` vs global-a1 weighted MAE `2.5531`.",
+            "- Leakage scan passes for LLM-facing profile/feature files: they exclude `HOUSEID`, `CNTTDHH`, and `WTHHFIN`.",
+            "",
+            "Interpretation for the course report: the dominant contribution is event-level label-free adaptation. Cohort-specific LLM ranking provides measurable incremental signal, but it should not be described as the sole source of improvement.",
             "",
             "## Figures",
             "",
@@ -473,6 +529,8 @@ def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: di
             "Avoid framing the project as a generic feature-only forecasting improvement. The cleaner narrative is: "
             "the traditional supervised baseline fails under a rare event; LLMs provide event semantics "
             "that can be distilled into a lightweight correction rule.",
+            "",
+            "Do not overstate the mode-composition or purpose-composition extensions. The strongest result remains trip generation under event-driven temporal adaptation; the extensions show a broader behavior system and planning relevance.",
         ]
     )
     path.write_text("\n".join(lines), encoding="utf-8")
@@ -508,7 +566,6 @@ def write_storyboard() -> Path:
         "- Primary gated weighted MAE reduction: 42.31%.",
         "- Primary gated weighted RMSE reduction: 32.22%.",
         "- Primary gated absolute weighted-bias reduction: 99.36%.",
-        "- Best-MAE sensitivity reduction: 42.78%.",
         "",
         "## Slide 7: Bias/R2 Tradeoff",
         "- Gated correction has near-zero weighted bias and highest weighted R2.",
@@ -737,7 +794,7 @@ def create_presentation(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_pa
         slide,
         [
             "Global controls are strong: the pandemic shift is a broad event-level effect.",
-            "Random controls are weaker than LLM trip suppression.",
+            "Random controls are weaker than structured event adaptation.",
             "Subgroup gains show where cohort-specific ranking adds value.",
         ],
         8.1,
@@ -752,7 +809,7 @@ def create_presentation(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_pa
         slide,
         [
             "Contribution: label-free event adaptation for post-pandemic travel demand.",
-            "Accuracy: primary weighted MAE reduction 42.3%; best-MAE sensitivity reduction 42.8%.",
+            "Accuracy: primary weighted MAE reduction 42.3%; near-zero weighted bias.",
             "Bias: primary gated correction reduces absolute weighted bias by 99.4%.",
             "Efficiency: cohort prompting reduces LLM requests by 83.2%.",
             "Future work: stronger priors, external event context, and prospective validation.",

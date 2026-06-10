@@ -47,9 +47,16 @@ TRIP_LABELS = {
     "llm_only_trip_suppression_a1p25": "LLM-only pressure",
     "global_trip_suppression_a1p25": "Global event prior",
     "random_trip_suppression_a1p25": "Random prior control",
-    "llm_trip_suppression_a1p25": "LLM trip suppression",
     "gated_trip_suppression_a1_d0p15": "Gated LLM correction",
 }
+PUBLIC_TRIP_METHODS = [
+    "historical_xgboost",
+    "historical_mean_trend_shift",
+    "llm_only_trip_suppression_a1p25",
+    "global_trip_suppression_a1p25",
+    "random_trip_suppression_a1p25",
+    "gated_trip_suppression_a1_d0p15",
+]
 COLORS = {
     "dark": RGBColor(15, 23, 42),
     "muted": RGBColor(71, 85, 105),
@@ -262,7 +269,6 @@ def write_method_report(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFram
     strong = load_strong_baselines()
     trip_base = trip[trip["method"] == "historical_xgboost"].iloc[0]
     trip_llm_only = trip[trip["method"] == "llm_only_trip_suppression_a1p25"].iloc[0]
-    trip_best = trip[trip["method"] == "llm_trip_suppression_a1p25"].iloc[0]
     trip_gated = trip[trip["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
     gated_acc = acc[acc["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
     mode_base = mode[mode["method"] == "historical_xgboost"].iloc[0]
@@ -298,10 +304,12 @@ def write_method_report(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFram
         "| Method | Weighted MAE | Weighted RMSE | Weighted Bias | Weighted R2 | MAE Gain vs Historical |",
         "|---|---:|---:|---:|---:|---:|",
     ]
-    for _, row in trip.iterrows():
+    trip_index = trip.set_index("method")
+    for method in PUBLIC_TRIP_METHODS:
+        row = trip_index.loc[method]
         gain = 100.0 * (trip_base["weighted_mae"] - row["weighted_mae"]) / trip_base["weighted_mae"]
         lines.append(
-            f"| {TRIP_LABELS.get(row['method'], row['method'])} | {row.weighted_mae:.4f} | "
+            f"| {TRIP_LABELS.get(method, method)} | {row.weighted_mae:.4f} | "
             f"{row.weighted_rmse:.4f} | {row.weighted_bias:.4f} | {row.weighted_r2:.4f} | {gain:.2f}% |"
         )
     lines.extend(
@@ -315,8 +323,6 @@ def write_method_report(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFram
             "This shows that event priors help directionally but need a household historical predictor.",
             f"- Compared with LLM-only pressure, the hybrid gated adapter reduces weighted MAE by `{llm_only_gain:.2f}%` "
             f"and absolute weighted bias by `{llm_only_bias_gain:.2f}%`.",
-            f"- Best MAE sensitivity row: `{trip_best.method}`, weighted MAE `{trip_best.weighted_mae:.4f}`, "
-            f"improving `{100.0 * (trip_base.weighted_mae - trip_best.weighted_mae) / trip_base.weighted_mae:.2f}%` over historical prediction.",
             f"- Gated household accuracy: exact `{pct(gated_acc.exact_rounded_accuracy)}`, within 2 trips `{pct(gated_acc.within_2_trips)}`, within 3 trips `{pct(gated_acc.within_3_trips)}`.",
             "",
             "## Stronger Non-LLM Tabular Baselines",
@@ -397,7 +403,6 @@ def write_method_report_zh(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataF
     strong = load_strong_baselines()
     trip_base = trip[trip["method"] == "historical_xgboost"].iloc[0]
     trip_llm_only = trip[trip["method"] == "llm_only_trip_suppression_a1p25"].iloc[0]
-    trip_best = trip[trip["method"] == "llm_trip_suppression_a1p25"].iloc[0]
     trip_gated = trip[trip["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
     gated_acc = acc[acc["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
     mode_base = mode[mode["method"] == "historical_xgboost"].iloc[0]
@@ -433,10 +438,12 @@ def write_method_report_zh(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataF
         "| 方法 | Weighted MAE | Weighted RMSE | Weighted Bias | Weighted R2 | 相对历史预测 MAE 提升 |",
         "|---|---:|---:|---:|---:|---:|",
     ]
-    for _, row in trip.iterrows():
+    trip_index = trip.set_index("method")
+    for method in PUBLIC_TRIP_METHODS:
+        row = trip_index.loc[method]
         gain = 100.0 * (trip_base["weighted_mae"] - row["weighted_mae"]) / trip_base["weighted_mae"]
         lines.append(
-            f"| {TRIP_LABELS.get(row['method'], row['method'])} | {row.weighted_mae:.4f} | "
+            f"| {TRIP_LABELS.get(method, method)} | {row.weighted_mae:.4f} | "
             f"{row.weighted_rmse:.4f} | {row.weighted_bias:.4f} | {row.weighted_r2:.4f} | {gain:.2f}% |"
         )
     lines.extend(
@@ -447,7 +454,6 @@ def write_method_report_zh(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataF
             f"- 主口径使用固定 no-label gated rule：`{trip_gated.method}`，weighted MAE `{trip_gated.weighted_mae:.4f}`，weighted bias `{trip_gated.weighted_bias:.4f}`，weighted R2 `{trip_gated.weighted_r2:.4f}`。",
             f"- LLM-only pressure baseline 的 weighted MAE 是 `{trip_llm_only.weighted_mae:.4f}`，说明 LLM 事件先验能给出方向，但需要 historical household predictor 提供个体化 baseline。",
             f"- 相比 LLM-only pressure，hybrid gated adapter 的 weighted MAE 进一步降低 `{llm_only_gain:.2f}%`，绝对 weighted bias 降低 `{llm_only_bias_gain:.2f}%`。",
-            f"- 最低 MAE 是 sensitivity row `{trip_best.method}`：weighted MAE 从 `{trip_base.weighted_mae:.4f}` 降到 `{trip_best.weighted_mae:.4f}`，降低 `42.78%`；它不作为严格 no-label 主方法的参数选择依据。",
             f"- 家庭颗粒度上，gated correction exact hit `{pct(gated_acc.exact_rounded_accuracy)}`，within 2 trips `{pct(gated_acc.within_2_trips)}`，within 3 trips `{pct(gated_acc.within_3_trips)}`。",
             "",
             "## 更强非 LLM 表格 baseline",
@@ -621,7 +627,6 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
 
     trip_base = trip[trip["method"] == "historical_xgboost"].iloc[0]
     trip_llm_only = trip[trip["method"] == "llm_only_trip_suppression_a1p25"].iloc[0]
-    trip_best = trip[trip["method"] == "llm_trip_suppression_a1p25"].iloc[0]
     trip_gated = trip[trip["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
     gated_acc = acc[acc["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
     mode_base = mode[mode["method"] == "historical_xgboost"].iloc[0]
@@ -692,7 +697,6 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
             ["LLM-only pressure", "No", "LLM only", "No household predictor"],
             ["Global event prior", "No", "Only global mean", "Event-level downscaling control"],
             ["Random prior control", "No", "Shuffled scores", "Negative control"],
-            ["LLM trip suppression", "No", "Cohort-specific", "Best-MAE sensitivity"],
             ["Gated LLM correction", "No", "Cohort-specific when confident", "Primary no-label rule"],
         ],
         0.65,
@@ -704,14 +708,7 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
 
     slide = base_slide("Trip-count comparison", "Weighted metrics on 2022 households")
     trip_rows = [["Method", "MAE", "RMSE", "Bias", "R2", "MAE gain"]]
-    for method in [
-        "historical_xgboost",
-        "global_trip_suppression_a1p25",
-        "llm_only_trip_suppression_a1p25",
-        "random_trip_suppression_a1p25",
-        "llm_trip_suppression_a1p25",
-        "gated_trip_suppression_a1_d0p15",
-    ]:
+    for method in PUBLIC_TRIP_METHODS:
         row = trip[trip["method"] == method].iloc[0]
         gain = 100.0 * (trip_base["weighted_mae"] - row["weighted_mae"]) / trip_base["weighted_mae"]
         trip_rows.append(
@@ -730,7 +727,7 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
         [
             f"Primary no-label gated rule: MAE {trip_gated.weighted_mae:.3f}, bias {trip_gated.weighted_bias:.3f}.",
             f"LLM-only pressure: MAE {trip_llm_only.weighted_mae:.3f}; hybrid keeps household-level baseline.",
-            f"Best-MAE sensitivity row: MAE {trip_best.weighted_mae:.3f}, a 42.8% reduction.",
+            "Parameter-sweep sensitivity rows are kept out of the public method comparison.",
         ],
         0.95,
         5.35,
@@ -867,7 +864,7 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
         slide,
         [
             "Do not claim that LLM directly predicts household trip counts.",
-            "Do not claim the best-MAE alpha was selected without looking at 2022 evaluation; treat it as sensitivity.",
+            "Keep parameter-sweep sensitivity rows in appendix/internal analysis, not in the main comparison.",
             "Present trip generation and mode composition as two household-level outputs, not as separate projects.",
             "Mode composition is weaker overall than trip-count adaptation, but it adds the mode-structure dimension.",
             "Future work should add external event context, stronger LLM priors, and prospective validation.",
@@ -904,7 +901,6 @@ def write_speaker_notes(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
     path = FINAL_DIR / "presentation_speaker_notes.md"
     strong = load_strong_baselines()
     trip_base = trip[trip["method"] == "historical_xgboost"].iloc[0]
-    trip_best = trip[trip["method"] == "llm_trip_suppression_a1p25"].iloc[0]
     trip_gated = trip[trip["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
     trip_llm_only = trip[trip["method"] == "llm_only_trip_suppression_a1p25"].iloc[0]
     trip_global = trip[trip["method"] == "global_trip_suppression_a1p25"].iloc[0]
@@ -921,7 +917,7 @@ def write_speaker_notes(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
         "",
         "## One-Minute Version",
         f"Historical prediction overestimates 2022 trips. The primary fixed no-label gated rule reduces weighted MAE from `{trip_base.weighted_mae:.4f}` to `{trip_gated.weighted_mae:.4f}` and moves weighted bias to `{trip_gated.weighted_bias:.4f}`. "
-        f"The LLM-only pressure baseline reaches `{trip_llm_only.weighted_mae:.4f}`, while the best-MAE hybrid sensitivity row reaches `{trip_best.weighted_mae:.4f}`. The LLM is not used as a direct trip-count predictor; it provides pandemic-event semantics that modify a historical routine-mobility predictor.",
+        f"The LLM-only pressure baseline reaches `{trip_llm_only.weighted_mae:.4f}`. The LLM is not used as a direct trip-count predictor; it provides pandemic-event semantics that modify a historical routine-mobility predictor.",
         "",
         "## Method Comparison Logic",
         "",
@@ -952,6 +948,7 @@ def write_speaker_notes(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
         "## Questions To Expect",
         "- Why use two metric families? Trip generation is count regression, while mode composition is a share-vector prediction problem.",
         "- Is this pure LLM? No. Pure LLM-like correction is weaker than XGBoost + LLM.",
+        "- Why not let the LLM build a zero-shot 2022 decision tree? A tree needs labels to learn split thresholds and leaf values. Without 2022 labels, the output becomes an LLM belief tree or synthetic-label model, so we use the LLM only as an event-prior generator.",
         "- Did 2022 labels enter training? Not in the main label-free setting; 2022 targets are used for evaluation.",
         "- What should we not claim? Do not claim causal effects or direct LLM trip-count prediction; claim causal guardrails and event-prior adaptation.",
         ]
@@ -964,7 +961,6 @@ def write_speaker_notes_zh(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
     path = FINAL_DIR / "presentation_speaker_notes_zh.md"
     strong = load_strong_baselines()
     trip_base = trip[trip["method"] == "historical_xgboost"].iloc[0]
-    trip_best = trip[trip["method"] == "llm_trip_suppression_a1p25"].iloc[0]
     trip_gated = trip[trip["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
     trip_llm_only = trip[trip["method"] == "llm_only_trip_suppression_a1p25"].iloc[0]
     trip_global = trip[trip["method"] == "global_trip_suppression_a1p25"].iloc[0]
@@ -990,7 +986,7 @@ def write_speaker_notes_zh(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
         "",
         "## 一分钟版本",
         "",
-        f"传统历史预测器会明显高估 2022 年家庭出行次数。主口径使用固定 no-label gated rule，weighted MAE 从 `{trip_base.weighted_mae:.4f}` 降到 `{trip_gated.weighted_mae:.4f}`，weighted bias 变成 `{trip_gated.weighted_bias:.4f}`，几乎消除了系统性高估。LLM-only pressure baseline 的 weighted MAE 是 `{trip_llm_only.weighted_mae:.4f}`，最低 MAE 的 hybrid sensitivity row 可以到 `{trip_best.weighted_mae:.4f}`。这说明 LLM 不是直接预测 trip count，而是提供疫情事件语义先验，再去修正历史 routine-mobility predictor。",
+        f"传统历史预测器会明显高估 2022 年家庭出行次数。主口径使用固定 no-label gated rule，weighted MAE 从 `{trip_base.weighted_mae:.4f}` 降到 `{trip_gated.weighted_mae:.4f}`，weighted bias 变成 `{trip_gated.weighted_bias:.4f}`，几乎消除了系统性高估。LLM-only pressure baseline 的 weighted MAE 是 `{trip_llm_only.weighted_mae:.4f}`。这说明 LLM 不是直接预测 trip count，而是提供疫情事件语义先验，再去修正历史 routine-mobility predictor。",
         "",
         "## 各方法怎么比较",
         "",
@@ -1033,6 +1029,7 @@ def write_speaker_notes_zh(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
         "",
         "- 为什么有两套指标？因为 trip generation 是 count regression，mode composition 是 share-vector prediction。",
         "- 这是 pure LLM 吗？不是。纯 LLM-style correction 比 XGBoost + LLM 弱，说明 LLM 适合作为 event-prior adapter。",
+        "- 为什么不直接让 LLM 零样本构建 2022 决策树？因为决策树需要标签学习 split threshold 和叶节点数值；没有 2022 标签时，这会变成 LLM belief tree 或 synthetic-label model，数值校准不如历史 household model + event prior。",
         "- 有没有用 2022 标签训练？主实验没有。2022 `CNTTDHH` 只在最终 evaluation 中使用。",
         "- 结果够不够做大作业？够，因为我们有完整数据链路、强 baseline、LLM event prior、无标签修正、稳健性检验、mode 扩展和 10 分钟汇报材料。",
         ]

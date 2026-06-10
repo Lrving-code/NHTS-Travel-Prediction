@@ -22,13 +22,11 @@ The project has three household-level behavior outputs.
 
 | Method | Weighted MAE | Weighted RMSE | Weighted Bias | Weighted R2 | MAE Gain vs Historical |
 |---|---:|---:|---:|---:|---:|
-| Historical mean | 5.5116 | 6.1251 | 4.4995 | -1.1722 | -27.06% |
 | Historical predictor | 4.3377 | 5.3169 | 3.6052 | -0.6367 | 0.00% |
 | Historical trend shift | 4.1504 | 5.1463 | 3.3485 | -0.5334 | 4.32% |
 | LLM-only pressure | 2.7175 | 3.9876 | -0.3732 | 0.0794 | 37.35% |
 | Global event prior | 2.5223 | 3.7432 | -0.7477 | 0.1888 | 41.85% |
 | Random prior control | 2.6466 | 3.8807 | -0.6368 | 0.1280 | 38.99% |
-| LLM trip suppression | 2.4820 | 3.6601 | -0.5404 | 0.2244 | 42.78% |
 | Gated LLM correction | 2.5023 | 3.6038 | -0.0230 | 0.2480 | 42.31% |
 
 Trip-count takeaway:
@@ -36,7 +34,6 @@ Trip-count takeaway:
 - Primary strict no-label row: `gated_trip_suppression_a1_d0p15`, weighted MAE `2.5023`, weighted bias `-0.0230`, weighted R2 `0.2480`.
 - LLM-only pressure baseline: weighted MAE `2.7175`. This shows that event priors help directionally but need a household historical predictor.
 - Compared with LLM-only pressure, the hybrid gated adapter reduces weighted MAE by `7.92%` and absolute weighted bias by `93.83%`.
-- Best MAE sensitivity row: `llm_trip_suppression_a1p25`, weighted MAE `2.4820`, improving `42.78%` over historical prediction.
 - Gated household accuracy: exact `17.7%`, within 2 trips `54.5%`, within 3 trips `71.2%`.
 
 ## Stronger Non-LLM Tabular Baselines

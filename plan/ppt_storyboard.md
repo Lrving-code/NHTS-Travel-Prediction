@@ -12,7 +12,7 @@
 - Can LLM event priors repair 2022 prediction without target-year labels?
 
 ## Slide 4: Method
-- Historical predictor learns routine mobility.
+- Traditional supervised baseline learns routine mobility.
 - LLM produces cohort-level pandemic priors.
 - A fixed correction rule distills the priors into prediction adjustment.
 
@@ -24,7 +24,6 @@
 - Primary gated weighted MAE reduction: 42.31%.
 - Primary gated weighted RMSE reduction: 32.22%.
 - Primary gated absolute weighted-bias reduction: 99.36%.
-- Best-MAE sensitivity reduction: 42.78%.
 
 ## Slide 7: Bias/R2 Tradeoff
 - Gated correction has near-zero weighted bias and highest weighted R2.

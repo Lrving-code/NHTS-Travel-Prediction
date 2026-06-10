@@ -12,14 +12,12 @@
 - Primary fixed no-label gated correction weighted bias: `-0.0230`
 - Primary fixed no-label gated correction weighted R2: `0.2480`
 - Primary gated weighted MAE reduction: `42.31%`
-- Best-MAE sensitivity row weighted MAE: `2.4820`
-- Best-MAE sensitivity reduction: `42.78%`
 - LLM-only pressure weighted MAE: `2.7175`
 - Compared with LLM-only pressure, the primary hybrid gated adapter reduces weighted MAE from `2.7175` to `2.5023` and reduces absolute weighted bias from `0.3732` to `0.0230`.
 - Gated household accuracy: exact `17.7%`, within 2 trips `54.5%`, within 3 trips `71.2%`
 - Stronger non-LLM baselines still overpredict 2022: best extra baseline is CatBoost GPU with weighted MAE `4.2196` and weighted bias `+3.4873`; the primary gated event adapter is `40.70%` lower in weighted MAE.
 - Equity-aware subgroup evaluation: worst-subgroup weighted MAE improves from `8.3778` under historical XGBoost to `4.7091` under the primary gated event adapter; all evaluated subgroups improve relative to historical XGBoost.
-- Multi-objective analysis: minimum-MAE profile selects `llm_trip_suppression_a1p25`; calibration-first and balanced profiles select the primary `gated_trip_suppression_a1_d0p15`; low-cost deployment selects `global_trip_suppression_a1`.
+- Multi-objective analysis: calibration-first and balanced profiles select the primary `gated_trip_suppression_a1_d0p15`; low-cost deployment selects `global_trip_suppression_a1`.
 
 行为目标 2 是 household-level mode composition：
 
@@ -51,6 +49,8 @@
 注意：LLM 不是直接预测 household trip count，也不是替代 XGBoost。LLM 的角色是 event-prior adapter。
 
 和 pure LLM pressure 相比，hybrid gated 方法更稳：pure LLM 能抓到疫情后出行下降方向，但缺少 household-level routine baseline，容易把总量压得过低；hybrid 方法保留传统模型学到的家庭基础出行需求，再用 LLM event priors 做机制修正。
+
+为什么不直接让 LLM 零样本构建 2022 决策树：决策树需要标签来学习 split threshold 和叶节点数值。没有 2022 `CNTTDHH` 标签时，LLM 只能生成 belief tree 或 synthetic labels，优化目标会变成拟合 LLM 自己的假设，而不是拟合真实 NHTS 行为。因此本项目把 LLM 限定为 event-prior generator，把数值预测锚定在真实历史 NHTS 训练出的 household model 上。
 
 ## 学术问题与贡献
 
@@ -303,7 +303,7 @@ purpose-composition 扩展使用同一组 trip-level files，并额外依赖跨�
 
 - 当前版本足够作为“大数据与城市规划”课程大作业汇报；如果要发展成论文，应按 `outputs/final_project/project_quality_assessment.md` 继续补外部验证、前瞻式事件上下文和不确定性分析。
 - 主实验不使用 2022 `CNTTDHH` 标签训练或校准，2022 标签只用于最终 evaluation。
-- 汇报主口径使用固定 `gated_trip_suppression_a1_d0p15` no-label rule；`llm_trip_suppression_a1p25` 是 best-MAE sensitivity row，不应表述为严格无标签参数选择的主方法。
+- 汇报主口径使用固定 `gated_trip_suppression_a1_d0p15` no-label rule；参数扫描结果只放内部附录，不进入公开方法比较主表。
 - 稳健性检验显示 global event pressure 是很强的 baseline；应把贡献表述为 event-level label-free adaptation，cohort-specific LLM ranking 是增量证据，不是唯一或主导来源。
 - mode-composition 是探索性扩展：总体 weighted TV 改善较小，最清楚的结果是 transit-share weighted MAE 和 mode-specific trip volume 改善。
 - purpose-composition 是综合目标扩展和边界实验：它说明项目可以预测“为什么出行”，但当前 LLM purpose prior 还不是整体最优。

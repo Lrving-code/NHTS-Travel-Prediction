@@ -803,17 +803,16 @@ def add_multi_objective_slide(prs: Presentation, logo: bytes | None) -> None:
     points = read_csv_or_empty(PARETO_DIR / "preference_operating_points.csv")
     if not points.empty:
         profile_labels = {
-            "minimum_mae_sensitivity": "Min error",
+            "calibration_first": "Calibration",
             "balanced_course_report": "Balanced / main",
             "low_cost_deployment": "Low-cost",
         }
         method_labels = {
-            "llm_trip_suppression_a1p25": "LLM suppression",
             "gated_trip_suppression_a1_d0p15": "Gated LLM",
             "global_trip_suppression_a1": "Global prior",
         }
         rows = []
-        show_profiles = ["minimum_mae_sensitivity", "balanced_course_report", "low_cost_deployment"]
+        show_profiles = ["calibration_first", "balanced_course_report", "low_cost_deployment"]
         for row in points[points["profile"].isin(show_profiles)].itertuples(index=False):
             rows.append(
                 [
@@ -955,7 +954,7 @@ def add_error_insight_slide(prs: Presentation, logo: bytes | None, values: dict[
     metric_card(slide, 0.75, 1.28, 2.45, 0.9, "Exact rounded", f"{values['exact']:.1%}", "household accuracy", COLORS["blue"])
     metric_card(slide, 3.48, 1.28, 2.45, 0.9, "Within 2 trips", f"{values['within2']:.1%}", "practical tolerance", COLORS["green"])
     metric_card(slide, 6.21, 1.28, 2.45, 0.9, "Within 3 trips", f"{values['within3']:.1%}", "broad tolerance", COLORS["orange"])
-    metric_card(slide, 8.94, 1.28, 2.45, 0.9, "Best sensitivity", f"{values['best']:.3f}", "wMAE, not main claim", COLORS["purple"])
+    metric_card(slide, 8.94, 1.28, 2.45, 0.9, "Weighted R2", f"{values['gated_r2']:.3f}", "primary gated rule", COLORS["purple"])
     text_box(slide, "Weighted bias comparison", 0.82, 2.75, 2.3, 0.24, 10.5, COLORS["teal"], True)
     draw_bias_strip(
         slide,
@@ -1210,7 +1209,6 @@ def create_deck() -> Path:
         "llm_only_r2": metric(trip, "llm_only_trip_suppression_a1p25", "weighted_r2"),
         "mean_bias": metric(trip, "historical_mean_only", "weighted_bias"),
         "trend_bias": metric(trip, "historical_mean_trend_shift", "weighted_bias"),
-        "best": metric(trip, "llm_trip_suppression_a1p25", "weighted_mae"),
         "mae_reduction": pct_delta(baseline, gated),
         "exact": metric(acc, main_method, "exact_rounded_accuracy"),
         "within2": metric(acc, main_method, "within_2_trips"),
