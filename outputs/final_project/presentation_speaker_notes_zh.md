@@ -14,6 +14,20 @@ PPT 新题目是“面向时序迁移的家庭出行预测：模拟选择器与�
 
 现在的项目不是 pure LLM 预测，也不是单纯 XGBoost。主方法是 hybrid gated adapter：先用历史 NHTS 学一个 household baseline，再用 LLM 生成的 event pressure 做事件修正。
 
+## 33 页完整版本怎么串两条方向
+
+完整 PPT 现在按“一个问题、两个分支”组织。第 1-5 页先讲目标年时序迁移和 household behavior system；第 6 页提前给出方法谱系，把 data-only、pure LLM、LLM rule selector、rule + history、LLM-corrected XGBoost 放到同一条链上；第 7 页再展开双分支技术路线。
+
+两条方向的关系可以这样讲：
+
+```text
+同一个问题：目标年情境变化下如何预测家庭出行行为
+  ├─ selector branch：冷启动、数据稀疏、字段缺失时，用 LLM 规则和置信度选择快速模拟预测
+  └─ correction branch：有历史 NHTS 标签但目标年变了时，用 LLM 情境先验修正 XGBoost
+```
+
+因此不要说“这是两套方案”。更准确的说法是：selector branch 解决没有足够历史标签时的预测选择问题，LLM-corrected XGBoost 解决有历史标签但发生时序迁移时的数值校准问题。正式汇报应先讲第 6 页方法谱系，再讲第 7 页技术路线，这样老师会更容易理解两部分为什么属于同一个框架。
+
 可以用一句公式概括：
 
 ```text

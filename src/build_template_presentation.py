@@ -356,7 +356,7 @@ def method_comparison_table(
 ) -> None:
     actual_row_h = max(row_h, 0.38)
     table_font = 10.5 if actual_row_h < 0.45 else 12
-    headers = ["Method", "传统基线", "LLM先验", "2022标签", "对比作用", "wMAE"]
+    headers = ["Method", "传统基线", "LLM先验", "目标年标签", "对比作用", "wMAE"]
     for col, header in enumerate(headers):
         xx = x + sum(widths[:col])
         rect(slide, xx, y, widths[col], actual_row_h, COLORS["navy"])
@@ -520,7 +520,7 @@ def add_content_slide(prs: Presentation, logo: bytes | None) -> None:
     items = [
         ("01", "Background & gap", "时序迁移、移动不平等与相关研究缺口"),
         ("02", "Problem & data", "家庭层面多输出 travel behavior system"),
-        ("03", "Method", "传统监督模型 × LLM event priors；蒸馏规则作为桥梁"),
+        ("03", "Method", "模拟预测选择器 + LLM-corrected XGBoost 的双分支框架"),
         ("04", "Evaluation", "性能比较、Pareto 选择、置信区间、稳健性检验"),
         ("05", "Insights", "出行强度、方式、目的与未来工作"),
     ]
@@ -536,7 +536,7 @@ def add_content_slide(prs: Presentation, logo: bytes | None) -> None:
 def add_problem_slide(prs: Presentation, logo: bytes | None, values: dict[str, float]) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "01", "研究问题 / Research Gap", "2022 不是普通跨年预测 | 2022 is not an ordinary transfer year", 3, logo)
+    add_frame(slide, "01", "研究问题 / Research Gap", "目标年不是普通跨年预测 | Target-year shift is not ordinary transfer", 3, logo)
     headers = ["Traditional framing", "Event-driven framing"]
     rows = [
         ["2017 -> 2022 as smooth temporal transfer", "2022 as target-year behavioral regime shift"],
@@ -625,7 +625,7 @@ def add_data_slide(prs: Presentation, logo: bytes | None) -> None:
 def add_route_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "04", "技术路线 / Technical Route", "传统监督模型给基线，LLM 只给事件折减因子", 6, logo)
+    add_frame(slide, "05", "技术路线 / Technical Route", "selector branch 处理冷启动，correction branch 处理目标年迁移", 7, logo)
     col_x = [1.0, 3.65, 6.3, 8.95]
     box_w = 2.05
     gap_arrow_w = 0.38
@@ -642,12 +642,12 @@ def add_route_slide(prs: Presentation, logo: bytes | None) -> None:
         if idx < 2:
             arrow(slide, col_x[idx] + box_w + 0.08, 1.74, gap_arrow_w, 0.14, COLORS["gray"])
 
-    text_box(slide, "LLM event-prior branch", 0.72, 2.58, 2.35, 0.22, 9.5, COLORS["orange"], True)
+    text_box(slide, "LLM context-prior / selector branch", 0.72, 2.58, 3.25, 0.22, 9.5, COLORS["orange"], True)
     for idx, (title, note) in enumerate(
         [
-            ("2022 cohort profile", "aggregated households"),
-            ("GPT-5.5 prompt", "pandemic mechanisms"),
-            ("Validated event prior", "s_event in [0, 1]"),
+            ("Target-year profile", "aggregated households"),
+            ("GPT-5.5 prompt", "context + rule signals"),
+            ("Validated priors", "s_event + selector"),
         ]
     ):
         node(slide, col_x[idx], 2.88, box_w, 0.68, title, note, COLORS["orange"])
@@ -655,10 +655,10 @@ def add_route_slide(prs: Presentation, logo: bytes | None) -> None:
             arrow(slide, col_x[idx] + box_w + 0.08, 3.14, gap_arrow_w, 0.14, COLORS["gray"])
 
     rect(slide, 0.72, 4.08, 7.65, 1.18, COLORS["pale"], COLORS["line"], True)
-    text_box(slide, "Fixed no-label adapter", 0.95, 4.26, 2.1, 0.22, 10, COLORS["green"], True)
+    text_box(slide, "Two adaptation branches", 0.95, 4.23, 2.25, 0.22, 10, COLORS["green"], True)
     text_box(slide, "ŷ_2022 = f_hist(X) × clip(1 − α × s_event, min_factor, 1)", 2.75, 4.16, 5.25, 0.48, 12, COLORS["ink"], True)
-    text_box(slide, "low-confidence cohort -> global pressure fallback", 2.75, 4.68, 5.25, 0.32, 9.2, COLORS["gray"])
-    text_box(slide, "2022 labels enter only here: final evaluation", 2.75, 4.98, 5.25, 0.28, 9.2, COLORS["red"], True)
+    text_box(slide, "selector branch: LLM rules -> confidence gate -> optional fallback", 2.75, 4.61, 5.25, 0.28, 9.2, COLORS["gray"])
+    text_box(slide, "target-year labels enter only here: final evaluation", 2.75, 4.93, 5.25, 0.28, 9.2, COLORS["red"], True)
     arrow(slide, 6.7, 2.15, 0.16, 0.62, COLORS["gray"])
     arrow(slide, 6.7, 3.56, 0.16, 0.44, COLORS["gray"])
 
@@ -689,7 +689,7 @@ def add_route_slide(prs: Presentation, logo: bytes | None) -> None:
 def add_llm_prior_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "05", "LLM 情境先验 / LLM Context Prior", "从 cohort 描述生成结构化目标年响应变量", 7, logo)
+    add_frame(slide, "06", "LLM 情境先验 / LLM Context Prior", "从 cohort 描述生成结构化目标年响应变量", 8, logo)
     headers = ["LLM output", "变量含义", "进入模型的位置"]
     rows = [
         ["trip_suppression", "总体出行折减压力", "修正 total trips"],
@@ -719,7 +719,7 @@ def add_llm_prior_slide(prs: Presentation, logo: bytes | None) -> None:
 def add_comparison_slide(prs: Presentation, logo: bytes | None, trip: pd.DataFrame) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "06", "对比体系 / Evaluation Design", "传统模型、简单事件修正、纯 LLM 与 hybrid 方法逐层比较", 8, logo)
+    add_frame(slide, "07", "对比体系 / Evaluation Design", "传统模型、selector、纯 LLM 与 hybrid correction 逐层比较", 9, logo)
     rows = [
         ("Historical mean", True, False, False, "只保留历史平均水平", f"{metric(trip, 'historical_mean_only', 'weighted_mae'):.2f}"),
         ("Ordinary XGBoost", True, False, False, "传统方法：家庭属性 -> 出行次数", f"{metric(trip, 'historical_xgboost', 'weighted_mae'):.2f}"),
@@ -748,7 +748,7 @@ def add_comparison_slide(prs: Presentation, logo: bytes | None, trip: pd.DataFra
 def add_results_slide(prs: Presentation, logo: bytes | None, trip: pd.DataFrame, values: dict[str, float]) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "07", "主结果 / Main Trip-Count Results", "Hybrid adapters reduce error while controlling bias", 9, logo)
+    add_frame(slide, "08", "主结果 / Main Trip-Count Results", "Hybrid adapters reduce error while controlling bias", 10, logo)
     chart_values = [
         (METHOD_LABELS["historical_mean_only"], metric(trip, "historical_mean_only", "weighted_mae"), COLORS["gray"]),
         (METHOD_LABELS["historical_xgboost"], values["baseline"], COLORS["red"]),
@@ -791,7 +791,7 @@ def add_statistical_validation_slide(
 ) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "08A", "统计验证 / Statistical Validation", "用 household bootstrap 给主结果加不确定性", 10, logo)
+    add_frame(slide, "09A", "统计验证 / Statistical Validation", "用 household bootstrap 给主结果加不确定性", 11, logo)
     base_mae = ci_values(ci, "traditional_supervised_baseline", "weighted_mae")
     hybrid_mae = ci_values(ci, "gated_llm_correction", "weighted_mae")
     hybrid_bias = ci_values(ci, "gated_llm_correction", "weighted_bias")
@@ -822,7 +822,7 @@ def add_statistical_validation_slide(
 def add_tradeoff_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "08B", "误差与偏差权衡 / Error-Bias Tradeoff", "横轴是 |bias|，纵轴是 wMAE，越靠左下越好", 11, logo)
+    add_frame(slide, "09B", "误差与偏差权衡 / Error-Bias Tradeoff", "横轴是 |bias|，纵轴是 wMAE，越靠左下越好", 12, logo)
     add_picture(slide, FIGURE_DIR / "mae_bias_tradeoff.png", 0.72, 1.28, 6.75)
     story_box(
         slide,
@@ -855,7 +855,7 @@ def add_tradeoff_slide(prs: Presentation, logo: bytes | None) -> None:
 def add_multi_objective_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "08C", "多目标选择 / Multi-Objective Selection", "从单一排行榜转向规划目标下的 operating point", 12, logo)
+    add_frame(slide, "09C", "多目标选择 / Multi-Objective Selection", "从单一排行榜转向规划目标下的 operating point", 13, logo)
     add_picture(slide, PARETO_DIR / "trip_pareto_frontier.png", 0.62, 1.18, 5.9)
     add_picture(slide, PARETO_DIR / "behavior_system_improvement.png", 6.82, 1.2, 5.55)
     points = read_csv_or_empty(PARETO_DIR / "preference_operating_points.csv")
@@ -907,7 +907,7 @@ def add_multi_objective_slide(prs: Presentation, logo: bytes | None) -> None:
 def add_error_distribution_figure_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "08D", "误差分布与容忍度 / Error Distribution and Tolerance", "误差分布看系统性高估，容忍曲线看 household-level 可用性", 13, logo)
+    add_frame(slide, "09D", "误差分布与容忍度 / Error Distribution and Tolerance", "误差分布看系统性高估，容忍曲线看 household-level 可用性", 14, logo)
     add_picture(slide, FIGURE_DIR / "error_distribution.png", 0.65, 1.2, 5.85)
     add_picture(slide, FIGURE_DIR / "tolerance_curve.png", 6.85, 1.2, 5.65)
     story_box(
@@ -925,7 +925,7 @@ def add_error_distribution_figure_slide(prs: Presentation, logo: bytes | None) -
 def add_event_heterogeneity_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "09", "情境影响异质性 / Event Heterogeneity", "pressure 分层和先验相关性检验时序机制是否合理", 14, logo)
+    add_frame(slide, "10A", "情境影响异质性 / Event Heterogeneity", "pressure 分层和先验相关性检验时序机制是否合理", 15, logo)
     add_picture(slide, FIGURE_DIR / "pressure_quintile_gain.png", 0.65, 1.2, 5.85)
     add_picture(slide, FIGURE_DIR / "event_prior_heatmap.png", 7.0, 1.13, 4.95)
     story_box(
@@ -943,7 +943,7 @@ def add_event_heterogeneity_slide(prs: Presentation, logo: bytes | None) -> None
 def add_subgroup_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "09B", "分组稳健性 / Equity-Aware Subgroup Check", "比较不同家庭群体中的 MAE 改善与 worst-subgroup error", 16, logo)
+    add_frame(slide, "10C", "分组稳健性 / Equity-Aware Subgroup Check", "比较不同家庭群体中的 MAE 改善与 worst-subgroup error", 17, logo)
     add_picture(slide, FIGURE_DIR / "subgroup_gain_top.png", 0.72, 1.25, 6.6)
     story_box(
         slide,
@@ -975,7 +975,7 @@ def add_subgroup_slide(prs: Presentation, logo: bytes | None) -> None:
 def add_robustness_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "09A", "稳健性检验 / Robustness Check", "随机置换检验 LLM pressure 是否包含真实排序信息", 15, logo)
+    add_frame(slide, "10B", "稳健性检验 / Robustness Check", "随机置换检验 LLM pressure 是否包含真实排序信息", 16, logo)
     add_picture(slide, ROBUSTNESS_DIR / "permutation_null_mae.png", 0.72, 1.22, 6.2)
     story_box(
         slide,
@@ -1008,7 +1008,7 @@ def add_robustness_slide(prs: Presentation, logo: bytes | None) -> None:
 def add_error_insight_slide(prs: Presentation, logo: bytes | None, values: dict[str, float]) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "10", "误差洞察 / Error Insight", "主收益来自消除 target-year over-prediction", 17, logo)
+    add_frame(slide, "11", "误差洞察 / Error Insight", "主收益来自消除 target-year over-prediction", 18, logo)
     metric_card(slide, 0.75, 1.28, 2.45, 0.9, "Exact rounded", f"{values['exact']:.1%}", "household accuracy", COLORS["blue"])
     metric_card(slide, 3.48, 1.28, 2.45, 0.9, "Within 2 trips", f"{values['within2']:.1%}", "practical tolerance", COLORS["green"])
     metric_card(slide, 6.21, 1.28, 2.45, 0.9, "Within 3 trips", f"{values['within3']:.1%}", "broad tolerance", COLORS["orange"])
@@ -1040,7 +1040,7 @@ def add_error_insight_slide(prs: Presentation, logo: bytes | None, values: dict[
 def add_llm_role_slide(prs: Presentation, logo: bytes | None, values: dict[str, float]) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "11", "LLM 的角色 / What the LLM Adds", "LLM 提供事件压力，XGBoost 提供家庭基线", 18, logo)
+    add_frame(slide, "12", "LLM 的角色 / What the LLM Adds", "LLM 提供 selector signal 和 correction prior", 19, logo)
     rect(slide, 1.15, 1.28, 10.35, 4.48, COLORS["light"], COLORS["line"])
     rect(slide, 6.3, 1.28, 0.012, 4.48, COLORS["line"])
     rect(slide, 1.15, 3.52, 10.35, 0.012, COLORS["line"])
@@ -1070,7 +1070,7 @@ def add_llm_role_slide(prs: Presentation, logo: bytes | None, values: dict[str, 
 def add_mode_slide(prs: Presentation, logo: bytes | None, mode: pd.DataFrame, values: dict[str, float]) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "12", "综合行为输出 / Behavior Outputs", "从出行次数扩展到方式结构和方式出行量", 19, logo)
+    add_frame(slide, "13", "综合行为输出 / Behavior Outputs", "从出行次数扩展到方式结构和方式出行量", 20, logo)
     modes = ["private", "walk", "bike", "transit", "taxi", "other"]
     for idx, mode_name in enumerate(modes):
         x = 0.78 + idx * 1.2
@@ -1102,7 +1102,7 @@ def add_mode_slide(prs: Presentation, logo: bytes | None, mode: pd.DataFrame, va
 def add_purpose_slide(prs: Presentation, logo: bytes | None, purpose: pd.DataFrame) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "13", "出行目的扩展 / Purpose Composition", "第三个行为维度：为什么出行", 20, logo)
+    add_frame(slide, "14", "出行目的扩展 / Purpose Composition", "第三个行为维度：为什么出行", 21, logo)
     add_picture(slide, PURPOSE_DIR / "figures" / "purpose_distribution_shift.png", 0.72, 1.18, 5.75)
     if purpose.empty:
         rows = [["missing", "-", "-", "-"]]
@@ -1133,10 +1133,10 @@ def add_method_spectrum_slide(prs: Presentation, logo: bytes | None, values: dic
     set_background(slide)
     add_frame(
         slide,
-        "14",
+        "04",
         "方法谱系 / Method Spectrum",
-        "把 LLM 蒸馏路线并入同一条实验演化链",
-        21,
+        "先把 selector branch 和 LLM-corrected XGBoost 串成一条线",
+        6,
         logo,
     )
     cards = [
@@ -1144,7 +1144,7 @@ def add_method_spectrum_slide(prs: Presentation, logo: bytes | None, values: dic
         ("Pure LLM prior", "事件方向可用", values["llm_only"], values["llm_only_bias"], COLORS["purple"]),
         ("LLM rule tree", "零样本规则", values["zero_rule"], values["zero_rule_bias"], COLORS["orange"]),
         ("Rule + history", "少量历史校准", values["small_rule"], values["small_rule_bias"], COLORS["teal"]),
-        ("Hybrid adapter", "历史基线+事件修正", values["gated"], values["gated_bias"], COLORS["green"]),
+        ("Hybrid adapter", "LLM 修正 XGBoost", values["gated"], values["gated_bias"], COLORS["green"]),
     ]
     for idx, (title, note, mae, bias, color) in enumerate(cards):
         x = 0.62 + idx * 2.46
@@ -1176,8 +1176,8 @@ def add_method_spectrum_slide(prs: Presentation, logo: bytes | None, values: dic
     )
     story_box(
         slide,
-        "整合口径：模拟预测选择器和 LLM 规则蒸馏不是独立路线，而是 data-sparse/cold-start 的中间模块；主任务是 target-year temporal shift，因此需要历史 household grounding。",
-        "The rule-distillation route is a bridge for sparse-data settings; the main NHTS 2022 task still benefits from anchoring routine mobility in historical survey labels.",
+        "整合口径：模拟预测选择器负责 cold-start / sparse-data 条件下的快速候选预测；LLM-corrected XGBoost 负责有历史标签但目标年情境变化的主任务。二者是同一 temporal-adaptation framework 的两个分支。",
+        "The selector branch handles sparse-data simulation, while the correction branch anchors routine mobility in historical survey labels and adapts it with LLM context priors.",
         0.82,
         6.18,
         10.95,
@@ -1237,7 +1237,7 @@ def add_scalability_slide(prs: Presentation, logo: bytes | None) -> None:
     )
     text_box(
         slide,
-        "汇报口径：LLM 不是每户都报答案，而是把 pandemic context 蒸馏成结构化 event priors；主实验预测阶段是 deterministic adapter，低置信 LLM 回退属于可部署扩展。",
+        "汇报口径：LLM 不是每户都报答案，而是把目标年 context 蒸馏成结构化 priors 或 selector signals；主实验预测阶段是 deterministic adapter，低置信 LLM 回退属于可部署扩展。",
         0.95,
         6.48,
         11.0,
@@ -1593,6 +1593,7 @@ def create_deck() -> Path:
     add_problem_slide(prs, logo, values)
     add_related_work_slide(prs, logo)
     add_data_slide(prs, logo)
+    add_method_spectrum_slide(prs, logo, values)
     add_route_slide(prs, logo)
     add_llm_prior_slide(prs, logo)
     add_comparison_slide(prs, logo, trip)
@@ -1608,7 +1609,6 @@ def create_deck() -> Path:
     add_llm_role_slide(prs, logo, values)
     add_mode_slide(prs, logo, mode, values)
     add_purpose_slide(prs, logo, purpose)
-    add_method_spectrum_slide(prs, logo, values)
     add_scalability_slide(prs, logo)
     add_contribution_slide(prs, logo)
     add_final_slide(prs, logo, values)
