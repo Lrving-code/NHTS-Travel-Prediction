@@ -6,7 +6,7 @@ Household travel surveys provide calibrated evidence for transportation planning
 
 ## 1. Introduction
 
-Household travel demand prediction is usually grounded in historical survey data. Models trained on prior survey waves can learn routine relationships between household attributes and travel behavior: household size, vehicle ownership, worker count, income, urban form, day of week, and regional context all influence how much a household travels on a diary day. This assumption becomes fragile when the target year is affected by a rare societal event. The 2022 NHTS wave is a post-pandemic recovery wave, after remote work, public-transit avoidance, online shopping, and uneven activity recovery changed daily travel patterns.
+Household travel demand prediction is usually grounded in historical survey data and classical travel-demand modeling, including discrete-choice foundations for travel behavior analysis. Models trained on prior survey waves can learn routine relationships between household attributes and travel behavior: household size, vehicle ownership, worker count, income, urban form, day of week, and regional context all influence how much a household travels on a diary day. This assumption becomes fragile when the target year is affected by a rare societal event. The 2022 NHTS wave is a post-pandemic recovery wave, after remote work, public-transit avoidance, online shopping, and uneven activity recovery changed daily travel patterns.
 
 This paper asks whether an LLM can help adapt a historical household travel model to a post-pandemic target year without using target-year trip-count labels for training or calibration. The key design choice is to separate routine mobility from event response. A supervised tabular model estimates household-level routine demand from historical NHTS waves, while the LLM supplies structured event priors for how the post-pandemic context may suppress or reshape travel. The LLM is therefore not a direct trip-count regressor. It is a constrained event-generalization module whose outputs are validated and distilled into an auditable correction rule.
 
@@ -74,7 +74,7 @@ The method is not pure LLM regression, not an LLM-generated 2022 decision tree, 
 
 ### Data
 
-The main dataset is the NHTS public-use household data for 2001, 2009, 2017, and 2022, with `357,553` harmonized household records and 28 common household variables. The target 2022 evaluation set contains `7,893` households.
+The main dataset is the NHTS public-use household data for 2001, 2009, 2017, and 2022, with `357,553` harmonized household records and 28 common household variables. The target 2022 evaluation set contains `7,893` households. Weighted metrics use the released household final weights, following the documented 2022 NHTS weighting plan.
 
 ### Metrics
 
@@ -136,7 +136,7 @@ The global event prior is strong, so the correct interpretation is event-level a
 - Zero-shot LLM rule tree reaches weighted MAE `2.6019`, and a pseudo-label tree distilled from it reaches `2.6040`; both are weaker and more biased than the primary adapter.
 - LLM rule plus 500 historical calibration reaches weighted MAE `2.7723`, showing that rule distillation plus small historical calibration is coherent but not the best solution for the 2022 event-shift task.
 - CatBoost GPU is the strongest extra non-LLM baseline with weighted MAE `4.2196` and weighted bias `+3.4873`, still far from the primary adapter.
-- Poisson GLM reaches weighted MAE `4.3368` and Tweedie GLM reaches `4.3761`; solver diagnostics are recorded, so these should be read as transparent count-model baselines rather than exhaustively optimized count-model state of the art.
+- Poisson GLM reaches weighted MAE `4.3368` and Tweedie GLM reaches `4.3761`; these are grounded in standard count-data regression practice, and solver diagnostics are recorded so they should be read as transparent count-model baselines rather than exhaustively optimized count-model state of the art.
 - Cohort-prior value analysis shows that the primary gated adapter is `0.0508` weighted-MAE lower than a same-alpha global prior and `0.0201` lower than the reported low-cost global prior; it beats same-alpha global prior in `77.8%` of evaluated subgroup cells while using cohort-specific pressure for only `17.5%` of survey-weighted households.
 
 ### 5.4 Behavior-System Outputs
@@ -188,3 +188,7 @@ This project shows that post-pandemic household travel prediction can be formula
 - ELP-Mob: Building Efficient LLM Pipeline for Human Mobility Prediction. SIGSPATIAL/GIS 2025. https://github.com/chwang0721/ELP-Mob
 - UniMob: A Universal Model for Human Mobility Prediction. KDD 2025 / arXiv. https://arxiv.org/abs/2412.15294
 - Foundation Models for Spatio-Temporal Data Science: A Tutorial and Survey. 2025. https://arxiv.org/abs/2503.13502
+- McFadden, D. Conditional Logit Analysis of Qualitative Choice Behavior. 1974.
+- Ben-Akiva and Lerman. Discrete Choice Analysis: Theory and Application to Travel Demand. MIT Press, 1985.
+- Cameron and Trivedi. Regression Analysis of Count Data. Cambridge University Press, 2nd edition, 2013.
+- 2022 NHTS Address-Based Sample Weighting Plan. FHWA/Ipsos, 2022.

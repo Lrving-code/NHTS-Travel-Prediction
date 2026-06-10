@@ -9,7 +9,7 @@ Scope: citations included in `outputs/paper_draft/latex/references.bib` and used
 - Paper citations were added only after checking a primary source such as DOI content negotiation, ACL Anthology, OpenReview, arXiv, or the publisher page.
 - Dataset and agency-report citations use official government or agency pages.
 - No BibTeX entry in `references.bib` is generated solely from memory.
-- The current LaTeX draft deliberately avoids unverifiable citations; missing classical travel-demand references can be added later after verification.
+- Classical travel-demand, count-model, and survey-weighting citations were added only after checking publisher, author, official agency, or catalog sources.
 
 ## Verified Paper Citations
 
@@ -24,6 +24,9 @@ Scope: citations included in `outputs/paper_draft/latex/references.bib` and used
 | `liang2025stfmsurvey` | Foundation Models for Spatio-Temporal Data Science | arXiv `https://arxiv.org/abs/2503.13502` | arXiv BibTeX fetched | Spatio-temporal foundation model survey |
 | `yan2025transportllm` | Large Language Models for Traffic and Transportation Research | arXiv `https://arxiv.org/abs/2503.21330` | arXiv BibTeX fetched | Transportation LLM survey |
 | `sharifi2026dailytravel` | Integrating hybrid recurrent neural networks and large language models for daily travel behavior prediction | DOI `https://doi.org/10.1016/j.trip.2025.101793` | DOI BibTeX fetched | NHTS / daily travel behavior related work boundary |
+| `mcfadden1974conditional` | Conditional Logit Analysis of Qualitative Choice Behavior | Berkeley reprint `https://eml.berkeley.edu/reprints/mcfadden/zarembka.pdf`; EconBiz record `https://www.econbiz.de/10002395479` | Verified classical travel-demand/discrete-choice source | Classical travel behavior modeling foundation |
+| `benakiva1985discretechoice` | Discrete Choice Analysis: Theory and Application to Travel Demand | MIT Press page `https://mitpress.mit.edu/9780262536400/discrete-choice-analysis/` | Publisher source checked | Classical travel-demand modeling foundation |
+| `cameron2013countdata` | Regression Analysis of Count Data | Cambridge Core page; author resource page `https://cameron.econ.ucdavis.edu/racd/count.html` | Publisher/author source checked | Count-regression baseline grounding |
 
 ## Verified Data and Agency Sources
 
@@ -33,15 +36,15 @@ Scope: citations included in `outputs/paper_draft/latex/references.bib` and used
 | `fhwa2024nhtstrends` | Summary of Travel Trends: 2022 NHTS | ROSA/National Transportation Library `https://rosap.ntl.bts.gov/view/dot/73764` | Official report page checked | Post-pandemic travel-trends context |
 | `burrows2024commuting` | Commuting in the United States: 2022 | U.S. Census Bureau PDF `https://www2.census.gov/library/publications/2024/demo/acsbr-018.pdf` | Official ACS brief checked | Work-from-home and transit mechanism evidence |
 | `psrc2024regionaltravelstudy` | 2023 Puget Sound Regional Travel Study Final Report | PSRC PDF `https://www.psrc.org/sites/default/files/2024-05/2023-Puget-Sound-Regional-Travel-Study-Final-Report.pdf` | Official report checked | External household-survey validation source |
+| `ipsos2022nhtsweighting` | NHTS NextGen Study: 2022 NHTS Address-Based Sample Weighting Plan | Official NHTS PDF `https://nhts.ornl.gov/assets/2022/doc/2022%20NextGen%20NHTS%20Weighting%20Memo.pdf` | Official weighting report checked | Survey-weighted metric protocol |
 
 ## Known Citation Gaps
 
-These are not blockers for the current skeleton, but they should be added before a real submission:
+These are not blockers for the current skeleton, but they should be considered before a real submission:
 
-- Classical household travel-demand modeling and trip-generation references.
-- Survey weighting and travel diary methodology references.
 - Domain adaptation / covariate shift references for structured tabular prediction.
 - Causal inference references for negative controls and leakage/audit framing.
+- More specialized travel diary methodology references if the paper moves from course report to transportation-journal submission.
 
 Add them only after programmatic or official-source verification.
 
@@ -58,4 +61,3 @@ The arXiv entries were fetched from:
 ```text
 https://arxiv.org/bibtex/<arxiv_id>
 ```
-

@@ -20,8 +20,9 @@ The project is strong enough for a course final presentation and has a coherent 
 | Robustness controls | permutation null, irrelevant pseudo-event, pre-COVID placebo | Good |
 | Global-vs-cohort decomposition | cohort-prior value analysis: primary beats same-alpha global prior by `0.0508` wMAE and wins in `77.8%` of subgroup cells | Good and appropriately scoped |
 | External evidence | ACS mechanism evidence; PSRC household microdata replication | Good but not definitive |
-| Presentation readiness | 32-slide deck with method-spectrum and backup Q&A | Strong |
+| Presentation readiness | 33-slide deck with method-spectrum, cohort-prior defense, and B1-B9 backup Q&A | Strong |
 | Paper package | Markdown draft + LaTeX skeleton + verified citations + figures | Good first submission draft |
+| Classical grounding | McFadden, Ben-Akiva/Lerman, Cameron/Trivedi, NHTS weighting report | Improved |
 
 ## Remaining Top-Tier Risks
 
@@ -33,7 +34,6 @@ The project is strong enough for a course final presentation and has a coherent 
 | No full causal identification | Current causal guardrails are negative controls, not causal effect estimates | Avoid causal-effect claims; keep causal language to guardrails and mechanism plausibility |
 | Mode/purpose are exploratory | Main gain is trip generation; mode/purpose improvements are uneven | Keep mode/purpose as behavior-system extensions, not primary solved tasks |
 | LaTeX compile environment | MiKTeX BibTeX cannot run in the current elevated shell | Compile in a normal user shell or Overleaf before sending to collaborators/advisor |
-| Classical travel-demand citations | Current references emphasize 2025-2026 LLM mobility, not enough transportation modeling history | Add verified travel-demand, NHTS, and survey-weighting citations |
 | Count-model depth | Poisson/Tweedie baselines are transparent but not fully optimized zero-inflated or negative-binomial travel-demand models | Keep the solver caveat; add tuned count variants for a submission version if time permits |
 
 ## Current Round Fixes
@@ -47,6 +47,7 @@ The project is strong enough for a course final presentation and has a coherent 
 - Updated readiness audits so the LaTeX manuscript and verified references are part of the checked artifact set.
 - Added transparent Poisson/Tweedie count-model baselines with solver diagnostics under `outputs/count_model_baselines/`.
 - Added cohort-prior value analysis under `outputs/cohort_prior_value_analysis/`, showing selective subgroup gains over same-alpha and reported global priors.
+- Added verified classical travel-demand, count-data, and NHTS survey-weighting citations to `references.bib`, `main.tex`, and `citation_verification_log.md`.
 
 ## Recommended Next Experiments
 

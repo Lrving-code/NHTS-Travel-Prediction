@@ -455,15 +455,33 @@ def audit_literature_and_story() -> list[Check]:
                 "fig:metric_comparison",
                 "fig:permutation",
                 "fig:multi_objective",
+                "mcfadden1974conditional",
+                "benakiva1985discretechoice",
+                "ipsos2022nhtsweighting",
             ],
         )
         and contains_text(
             "outputs/paper_draft/latex/references.bib",
-            ["wang2026ellmob", "yang2025causalmob", "feng2025agentmove", "long2025unimob"],
+            [
+                "wang2026ellmob",
+                "yang2025causalmob",
+                "feng2025agentmove",
+                "long2025unimob",
+                "mcfadden1974conditional",
+                "benakiva1985discretechoice",
+                "cameron2013countdata",
+                "ipsos2022nhtsweighting",
+            ],
         )
         and contains_text(
             "outputs/paper_draft/latex/citation_verification_log.md",
-            ["DOI BibTeX fetched", "arXiv BibTeX fetched", "Official data source checked"],
+            [
+                "DOI BibTeX fetched",
+                "arXiv BibTeX fetched",
+                "Official data source checked",
+                "Verified classical travel-demand",
+                "Survey-weighted metric protocol",
+            ],
         )
     )
     if latex_ready:

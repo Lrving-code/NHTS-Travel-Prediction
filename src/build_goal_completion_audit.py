@@ -130,6 +130,30 @@ def build_requirements() -> list[RequirementEvidence]:
             "outputs/paper_draft/latex/main.tex",
         ),
         pass_if(
+            all(
+                term in latex_bib
+                for term in [
+                    "mcfadden1974conditional",
+                    "benakiva1985discretechoice",
+                    "cameron2013countdata",
+                    "ipsos2022nhtsweighting",
+                ]
+            )
+            and all(
+                term in latex_main
+                for term in [
+                    "mcfadden1974conditional",
+                    "benakiva1985discretechoice",
+                    "ipsos2022nhtsweighting",
+                    "cameron2013countdata",
+                ]
+            )
+            and "Verified classical travel-demand" in citation_log,
+            "Classical travel-demand and survey-weighting grounding is present",
+            "LaTeX cites verified discrete-choice, count-data, and NHTS weighting references.",
+            "outputs/paper_draft/latex/references.bib",
+        ),
+        pass_if(
             all(term in top_venue_audit for term in ["Remaining Top-Tier Risks", "Safe Top-Line Claim", "Recommended Next Experiments"]),
             "Top-venue adversarial audit is explicit",
             "Round-2 audit records remaining top-tier risks and safe claims.",

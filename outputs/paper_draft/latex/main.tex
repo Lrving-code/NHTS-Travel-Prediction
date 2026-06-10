@@ -44,7 +44,7 @@ The results suggest that LLMs are most useful in this survey setting as constrai
 
 \section{Introduction}
 
-Household travel demand prediction is usually grounded in historical survey data.
+Household travel demand prediction is usually grounded in historical survey data and classical travel-demand modeling, including discrete-choice foundations for travel behavior analysis \citep{mcfadden1974conditional,benakiva1985discretechoice}.
 Models trained on prior survey waves can learn routine relationships between household attributes and travel behavior: household size, vehicle ownership, worker count, income, urban form, day of week, and regional context all influence how much a household travels on a diary day.
 This assumption becomes fragile when the target year is affected by a rare societal event.
 The 2022 \nhts{} wave is a post-pandemic recovery wave, after remote work, public-transit avoidance, online shopping, and uneven activity recovery changed daily travel patterns \citep{fhwa2022nhts,fhwa2024nhtstrends}.
@@ -145,8 +145,9 @@ It is a hybrid structured-data system: historical labels provide the numerical h
 \section{Experimental Setup}
 
 \paragraph{Data.}
-The main dataset is public-use \nhts{} household data for 2001, 2009, 2017, and 2022, with 357,553 harmonized household records and 28 common household variables.
+The main dataset is public-use \nhts{} household data for 2001, 2009, 2017, and 2022, with 357,553 harmonized household records and 28 common household variables \citep{fhwa2022nhts,fhwa2024nhtstrends}.
 The target 2022 evaluation set contains 7,893 households.
+We use the released household final weights for weighted metrics, following the survey-weighting design documented for the 2022 \nhts{} \citep{ipsos2022nhtsweighting}.
 External mechanism checks use ACS commuting statistics and PSRC household travel survey data \citep{burrows2024commuting,psrc2024regionaltravelstudy}.
 
 \paragraph{Metrics.}
@@ -212,7 +213,7 @@ Placebo and robustness checks constrain the claim:
     \item Zero-shot LLM rule tree reaches \whmae{} 2.6019, and a pseudo-label tree distilled from it reaches 2.6040; both are weaker and more biased than the primary adapter.
     \item LLM rule plus 500 historical calibration reaches \whmae{} 2.7723, showing that rule distillation plus small historical calibration is coherent but not the best solution for the 2022 event-shift task.
     \item CatBoost GPU is the strongest extra non-LLM baseline with \whmae{} 4.2196 and \whbias{} +3.4873.
-    \item Poisson GLM reaches \whmae{} 4.3368 and Tweedie GLM reaches 4.3761; solver diagnostics are recorded, so these should be read as transparent count-model baselines rather than exhaustively optimized count-model state of the art.
+    \item Poisson GLM reaches \whmae{} 4.3368 and Tweedie GLM reaches 4.3761; these transparent baselines are grounded in standard count-data regression practice \citep{cameron2013countdata}, and solver diagnostics are recorded so they are not overclaimed as exhaustively optimized count-model state of the art.
     \item Cohort-prior value analysis shows that the primary gated adapter is 0.0508 \whmae{} lower than a same-alpha global prior and 0.0201 lower than the reported low-cost global prior; it beats same-alpha global prior in 77.8\% of evaluated subgroup cells while using cohort-specific pressure for only 17.5\% of survey-weighted households.
 \end{itemize}
 
