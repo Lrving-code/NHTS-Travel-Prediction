@@ -311,7 +311,7 @@ def audit_temporal_external_validation() -> list[Check]:
 def audit_literature_and_story() -> list[Check]:
     category = "Literature and paper story"
     checks: list[Check] = []
-    literature_terms = ["ELLMob", "CausalMob", "AgentMove", "UniMob", "ELP-Mob"]
+    literature_terms = ["ELLMob", "CausalMob", "AgentMove", "AgentMob", "UniMob", "ELP-Mob"]
     if contains_text("plan/literature_grounding_2026.md", literature_terms):
         checks.append(pass_check(category, "2025-2026 literature grounding", "Literature grounding note contains current anchors."))
     else:
@@ -352,7 +352,7 @@ def audit_presentation() -> list[Check]:
         )
     else:
         checks.append(fail_check(category, "Main deck plus backup", f"Template PPT has {slide_count} slides.", "Regenerate the deck."))
-    if all(term in text for term in ["ELLMob", "CausalMob", "Zero-shot rule tree", "Rule + 500 history"]):
+    if all(term in text for term in ["ELLMob", "CausalMob", "AgentMob", "Zero-shot rule tree", "Rule + 500 history"]):
         checks.append(pass_check(category, "Key defense content in deck", "Deck contains literature anchors and method-defense baselines."))
     else:
         checks.append(

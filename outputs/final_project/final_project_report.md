@@ -12,7 +12,7 @@ This project formulates 2022 NHTS household travel prediction as event-driven te
 
 ## Literature Position
 
-The 2025-2026 literature grounding is summarized in `plan/literature_grounding_2026.md`. The closest directions are event-driven LLM mobility generation (ELLMob, ICLR 2026), LLM-derived causal public-event features for mobility prediction (CausalMob, KDD 2025), zero-shot LLM mobility agents (AgentMove, NAACL 2025), efficient LLM mobility pipelines (ELP-Mob, SIGSPATIAL/GIS 2025), and universal mobility foundation models (UniMob, KDD 2025).
+The 2025-2026 literature grounding is summarized in `plan/literature_grounding_2026.md`. The closest directions are event-driven LLM mobility generation (ELLMob, ICLR 2026), LLM-derived causal public-event features for mobility prediction (CausalMob, KDD 2025), zero-shot LLM mobility agents (AgentMove, NAACL 2025), efficient/evidence-grounded LLM mobility agents (AgentMob, 2026 preprint), efficient LLM mobility pipelines (ELP-Mob, SIGSPATIAL/GIS 2025), and universal mobility foundation models (UniMob, KDD 2025).
 
 Our gap is survey-based household mobility under a post-pandemic event shift: most recent work targets trajectories, flows, traffic sensors, or public-event time series, while this project uses historical NHTS labels to ground routine household demand and uses LLM priors only for no-label event adaptation.
 
@@ -33,7 +33,7 @@ Our gap is survey-based household mobility under a post-pandemic event shift: mo
 
 ## Temporal Transfer Validation
 
-Before interpreting 2022 as an event-shift target, we checked routine cross-year transfer:
+Before interpreting 2022 as an event-shift target, we checked routine cross-year transfer. This table is a diagnostic transfer check, not the final ordinary-XGBoost comparison row reported above:
 
 | Check | Weighted MAE | Weighted Bias | R2 |
 |---|---:|---:|---:|
@@ -41,7 +41,7 @@ Before interpreting 2022 as an event-shift target, we checked routine cross-year
 | 2001+2009 -> 2017 | 4.1272 | +1.2230 | 0.2505 |
 | 2001+2009+2017 -> 2022 | 4.4062 | +3.7202 | -0.5055 |
 
-The pre-COVID checks have mean absolute weighted bias `0.9024`, while 2022 has absolute weighted bias `3.7202`. This supports the problem framing: 2022 is a stronger post-pandemic event shift rather than an ordinary transfer year.
+The pre-COVID checks have mean absolute weighted bias `0.9024`, while the diagnostic 2022 transfer check has absolute weighted bias `3.7202`. The final ordinary-XGBoost comparison row in the main table has weighted bias `+3.6052`. Both estimates support the same problem framing: 2022 is a stronger post-pandemic event shift rather than an ordinary transfer year.
 
 ## External Mechanism Validation
 

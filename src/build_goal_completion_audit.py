@@ -113,7 +113,7 @@ def build_requirements() -> list[RequirementEvidence]:
             "plan/paper_logic_chain.md",
         ),
         pass_if(
-            all(term in literature for term in ["ELLMob", "CausalMob", "AgentMove", "UniMob", "ELP-Mob"]),
+            all(term in literature for term in ["ELLMob", "CausalMob", "AgentMove", "AgentMob", "UniMob", "ELP-Mob"]),
             "2025-2026 literature grounding is present",
             "Literature note covers current LLM/mobility anchors.",
             "plan/literature_grounding_2026.md",
@@ -180,7 +180,7 @@ def build_requirements() -> list[RequirementEvidence]:
         ),
         pass_if(
             slide_count >= 31
-            and all(term in deck_text for term in ["B7", "B8", "PSRC microdata", "ELLMob", "CausalMob", "Distillation & Scaling"]),
+            and all(term in deck_text for term in ["B7", "B8", "PSRC microdata", "ELLMob", "CausalMob", "AgentMob", "Distillation & Scaling"]),
             "10-minute PPT and backup Q&A are current",
             f"Template deck has {slide_count} slides and includes literature, external-validation, and LLM-distillation backup content.",
             "outputs/final_project/NHTS_Travel_Behavior_Template_Presentation.pptx",

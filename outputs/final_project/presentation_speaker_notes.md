@@ -10,7 +10,7 @@ Historical prediction overestimates 2022 trips. The primary fixed no-label gated
 
 ## 10-Minute Talk Path
 
-The first 23 slides are the main talk path. Slides B1-B6 after END are backup Q&A slides and should only be used during discussion.
+The first 23 slides are the main talk path. Slides B1-B8 after END are backup Q&A slides and should only be used during discussion.
 
 Suggested timing:
 
@@ -31,6 +31,9 @@ If time is tight, keep the problem, route, method comparison, main results, robu
 - Global event prior is a strong low-cost control: wMAE `2.5223`, wBias `-0.7477`. Do not overclaim that cohort-specific LLM ranking explains the whole gain.
 - Primary hybrid gated adapter is the balanced operating point: wMAE `2.5023`, wBias `-0.0230`, wR2 `0.2480`.
 - Stronger non-LLM tabular baselines still overpredict. Best extra baseline `catboost_gpu` has wMAE `4.2196` and wBias `3.4873`.
+
+## LLM Distillation and Efficiency
+The recommended framing is that direct household-level LLM calls are both expensive and numerically under-calibrated. The implemented system aggregates 7,893 households into 1,327 cohorts, then uses batch size 15 to generate event priors in 89 prompts. After validation, the reported main experiment uses a deterministic adapter, not per-household online LLM inference. Low-confidence LLM fallback is a deployable extension, while the paper result keeps the no-label evaluation clean.
 
 ## Metric Language
 - Weighted MAE/RMSE are survey-weighted trip-count errors.
@@ -59,3 +62,5 @@ Mode-specific trip volume is the derived planning output: predicted total trips 
 - B4: relation to 2025-2026 LLM mobility and foundation-model work.
 - B5: limits of mode and purpose outputs.
 - B6: plain-language interpretation of weighted MAE, bias, and within-k accuracy.
+- B7: external mechanism validation and PSRC household-level replication.
+- B8: how rule distillation and low-confidence LLM fallback fit the method.

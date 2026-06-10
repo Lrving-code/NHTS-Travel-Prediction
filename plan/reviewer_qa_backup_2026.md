@@ -56,7 +56,7 @@ Evidence:
 
 - Literature anchor: `plan/literature_grounding_2026.md`.
 - ELLMob and CausalMob motivate event-aware LLM mobility modeling.
-- AgentMove and ELP-Mob motivate zero-shot and efficient LLM mobility pipelines.
+- AgentMove motivates zero-shot LLM mobility agents; ELP-Mob motivates efficient LLM mobility pipelines; AgentMob motivates a fast-path plus selective LLM/tool-reasoning design for ambiguous mobility cases.
 - UniMob and STFM surveys motivate foundation-model generalization.
 
 Response:
@@ -90,4 +90,3 @@ Evidence:
 Response:
 
 MAE tells us how far predictions are from household trip counts. Bias tells us whether the model systematically overestimates total travel demand. The primary gain is not just lower error; it nearly removes the systematic 2022 overprediction.
-

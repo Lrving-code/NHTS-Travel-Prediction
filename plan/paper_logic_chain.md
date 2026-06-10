@@ -45,15 +45,17 @@ These mechanisms are only weakly encoded, or not encoded at all, in standard NHT
 
 The first household baseline predicts `CNTTDHH`, the household travel-day trip count.
 
-Current CUDA XGBoost results:
+Current final-method comparison uses a CUDA XGBoost historical predictor as the ordinary supervised baseline:
 
 | Experiment | Train Years | Test Year | Weighted MAE | Weighted RMSE | Weighted Bias |
 |---|---|---:|---:|---:|---:|
-| Direct transfer | 2017 | 2022 | 4.5921 | 5.6292 | +3.9598 |
-| Pooled history | 2001+2009+2017 | 2022 | 4.7163 | 5.8269 | +4.1255 |
-| Pooled history with year | 2001+2009+2017 | 2022 | 4.4062 | 5.4076 | +3.7202 |
+| Ordinary XGBoost | 2001+2009+2017 | 2022 | 4.3377 | 5.3169 | +3.6052 |
+| CatBoost GPU | 2001+2009+2017 | 2022 | 4.2196 | 5.2095 | +3.4873 |
+| Hybrid gated adapter | history + LLM event priors | 2022 | 2.5023 | 3.6038 | -0.0230 |
 
-The key observation is not only high error, but positive bias: historical models consistently overpredict 2022 household trip counts.
+The diagnostic temporal-transfer table in the project report still reports an earlier pre-COVID/2022 transfer check (`2001+2009+2017 -> 2022` weighted bias `+3.7202`). That table is used only to establish that 2022 is an unusually difficult transfer target; the main performance comparison should use the final metrics above.
+
+The key observation is not only high error, but positive bias: historical models consistently overpredict 2022 household trip counts, while the fixed event adapter nearly removes this bias.
 
 This supports the claim that 2022 behavior is not simply a smooth continuation of pre-pandemic travel patterns.
 
@@ -75,7 +77,7 @@ The 2026 literature suggests that LLMs are useful in mobility research when the 
 - rare events that deviate from routine mobility
 - cross-scenario generalization
 
-The closest methodological inspiration is ELLMob, which frames event-driven mobility as a conflict between habitual patterns and event constraints. Other 2026 work points toward structured spatio-temporal steering, gated fusion, trend enhancement, and LLM modules rather than direct prompt-only prediction.
+The closest methodological inspiration is ELLMob, which frames event-driven mobility as a conflict between habitual patterns and event constraints. CausalMob supports the idea of turning public-event semantics into structured mobility features, and AgentMob points to a newer efficiency pattern: routine cases should exit through a fast historical path, while ambiguous cases receive extra LLM/tool reasoning. Our survey setting implements this as offline event-prior distillation rather than online per-household LLM inference.
 
 ### 6. Our method hypothesis
 
@@ -188,7 +190,7 @@ Figure 1 should show:
 2. COVID/post-pandemic event constraints shift 2022 behavior downward.
 3. Historical tabular predictor overestimates 2022 trips.
 4. LLM event-semantic adapter generates household-specific shock features.
-5. Residual adapter corrects predictions and reduces bias.
+5. Fixed event adapter corrects predictions and reduces bias.
 
 ## Related Work Buckets
 
@@ -207,6 +209,7 @@ Key anchors:
 - ELLMob, ICLR 2026: event-driven mobility generation with habitual patterns and event constraints.
 - CausalMob, KDD 2025: LLM-derived public-event intentions as causal treatment features for mobility prediction.
 - AgentMove, NAACL 2025: zero-shot next-location prediction with LLM agents.
+- AgentMob, arXiv/OpenReview 2026: efficient evidence-grounded LLM mobility agent with fast path plus selective reasoning.
 - UniMob, KDD 2025: universal mobility prediction across individual trajectory and crowd flow.
 - ELP-Mob, SIGSPATIAL/GIS 2025: efficient LLM pipeline for human mobility prediction.
 - Spatiotemporal foundation model surveys and ST-LLM-style work: the field is moving toward generalization, reasoning, and efficient adaptation.
@@ -224,9 +227,10 @@ Data:
 Baseline:
 
 - CUDA XGBoost on RTX 4090
-- Best current weighted MAE: 4.4062
-- Best current weighted RMSE: 5.4076
-- Best current weighted bias: +3.7202
+- Ordinary supervised baseline weighted MAE: 4.3377
+- Ordinary supervised baseline weighted RMSE: 5.3169
+- Ordinary supervised baseline weighted bias: +3.6052
+- Strongest extra non-LLM baseline: CatBoost GPU, weighted MAE 4.2196 and weighted bias +3.4873
 
 Label-free LLM adaptation:
 

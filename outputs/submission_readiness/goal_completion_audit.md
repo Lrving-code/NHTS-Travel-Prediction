@@ -1,7 +1,7 @@
 # Goal Completion Audit
 
 Git branch: `feature/label-free-llm-adaptation`
-Git commit: `7e477a9`
+Git commit: `6c30317`
 
 This document maps the long-running project objective to current repository evidence.
 

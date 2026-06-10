@@ -10,8 +10,10 @@ Historical household travel models trained on 2001, 2009, and 2017 NHTS data sub
 
 Current baseline finding:
 
-- Best current historical model: pooled XGBoost with `survey_year`
-- Best current 2022 weighted bias: `+3.7202`
+- Ordinary historical model: CUDA XGBoost trained on 2001/2009/2017 household records
+- Ordinary 2022 weighted MAE: `4.3377`
+- Ordinary 2022 weighted bias: `+3.6052`
+- Strongest extra non-LLM baseline: CatBoost GPU, weighted MAE `4.2196`, weighted bias `+3.4873`
 
 Interpretation:
 

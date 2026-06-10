@@ -556,11 +556,13 @@ def add_related_work_slide(prs: Presentation, logo: bytes | None) -> None:
     headers = ["最新方向", "2025-2026 代表线索", "本项目的位置"]
     rows = [
         ["Event-driven mobility", "ELLMob ICLR'26; CausalMob KDD'25", "把 COVID shock 转成 label-free event priors"],
-        ["Zero-shot LLM mobility", "AgentMove NAACL'25; ELP-Mob GIS'25", "直接 LLM 可做 baseline，但数值校准弱"],
+        ["Zero-shot LLM mobility", "AgentMove NAACL'25", "直接 LLM 可做 baseline，但数值校准弱"],
+        ["Evidence-grounded agents", "AgentMob 2026", "routine fast path + low-confidence LLM reasoning"],
+        ["Efficient LLM pipeline", "ELP-Mob GIS'25", "batch prompting 和调用压缩是必要工程约束"],
         ["Mobility foundation models", "UniMob KDD'25; STFM survey'25", "不训练大 FM；用轻量 adapter 处理 survey shift"],
         ["Planning evaluation", "causal guardrails + multi-objective metrics", "同时报告 accuracy、bias、equity、mode/purpose"],
     ]
-    small_table(slide, headers, rows, 0.65, 1.22, [2.55, 4.2, 4.7], 0.72, 12, COLORS["navy2"])
+    small_table(slide, headers, rows, 0.65, 1.22, [2.55, 4.2, 4.7], 0.50, 12, COLORS["navy2"])
     rect(slide, 0.9, 5.25, 10.8, 0.85, COLORS["pale"], COLORS["line"], True)
     text_box(slide, "研究缺口", 1.12, 5.52, 1.1, 0.22, 10, COLORS["orange"], True)
     text_box(
@@ -1290,7 +1292,8 @@ def add_backup_qa_slides(prs: Presentation, logo: bytes | None, values: dict[str
         "最新工作多是 trajectory / flow / sensor forecasting；我们是 NHTS household survey 的 event adaptation。",
         [
             ["Event-driven LLM mobility", "ELLMob ICLR'26; CausalMob KDD'25"],
-            ["Zero-shot / efficient LLM mobility", "AgentMove NAACL'25; ELP-Mob GIS'25"],
+            ["Zero-shot / agentic LLM mobility", "AgentMove NAACL'25; AgentMob 2026"],
+            ["Efficient LLM mobility pipeline", "ELP-Mob GIS'25"],
             ["Foundation model direction", "UniMob KDD'25; STFM survey'25"],
             ["Our unit", "Household survey record, not trajectory or road node"],
         ],

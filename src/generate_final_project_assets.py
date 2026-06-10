@@ -455,7 +455,8 @@ def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: di
         "The 2025-2026 literature grounding is summarized in `plan/literature_grounding_2026.md`. "
         "The closest directions are event-driven LLM mobility generation (ELLMob, ICLR 2026), "
         "LLM-derived causal public-event features for mobility prediction (CausalMob, KDD 2025), "
-        "zero-shot LLM mobility agents (AgentMove, NAACL 2025), efficient LLM mobility pipelines "
+        "zero-shot LLM mobility agents (AgentMove, NAACL 2025), efficient/evidence-grounded LLM mobility agents "
+        "(AgentMob, 2026 preprint), efficient LLM mobility pipelines "
         "(ELP-Mob, SIGSPATIAL/GIS 2025), and universal mobility foundation models (UniMob, KDD 2025).",
         "",
         "Our gap is survey-based household mobility under a post-pandemic event shift: most recent work targets "
@@ -488,7 +489,8 @@ def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: di
             "",
             "## Temporal Transfer Validation",
             "",
-            "Before interpreting 2022 as an event-shift target, we checked routine cross-year transfer:",
+            "Before interpreting 2022 as an event-shift target, we checked routine cross-year transfer. "
+            "This table is a diagnostic transfer check, not the final ordinary-XGBoost comparison row reported above:",
             "",
             "| Check | Weighted MAE | Weighted Bias | R2 |",
             "|---|---:|---:|---:|",
@@ -496,7 +498,20 @@ def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: di
             "| 2001+2009 -> 2017 | 4.1272 | +1.2230 | 0.2505 |",
             "| 2001+2009+2017 -> 2022 | 4.4062 | +3.7202 | -0.5055 |",
             "",
-            "The pre-COVID checks have mean absolute weighted bias `0.9024`, while 2022 has absolute weighted bias `3.7202`. This supports the problem framing: 2022 is a stronger post-pandemic event shift rather than an ordinary transfer year.",
+            "The pre-COVID checks have mean absolute weighted bias `0.9024`, while the diagnostic 2022 transfer check has absolute weighted bias `3.7202`. The final ordinary-XGBoost comparison row in the main table has weighted bias `+3.6052`. Both estimates support the same problem framing: 2022 is a stronger post-pandemic event shift rather than an ordinary transfer year.",
+            "",
+            "## External Mechanism Validation",
+            "",
+            "We added an external validation and compatibility audit in `outputs/external_validation/`. The external evidence is deliberately scoped as mechanism-level validation rather than household-level MAE.",
+            "",
+            "| External source | Finding | Relevance |",
+            "|---|---|---|",
+            "| ACS commuting brief | Worked-from-home commute share remains much higher in 2022 than 2019: `5.7% -> 15.2%`. | Supports `remote_work_substitution` event prior. |",
+            "| ACS commuting brief | Public-transportation commute share remains lower in 2022 than 2019: `5.0% -> 3.1%`. | Supports `transit_avoidance` event prior. |",
+            "| BTS/UMD daily mobility | BTS trips/person changes only `-1.95%` from 2019 to 2022, while NHTS diary `CNTTDHH` has a much larger 2017-to-2022 shift. | Shows BTS device mobility is not a direct numeric label for NHTS household trips. |",
+            "| PSRC household travel survey | 2017+2019->2023 household/day pre/post replication wMAE changes `3.4271 -> 3.2498`; wBias changes `+1.0532 -> +0.2605` using an ACS-derived remote-work suppression factor. | Provides household-level external microdata evidence that event-scale suppression improves transfer on an independent travel survey. |",
+            "",
+            "Interpretation: external data supports the event semantics used by the LLM adapter and includes a household-level external pre/post replication. The PSRC result is not direct numerical validation of NHTS 2022 household predictions because PSRC is a regional survey with different sampling and diary protocols, but it strengthens the paper claim that fixed event priors can improve label-free transfer under post-pandemic survey shifts. The external adapter is also no-label: it is specified from ACS event context, without target-year PSRC label calibration.",
             "",
             "## Improvement Over Historical Predictor",
             "",

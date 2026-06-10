@@ -6,7 +6,7 @@
 
 行为目标 1 是 household-level trip-count regression：
 
-- Temporal transfer validation: pre-COVID mean absolute weighted bias `0.9024` vs 2022 absolute weighted bias `3.7202`
+- Temporal transfer validation: pre-COVID mean absolute weighted bias `0.9024` vs diagnostic 2022 absolute weighted bias `3.7202`; final ordinary XGBoost comparison uses weighted bias `+3.6052`
 - Traditional supervised baseline weighted MAE: `4.3377`
 - Primary fixed no-label gated correction weighted MAE: `2.5023`
 - Primary fixed no-label gated correction weighted bias: `-0.0230`
@@ -80,7 +80,7 @@
 
 最新文献定位：
 
-- `plan/literature_grounding_2026.md` 汇总了截至 2026-06-10 核查的相关方向，包括 ELLMob（ICLR 2026）、CausalMob（KDD 2025）、AgentMove（NAACL 2025）、UniMob（KDD 2025）、ELP-Mob（SIGSPATIAL/GIS 2025）和 spatiotemporal foundation model survey。
+- `plan/literature_grounding_2026.md` 汇总了截至 2026-06-10 核查的相关方向，包括 ELLMob（ICLR 2026）、CausalMob（KDD 2025）、AgentMove（NAACL 2025）、AgentMob（2026 preprint/OpenReview）、UniMob（KDD 2025）、ELP-Mob（SIGSPATIAL/GIS 2025）和 spatiotemporal foundation model survey。
 - 我们的定位不是 generic mobility foundation model，而是 **survey-based household mobility 的 event-driven label-free adaptation**：用 NHTS 历史标签锚定 routine mobility，用 LLM event priors 表达疫情冲击机制。
 
 ## 整体任务设计

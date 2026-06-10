@@ -9,8 +9,10 @@ Completed:
 
 - Harmonized household dataset: `data/processed/household_harmonized.csv`
 - Baseline results: `outputs/household_baseline/household_baseline_results.md`
-- Best current model: pooled historical XGBoost with `survey_year`
-- Best current weighted bias: `+3.7202`
+- Final ordinary baseline: CUDA XGBoost trained on 2001/2009/2017
+- Final ordinary baseline weighted MAE: `4.3377`
+- Final ordinary baseline weighted bias: `+3.6052`
+- Stronger non-LLM check: CatBoost GPU weighted MAE `4.2196`, weighted bias `+3.4873`
 
 Interpretation:
 
