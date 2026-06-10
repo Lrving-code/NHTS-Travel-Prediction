@@ -15,6 +15,9 @@
 - Ordinary historical XGBoost weighted bias: `+3.6052`.
 - Primary hybrid gated weighted bias: `-0.0230`, almost removing systematic overprediction.
 - LLM-only pressure weighted MAE: `2.7175`, weaker than hybrid. This supports the claim that LLM should be an event-prior adapter, not a standalone predictor.
+- Zero-shot LLM rule tree weighted MAE: `2.6019`; pseudo-label tree distilled from it: `2.6040`. These baselines answer the direct "why not let the LLM build a 2022 tree" question and remain weaker than the hybrid adapter.
+- LLM rule + 500 historical calibration weighted MAE: `2.7723`; full-history rule calibration: `2.7870`. This integrates the collaborator's rule-distillation + small-data calibration idea, but it is not the strongest setting for the 2022 event-shift task.
+- Irrelevant pseudo-event controls do not reproduce the main method: best ranked pseudo-event weighted MAE `2.6274`, best gated pseudo-event weighted MAE `2.5610`.
 - Transit-share weighted MAE improves from `0.0325` to `0.0269`, but full mode composition improves only modestly.
 - Household exact rounded accuracy improves from `5.84%` to `17.72%`; weighted within-2-trips coverage improves from `23.39%` to `53.95%`.
 
@@ -39,7 +42,7 @@ For a course project, the story is strong because it has:
 1. A real planning problem: 2022 post-pandemic mobility is a distribution-shift year.
 2. A clear baseline failure: historical XGBoost overpredicts household trips.
 3. A concrete LLM role: generate `s_event`, not direct labels.
-4. Multiple controls: historical mean, XGBoost, trend rule, global event rule, random pressure, LLM-only, hybrid.
+4. Multiple controls: historical mean, XGBoost, trend rule, global event rule, random pressure, LLM-only, zero-shot LLM rule tree, pseudo-label tree, LLM rule + small historical calibration, irrelevant pseudo-event placebo, hybrid.
 5. A guarded conclusion: event-level correction is strong; cohort ranking is incremental; mode composition remains exploratory.
 
 The main presentation should emphasize the first three points and use the controls as credibility support.
@@ -54,7 +57,7 @@ Current version is not ready for a full paper because:
 4. Mode composition improvement is concentrated in transit and does not yet form a complete mode-choice model.
 5. Statistical uncertainty and repeated-seed confidence intervals are limited.
 
-Adversarial reviewer concern: the strongest alternative explanation is that most of the gain comes from a global 2022 shock correction, not from rich LLM reasoning. Our experiments partially address this with LLM-only, random-prior, and global-prior controls, but a paper would need stronger evidence that cohort-specific semantic priors add value beyond a calibrated shock scalar.
+Adversarial reviewer concern: the strongest alternative explanation is that most of the gain comes from a global 2022 shock correction, not from rich LLM reasoning. The current version now addresses this with LLM-only, zero-shot rule-tree, random-prior, irrelevant pseudo-event, and global-prior controls. A paper would still need stronger external evidence that cohort-specific semantic priors add value beyond a calibrated shock scalar across multiple shocks or regions.
 
 To make it paper-ready, the next experiments should be:
 

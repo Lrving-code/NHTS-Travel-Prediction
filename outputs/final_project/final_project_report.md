@@ -21,6 +21,9 @@ This project formulates 2022 NHTS household travel prediction as event-driven te
 | Global event prior | 2.5223 | 3.7432 | -0.7477 | 0.1888 |
 | Random prior control | 2.6466 | 3.8807 | -0.6368 | 0.1280 |
 | Gated LLM correction | 2.5023 | 3.6038 | -0.0230 | 0.2480 |
+| Zero-shot LLM rule tree | 2.6019 | 3.8300 | -0.4072 | 0.1507 |
+| Zero-shot pseudo-label tree | 2.6040 | 3.8368 | -0.4072 | 0.1477 |
+| LLM rule + 500-history calibration | 2.7723 | 3.8226 | 0.4627 | 0.1538 |
 
 ## Temporal Transfer Validation
 
@@ -41,6 +44,8 @@ The pre-COVID checks have mean absolute weighted bias `0.9024`, while 2022 has a
 - Primary weighted RMSE drops from `5.3169` to `3.6038` (32.22% reduction).
 - Primary absolute weighted bias drops by `99.36%`.
 - LLM-only pressure improves over naive historical baselines but remains weaker than the hybrid adapter, supporting the design choice that LLMs provide event semantics rather than standalone household predictions.
+- Zero-shot LLM rule tree reaches weighted MAE `2.6019`, and the pseudo-label tree distilled from it reaches `2.6040`; both are weaker and more biased than the primary hybrid adapter.
+- LLM rule + 500 historical calibration reaches weighted MAE `2.7723`; it is a useful bridge baseline for data-sparse settings, but it reintroduces positive 2022 bias.
 
 ## Household-Level Accuracy
 
@@ -95,6 +100,11 @@ The LLM should be framed as an event-generalization module, not as a direct pred
 ## Why Not a Zero-Shot LLM Decision Tree
 
 A decision tree needs labels to learn split thresholds and leaf-level numerical predictions. Without 2022 `CNTTDHH` labels, an LLM-generated tree would be a belief tree or a synthetic-label model rather than a data-fitted 2022 tree. This is why the project uses the LLM as an event-prior generator and keeps numerical prediction grounded in a historical household model trained on real NHTS data.
+We now include this as an explicit ablation. A zero-shot LLM-style semantic rule tree reaches weighted MAE `2.6019`, while a pseudo-label tree reaches `2.6040`. The primary hybrid adapter remains better at weighted MAE `2.5023`.
+
+## LLM Rules Plus Small Historical Calibration
+
+We also include the collaborator-proposed bridge route: let an LLM-style rule structure define routine demand leaves, calibrate leaf values with historical samples, and then apply the same 2022 event factor. With 500 historical calibration rows, weighted MAE is `2.7723`; with full-history rule calibration, weighted MAE is `2.7870`. This supports the method spectrum but also shows why routine historical calibration alone can overpredict under a post-pandemic shift.
 
 ## Robustness Check
 
@@ -102,6 +112,8 @@ We ran additional robustness checks in `outputs/robustness_checks/`.
 
 - 500-run permutation control for the primary gated rule: actual weighted MAE `2.5023`, random-permutation mean `2.5808`, empirical p-value `0.0020`.
 - Same-alpha global pressure remains strong: primary gated weighted MAE `2.5023` vs global-a1 weighted MAE `2.5531`.
+- LLM rule + small historical calibration is a coherent bridge baseline but not a replacement: 500-row calibration weighted MAE `2.7723`.
+- Irrelevant pseudo-event placebo controls are weaker than the primary method: best ranked pseudo-event weighted MAE `2.6274`, best gated pseudo-event weighted MAE `2.5610`.
 - Leakage scan passes for LLM-facing profile/feature files: they exclude `HOUSEID`, `CNTTDHH`, and `WTHHFIN`.
 
 Interpretation for the course report: the dominant contribution is event-level label-free adaptation. Cohort-specific LLM ranking provides measurable incremental signal, but it should not be described as the sole source of improvement.

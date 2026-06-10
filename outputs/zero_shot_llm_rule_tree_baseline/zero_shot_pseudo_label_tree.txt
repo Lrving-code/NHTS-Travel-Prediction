@@ -1,0 +1,70 @@
+|--- llm_trip_suppression_pressure <= 0.455
+|   |--- HHSIZE <= 3.500
+|   |   |--- WRKCOUNT <= 1.500
+|   |   |   |--- NUMADLT <= 1.500
+|   |   |   |   |--- online_delivery_substitution_likelihood <= 0.575
+|   |   |   |   |   |--- value: [3.450]
+|   |   |   |   |--- online_delivery_substitution_likelihood >  0.575
+|   |   |   |   |   |--- value: [3.229]
+|   |   |   |--- NUMADLT >  1.500
+|   |   |   |   |--- URBAN <= 1.500
+|   |   |   |   |   |--- value: [3.774]
+|   |   |   |   |--- URBAN >  1.500
+|   |   |   |   |   |--- value: [3.449]
+|   |   |--- WRKCOUNT >  1.500
+|   |   |   |--- online_delivery_substitution_likelihood <= 0.595
+|   |   |   |   |--- remote_work_substitution_likelihood <= 0.635
+|   |   |   |   |   |--- value: [4.700]
+|   |   |   |   |--- remote_work_substitution_likelihood >  0.635
+|   |   |   |   |   |--- value: [4.636]
+|   |   |   |--- online_delivery_substitution_likelihood >  0.595
+|   |   |   |   |--- value: [4.246]
+|   |--- HHSIZE >  3.500
+|   |   |--- online_delivery_substitution_likelihood <= 0.615
+|   |   |   |--- post_pandemic_recovery_sensitivity <= 0.515
+|   |   |   |   |--- llm_trip_suppression_pressure <= 0.415
+|   |   |   |   |   |--- value: [5.496]
+|   |   |   |   |--- llm_trip_suppression_pressure >  0.415
+|   |   |   |   |   |--- value: [5.461]
+|   |   |   |--- post_pandemic_recovery_sensitivity >  0.515
+|   |   |   |   |--- value: [5.560]
+|   |   |--- online_delivery_substitution_likelihood >  0.615
+|   |   |   |--- value: [5.299]
+|--- llm_trip_suppression_pressure >  0.455
+|   |--- llm_trip_suppression_pressure <= 0.590
+|   |   |--- WRKCOUNT <= 0.500
+|   |   |   |--- HHSIZE <= 2.500
+|   |   |   |   |--- HHFAMINC <= 7.500
+|   |   |   |   |   |--- value: [2.200]
+|   |   |   |   |--- HHFAMINC >  7.500
+|   |   |   |   |   |--- value: [2.134]
+|   |   |   |--- HHSIZE >  2.500
+|   |   |   |   |--- value: [2.812]
+|   |   |--- WRKCOUNT >  0.500
+|   |   |   |--- HHSIZE <= 3.500
+|   |   |   |   |--- online_delivery_substitution_likelihood <= 0.595
+|   |   |   |   |   |--- value: [3.128]
+|   |   |   |   |--- online_delivery_substitution_likelihood >  0.595
+|   |   |   |   |   |--- value: [2.833]
+|   |   |   |--- HHSIZE >  3.500
+|   |   |   |   |--- WRKCOUNT <= 1.500
+|   |   |   |   |   |--- value: [3.400]
+|   |   |   |   |--- WRKCOUNT >  1.500
+|   |   |   |   |   |--- value: [4.174]
+|   |--- llm_trip_suppression_pressure >  0.590
+|   |   |--- remote_work_substitution_likelihood <= 0.230
+|   |   |   |--- HHSIZE <= 1.500
+|   |   |   |   |--- online_delivery_substitution_likelihood <= 0.570
+|   |   |   |   |   |--- value: [1.124]
+|   |   |   |   |--- online_delivery_substitution_likelihood >  0.570
+|   |   |   |   |   |--- value: [1.004]
+|   |   |   |--- HHSIZE >  1.500
+|   |   |   |   |--- HHFAMINC <= 2.500
+|   |   |   |   |   |--- value: [1.415]
+|   |   |   |   |--- HHFAMINC >  2.500
+|   |   |   |   |   |--- value: [1.320]
+|   |   |--- remote_work_substitution_likelihood >  0.230
+|   |   |   |--- remote_work_substitution_likelihood <= 0.565
+|   |   |   |   |--- value: [2.402]
+|   |   |   |--- remote_work_substitution_likelihood >  0.565
+|   |   |   |   |--- value: [1.823]

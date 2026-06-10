@@ -30,6 +30,18 @@ FINAL_DIR = PROJECT_ROOT / "outputs" / "final_project"
 FINAL_FIGURE_DIR = FINAL_DIR / "figures"
 MODE_DIR = PROJECT_ROOT / "outputs" / "mode_composition_extension"
 STRONG_BASELINE_PATH = PROJECT_ROOT / "outputs" / "strong_baselines" / "strong_tabular_baseline_metrics.csv"
+ZERO_SHOT_RULE_TREE_PATH = (
+    PROJECT_ROOT
+    / "outputs"
+    / "zero_shot_llm_rule_tree_baseline"
+    / "zero_shot_llm_rule_tree_metrics.csv"
+)
+SMALL_DATA_CALIBRATION_PATH = (
+    PROJECT_ROOT
+    / "outputs"
+    / "llm_rule_small_data_calibration"
+    / "method_spectrum_metrics.csv"
+)
 MODE_COLUMNS = [
     "private_vehicle_share",
     "walk_share",
@@ -45,6 +57,9 @@ TRIP_LABELS = {
     "historical_xgboost": "Historical predictor",
     "historical_mean_trend_shift": "Historical trend shift",
     "llm_only_trip_suppression_a1p25": "LLM-only pressure",
+    "zero_shot_llm_rule_tree": "Zero-shot LLM rule tree",
+    "zero_shot_pseudo_label_tree": "Zero-shot pseudo-label tree",
+    "llm_rule_small_hist_calibrated_n500": "LLM rule + 500-history calibration",
     "global_trip_suppression_a1p25": "Global event prior",
     "random_trip_suppression_a1p25": "Random prior control",
     "gated_trip_suppression_a1_d0p15": "Gated LLM correction",
@@ -53,6 +68,9 @@ PUBLIC_TRIP_METHODS = [
     "historical_xgboost",
     "historical_mean_trend_shift",
     "llm_only_trip_suppression_a1p25",
+    "zero_shot_llm_rule_tree",
+    "zero_shot_pseudo_label_tree",
+    "llm_rule_small_hist_calibrated_n500",
     "global_trip_suppression_a1p25",
     "random_trip_suppression_a1p25",
     "gated_trip_suppression_a1_d0p15",
@@ -91,6 +109,24 @@ def load_strong_baselines() -> pd.DataFrame:
         LOGGER.warning("Missing stronger baseline table: %s", STRONG_BASELINE_PATH)
         return pd.DataFrame()
     return pd.read_csv(STRONG_BASELINE_PATH)
+
+
+def load_zero_shot_rule_tree_metrics() -> pd.DataFrame:
+    if not ZERO_SHOT_RULE_TREE_PATH.exists():
+        LOGGER.warning("Missing zero-shot rule-tree baseline table: %s", ZERO_SHOT_RULE_TREE_PATH)
+        return pd.DataFrame()
+    metrics = pd.read_csv(ZERO_SHOT_RULE_TREE_PATH)
+    return metrics.loc[
+        metrics["method"].isin(["zero_shot_llm_rule_tree", "zero_shot_pseudo_label_tree"])
+    ].copy()
+
+
+def load_small_data_calibration_metrics() -> pd.DataFrame:
+    if not SMALL_DATA_CALIBRATION_PATH.exists():
+        LOGGER.warning("Missing small-data calibration table: %s", SMALL_DATA_CALIBRATION_PATH)
+        return pd.DataFrame()
+    metrics = pd.read_csv(SMALL_DATA_CALIBRATION_PATH)
+    return metrics.loc[metrics["method"] == "llm_rule_small_hist_calibrated_n500"].copy()
 
 
 def normalize_shares(predictions: np.ndarray) -> np.ndarray:
@@ -200,6 +236,12 @@ def save_csv(frame: pd.DataFrame, path: Path) -> None:
 
 def build_method_comparison() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, Path]:
     trip = pd.read_csv(FINAL_DIR / "final_metrics_summary.csv")
+    zero_shot_trip = load_zero_shot_rule_tree_metrics()
+    if not zero_shot_trip.empty:
+        trip = pd.concat([trip, zero_shot_trip], ignore_index=True, sort=False)
+    small_data_trip = load_small_data_calibration_metrics()
+    if not small_data_trip.empty:
+        trip = pd.concat([trip, small_data_trip], ignore_index=True, sort=False)
     acc = pd.read_csv(FINAL_DIR / "household_accuracy_summary.csv")
     mode = pd.read_csv(MODE_DIR / "mode_composition_metrics.csv")
     llm_only = compute_llm_only_mode_baselines()
@@ -269,6 +311,9 @@ def write_method_report(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFram
     strong = load_strong_baselines()
     trip_base = trip[trip["method"] == "historical_xgboost"].iloc[0]
     trip_llm_only = trip[trip["method"] == "llm_only_trip_suppression_a1p25"].iloc[0]
+    trip_zero_rule = trip[trip["method"] == "zero_shot_llm_rule_tree"].iloc[0]
+    trip_zero_tree = trip[trip["method"] == "zero_shot_pseudo_label_tree"].iloc[0]
+    trip_small_rule = trip[trip["method"] == "llm_rule_small_hist_calibrated_n500"].iloc[0]
     trip_gated = trip[trip["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
     gated_acc = acc[acc["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
     mode_base = mode[mode["method"] == "historical_xgboost"].iloc[0]
@@ -321,6 +366,9 @@ def write_method_report(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFram
             f"weighted bias `{trip_gated.weighted_bias:.4f}`, weighted R2 `{trip_gated.weighted_r2:.4f}`.",
             f"- LLM-only pressure baseline: weighted MAE `{trip_llm_only.weighted_mae:.4f}`. "
             "This shows that event priors help directionally but need a household historical predictor.",
+            f"- Zero-shot LLM rule tree reaches weighted MAE `{trip_zero_rule.weighted_mae:.4f}`, "
+            f"while the pseudo-label tree reaches `{trip_zero_tree.weighted_mae:.4f}`. Direct LLM-authored trees are useful cold-start baselines, but their numerical calibration remains weaker than the hybrid adapter.",
+            f"- LLM rule + 500 historical samples reaches weighted MAE `{trip_small_rule.weighted_mae:.4f}`. It integrates the rule-distillation plus small-data calibration route, but it reintroduces positive bias under the 2022 event shift.",
             f"- Compared with LLM-only pressure, the hybrid gated adapter reduces weighted MAE by `{llm_only_gain:.2f}%` "
             f"and absolute weighted bias by `{llm_only_bias_gain:.2f}%`.",
             f"- Gated household accuracy: exact `{pct(gated_acc.exact_rounded_accuracy)}`, within 2 trips `{pct(gated_acc.within_2_trips)}`, within 3 trips `{pct(gated_acc.within_3_trips)}`.",
@@ -403,6 +451,9 @@ def write_method_report_zh(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataF
     strong = load_strong_baselines()
     trip_base = trip[trip["method"] == "historical_xgboost"].iloc[0]
     trip_llm_only = trip[trip["method"] == "llm_only_trip_suppression_a1p25"].iloc[0]
+    trip_zero_rule = trip[trip["method"] == "zero_shot_llm_rule_tree"].iloc[0]
+    trip_zero_tree = trip[trip["method"] == "zero_shot_pseudo_label_tree"].iloc[0]
+    trip_small_rule = trip[trip["method"] == "llm_rule_small_hist_calibrated_n500"].iloc[0]
     trip_gated = trip[trip["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
     gated_acc = acc[acc["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
     mode_base = mode[mode["method"] == "historical_xgboost"].iloc[0]
@@ -453,6 +504,8 @@ def write_method_report_zh(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataF
             "",
             f"- 主口径使用固定 no-label gated rule：`{trip_gated.method}`，weighted MAE `{trip_gated.weighted_mae:.4f}`，weighted bias `{trip_gated.weighted_bias:.4f}`，weighted R2 `{trip_gated.weighted_r2:.4f}`。",
             f"- LLM-only pressure baseline 的 weighted MAE 是 `{trip_llm_only.weighted_mae:.4f}`，说明 LLM 事件先验能给出方向，但需要 historical household predictor 提供个体化 baseline。",
+            f"- Zero-shot LLM rule tree 的 weighted MAE 是 `{trip_zero_rule.weighted_mae:.4f}`，pseudo-label tree 是 `{trip_zero_tree.weighted_mae:.4f}`；二者可以作为 cold-start baseline，但数值校准仍弱于 hybrid adapter。",
+            f"- LLM rule + 500 historical samples 的 weighted MAE 是 `{trip_small_rule.weighted_mae:.4f}`。这条路线把 rule distillation + small-data calibration 融入了方法谱系，但当前 event-shift 任务里会重新出现正向 bias。",
             f"- 相比 LLM-only pressure，hybrid gated adapter 的 weighted MAE 进一步降低 `{llm_only_gain:.2f}%`，绝对 weighted bias 降低 `{llm_only_bias_gain:.2f}%`。",
             f"- 家庭颗粒度上，gated correction exact hit `{pct(gated_acc.exact_rounded_accuracy)}`，within 2 trips `{pct(gated_acc.within_2_trips)}`，within 3 trips `{pct(gated_acc.within_3_trips)}`。",
             "",
@@ -695,6 +748,8 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
             ["Historical predictor", "No", "No", "Routine mobility baseline"],
             ["Historical trend shift", "No", "No", "Mean-trend control"],
             ["LLM-only pressure", "No", "LLM only", "No household predictor"],
+            ["Zero-shot rule tree", "No", "LLM-authored", "Cold-start ablation"],
+            ["Rule + 500 history", "No", "LLM rules + data", "Small-data bridge"],
             ["Global event prior", "No", "Only global mean", "Event-level downscaling control"],
             ["Random prior control", "No", "Shuffled scores", "Negative control"],
             ["Gated LLM correction", "No", "Cohort-specific when confident", "Primary no-label rule"],
@@ -702,8 +757,8 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
         0.65,
         1.3,
         12.1,
-        4.25,
-        10,
+        4.65,
+        8,
     )
 
     slide = base_slide("Trip-count comparison", "Weighted metrics on 2022 households")
@@ -903,6 +958,8 @@ def write_speaker_notes(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
     trip_base = trip[trip["method"] == "historical_xgboost"].iloc[0]
     trip_gated = trip[trip["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
     trip_llm_only = trip[trip["method"] == "llm_only_trip_suppression_a1p25"].iloc[0]
+    trip_zero_rule = trip[trip["method"] == "zero_shot_llm_rule_tree"].iloc[0]
+    trip_small_rule = trip[trip["method"] == "llm_rule_small_hist_calibrated_n500"].iloc[0]
     trip_global = trip[trip["method"] == "global_trip_suppression_a1p25"].iloc[0]
     mode_base = mode[mode["method"] == "historical_xgboost"].iloc[0]
     mode_best = mode[mode["method"] == "llm_transit_avoidance_a1"].iloc[0]
@@ -923,6 +980,8 @@ def write_speaker_notes(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
         "",
         f"- Ordinary historical prediction has household grounding but lacks event semantics: wMAE `{trip_base.weighted_mae:.4f}`, wBias `{trip_base.weighted_bias:.4f}`.",
         f"- Pure LLM pressure has the right downward direction but weaker calibration: wMAE `{trip_llm_only.weighted_mae:.4f}`, wBias `{trip_llm_only.weighted_bias:.4f}`.",
+        f"- Zero-shot LLM rule tree is now an explicit ablation: wMAE `{trip_zero_rule.weighted_mae:.4f}`, wBias `{trip_zero_rule.weighted_bias:.4f}`. It is useful for cold-start discussion but weaker than the hybrid adapter.",
+        f"- LLM rule + 500 historical calibration reaches wMAE `{trip_small_rule.weighted_mae:.4f}`, wBias `{trip_small_rule.weighted_bias:.4f}`. It is the bridge baseline for the collaborator's route, but it still overpredicts 2022.",
         f"- Global event prior is a strong low-cost control: wMAE `{trip_global.weighted_mae:.4f}`, wBias `{trip_global.weighted_bias:.4f}`. Do not overclaim that cohort-specific LLM ranking explains the whole gain.",
         f"- Primary hybrid gated adapter is the balanced operating point: wMAE `{trip_gated.weighted_mae:.4f}`, wBias `{trip_gated.weighted_bias:.4f}`, wR2 `{trip_gated.weighted_r2:.4f}`.",
     ]
@@ -948,7 +1007,7 @@ def write_speaker_notes(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
         "## Questions To Expect",
         "- Why use two metric families? Trip generation is count regression, while mode composition is a share-vector prediction problem.",
         "- Is this pure LLM? No. Pure LLM-like correction is weaker than XGBoost + LLM.",
-        "- Why not let the LLM build a zero-shot 2022 decision tree? A tree needs labels to learn split thresholds and leaf values. Without 2022 labels, the output becomes an LLM belief tree or synthetic-label model, so we use the LLM only as an event-prior generator.",
+        f"- Why not let the LLM build a zero-shot 2022 decision tree? We now include that ablation. The zero-shot rule tree reaches wMAE `{trip_zero_rule.weighted_mae:.4f}`, still weaker and more biased than the primary hybrid rule. Without labels, the output is closer to an LLM belief tree than a data-fitted decision tree.",
         "- Did 2022 labels enter training? Not in the main label-free setting; 2022 targets are used for evaluation.",
         "- What should we not claim? Do not claim causal effects or direct LLM trip-count prediction; claim causal guardrails and event-prior adaptation.",
         ]
@@ -963,6 +1022,8 @@ def write_speaker_notes_zh(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
     trip_base = trip[trip["method"] == "historical_xgboost"].iloc[0]
     trip_gated = trip[trip["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
     trip_llm_only = trip[trip["method"] == "llm_only_trip_suppression_a1p25"].iloc[0]
+    trip_zero_rule = trip[trip["method"] == "zero_shot_llm_rule_tree"].iloc[0]
+    trip_small_rule = trip[trip["method"] == "llm_rule_small_hist_calibrated_n500"].iloc[0]
     trip_global = trip[trip["method"] == "global_trip_suppression_a1p25"].iloc[0]
     mode_base = mode[mode["method"] == "historical_xgboost"].iloc[0]
     mode_best = mode[mode["method"] == "llm_transit_avoidance_a1"].iloc[0]
@@ -999,6 +1060,8 @@ def write_speaker_notes_zh(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
     lines.extend(
         [
         f"- Pure LLM pressure：优势是知道疫情后出行下降方向，问题是缺少家庭数值基线，wMAE `{trip_llm_only.weighted_mae:.4f}`，wBias `{trip_llm_only.weighted_bias:.4f}`。",
+        f"- Zero-shot LLM rule tree：已经作为补充 ablation 跑过，wMAE `{trip_zero_rule.weighted_mae:.4f}`，wBias `{trip_zero_rule.weighted_bias:.4f}`，能表达机制方向但校准弱于 hybrid。",
+        f"- LLM rule + 500 historical calibration：这是队友路线的 bridge baseline，wMAE `{trip_small_rule.weighted_mae:.4f}`，wBias `{trip_small_rule.weighted_bias:.4f}`，说明少量历史校准合理但会重新高估 2022。",
         f"- Global event prior：低成本且很强，wMAE `{trip_global.weighted_mae:.4f}`，wBias `{trip_global.weighted_bias:.4f}`。这说明主信号确实是 event-level suppression，不能夸大成 cohort LLM ranking 独自贡献全部提升。",
         f"- 我们的 hybrid gated：wMAE `{trip_gated.weighted_mae:.4f}`，wBias `{trip_gated.weighted_bias:.4f}`，wR2 `{trip_gated.weighted_r2:.4f}`。优势是同时保留 household baseline、event semantics 和 near-zero bias。",
         "",
@@ -1029,7 +1092,7 @@ def write_speaker_notes_zh(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
         "",
         "- 为什么有两套指标？因为 trip generation 是 count regression，mode composition 是 share-vector prediction。",
         "- 这是 pure LLM 吗？不是。纯 LLM-style correction 比 XGBoost + LLM 弱，说明 LLM 适合作为 event-prior adapter。",
-        "- 为什么不直接让 LLM 零样本构建 2022 决策树？因为决策树需要标签学习 split threshold 和叶节点数值；没有 2022 标签时，这会变成 LLM belief tree 或 synthetic-label model，数值校准不如历史 household model + event prior。",
+        f"- 为什么不直接让 LLM 零样本构建 2022 决策树？我们已经把它作为 ablation 跑过，zero-shot rule tree wMAE `{trip_zero_rule.weighted_mae:.4f}`，仍弱于主方法。原因是没有标签时 split threshold 和 leaf value 缺少数据校准，更像 LLM belief tree。",
         "- 有没有用 2022 标签训练？主实验没有。2022 `CNTTDHH` 只在最终 evaluation 中使用。",
         "- 结果够不够做大作业？够，因为我们有完整数据链路、强 baseline、LLM event prior、无标签修正、稳健性检验、mode 扩展和 10 分钟汇报材料。",
         ]

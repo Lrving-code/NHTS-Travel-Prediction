@@ -232,7 +232,7 @@ Important diagnostic result:
 - `llm_trip_suppression_a1p25` improves weighted MAE by `1.60%` over its global-mean control and by `6.22%` over its random-shuffle control.
 - The broader recovery-adjusted composite should not be overclaimed because it does not beat global/random controls at the strongest alpha.
 - No-label gated correction adds a useful bias/R2 tradeoff: `gated_trip_suppression_a1_d0p15` has weighted MAE `2.5023`, weighted bias `-0.0230`, and weighted R2 `0.2480`.
-- This gated result is slightly worse than the best-MAE sensitivity row but is nearly unbiased and has the highest current weighted R2.
+- This gated result is slightly worse than the single-objective sensitivity candidate but is nearly unbiased and has the highest current weighted R2.
 - Gated correction is a useful compromise when the paper emphasizes bias correction and distributional fit rather than MAE alone.
 
 Subgroup diagnostic result:

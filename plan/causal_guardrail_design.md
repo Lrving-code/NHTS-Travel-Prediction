@@ -67,11 +67,25 @@ Already available:
   - Pure LLM pressure captures the downward event direction but has weaker calibration: weighted MAE `2.7175`, weighted bias `-0.3732`.
   - Primary hybrid gated adapter improves to weighted MAE `2.5023`, weighted bias `-0.0230`.
   - Interpretation: LLM event priors are useful only after being grounded by a routine household predictor.
+- Zero-shot LLM rule-tree ablation:
+  - `outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_report_zh.md`
+  - Direct LLM-style rule tree weighted MAE `2.6019`, weighted bias `-0.4072`.
+  - Pseudo-label tree distilled from that rule tree weighted MAE `2.6040`, weighted bias `-0.4072`.
+  - Primary hybrid gated adapter remains better: weighted MAE `2.5023`, weighted bias `-0.0230`.
+  - Interpretation: direct LLM-authored trees are useful cold-start baselines, but they behave like qualitative belief trees without empirical leaf calibration.
+- LLM rule + small historical calibration:
+  - `outputs/llm_rule_small_data_calibration/llm_rule_small_data_calibration_report_zh.md`
+  - Rule + 500 historical calibration rows weighted MAE `2.7723`, weighted bias `+0.4627`.
+  - Full-history rule calibration weighted MAE `2.7870`, weighted bias `+0.6068`.
+  - Interpretation: using historical labels to calibrate LLM-extracted rules is a coherent data-sparse bridge, but routine calibration alone can overpredict under 2022 event shift.
+- Irrelevant pseudo-event prior:
+  - `outputs/irrelevant_pseudo_event_placebo/irrelevant_pseudo_event_placebo_report.md`
+  - Best irrelevant ranked pseudo-event weighted MAE `2.6274`.
+  - Best irrelevant gated pseudo-event weighted MAE `2.5610`.
+  - Interpretation: arbitrary distribution-matched cohort rankings do not replace mechanism-aligned event priors.
 
 Add next:
 
-- Irrelevant pseudo-event prior:
-  - Ask/generate an event prior unrelated to travel suppression, such as generic “digital service adoption pressure,” and verify it should not improve trip-count prediction.
 - Feature leakage audit:
   - Extend the current schema audit into a full prompt provenance appendix if writing the paper.
 

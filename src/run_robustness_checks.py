@@ -158,12 +158,13 @@ def leakage_status() -> tuple[bool, list[str]]:
 
 def build_claim_audit(
     final_metrics: pd.DataFrame,
+    grid_metrics: pd.DataFrame,
     mode_metrics: pd.DataFrame,
     permutation: pd.DataFrame,
 ) -> pd.DataFrame:
     baseline = metric_from_summary(final_metrics, BASE, "weighted_mae")
     primary = metric_from_summary(final_metrics, PRIMARY, "weighted_mae")
-    llm_best = metric_from_summary(final_metrics, LLM_BEST, "weighted_mae")
+    llm_best = metric_from_summary(grid_metrics, LLM_BEST, "weighted_mae")
     global_best = metric_from_summary(final_metrics, GLOBAL_BEST, "weighted_mae")
     primary_bias = metric_from_summary(final_metrics, PRIMARY, "weighted_bias")
     llm_only = metric_from_summary(final_metrics, LLM_ONLY, "weighted_mae")
@@ -185,7 +186,7 @@ def build_claim_audit(
         {
             "claim": "LLM cohort-specific ranking is the dominant reason for improvement.",
             "verdict": "Overclaim",
-            "evidence": f"best LLM-specific row improves over global rule only {(global_best - llm_best) / global_best:.2%}; permutation p={p_llm:.4f}.",
+            "evidence": f"single-objective sensitivity row improves over global rule only {(global_best - llm_best) / global_best:.2%}; permutation p={p_llm:.4f}.",
             "revision": "Say the dominant signal is event-level downscaling; cohort-specific LLM ranking adds incremental evidence.",
         },
         {
@@ -259,7 +260,7 @@ def write_report(
         f"- Main trip-count claim remains supported: ordinary historical XGBoost weighted MAE `{baseline:.4f}` -> primary gated weighted MAE `{primary:.4f}`.",
         f"- The strongest contribution should be phrased as **event-level correction without 2022 label calibration**, not as strong individualized LLM ranking.",
         f"- Compared with same-alpha global pressure, primary gated wMAE is `{primary:.4f}` vs global-a1 wMAE `{global_a1:.4f}`.",
-        f"- 500-run permutation null for best LLM pressure: actual wMAE `{llm_actual:.4f}`, random mean `{llm_perm.mean():.4f}`, empirical p `{empirical_p_value(llm_perm, llm_actual):.4f}`.",
+        f"- 500-run permutation null for sensitivity LLM pressure: actual wMAE `{llm_actual:.4f}`, random mean `{llm_perm.mean():.4f}`, empirical p `{empirical_p_value(llm_perm, llm_actual):.4f}`.",
         f"- 500-run permutation null for primary gated rule: actual wMAE `{primary_actual:.4f}`, random mean `{primary_perm.mean():.4f}`, empirical p `{empirical_p_value(primary_perm, primary_actual):.4f}`.",
         f"- LLM-input leakage scan: `{'PASS' if leak_ok else 'FAIL'}`" + ("" if leak_ok else f" ({'; '.join(leaks)})"),
         "",
@@ -284,7 +285,7 @@ def write_report(
             "",
             "Applying the global average trip-suppression pressure already removes much of the 2022 over-prediction. Therefore, the presentation should not claim that LLM individualized ranking is the dominant mechanism. The cleaner statement is that LLM-derived event semantics provide an event-level correction, with cohort-specific ranking adding incremental support.",
             "",
-            "### Finding 2: Best-MAE sensitivity row must not be the main method",
+            "### Finding 2: Single-objective sensitivity candidate must not be the main method",
             "",
             "`llm_trip_suppression_a1p25` has the lowest MAE, but alpha 1.25 should be treated as sensitivity analysis. The main method should remain the fixed `gated_trip_suppression_a1_d0p15`, because it gives near-zero bias and is easier to defend as a no-label rule.",
             "",
@@ -316,9 +317,9 @@ def write_report(
 def main() -> None:
     configure_logging()
     sns.set_theme(style="whitegrid", context="paper", font="DejaVu Sans")
-    final_metrics, mode_metrics, _grid_metrics, predictions = load_data()
+    final_metrics, mode_metrics, grid_metrics, predictions = load_data()
     permutation = run_permutation_controls(predictions)
-    claim_audit = build_claim_audit(final_metrics, mode_metrics, permutation)
+    claim_audit = build_claim_audit(final_metrics, grid_metrics, mode_metrics, permutation)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     permutation.to_csv(OUTPUT_DIR / "permutation_pressure_controls.csv", index=False)
     claim_audit.to_csv(OUTPUT_DIR / "claim_audit.csv", index=False)

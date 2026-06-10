@@ -25,6 +25,9 @@
 | Historical predictor | 4.3377 | 5.3169 | 3.6052 | -0.6367 | 0.00% |
 | Historical trend shift | 4.1504 | 5.1463 | 3.3485 | -0.5334 | 4.32% |
 | LLM-only pressure | 2.7175 | 3.9876 | -0.3732 | 0.0794 | 37.35% |
+| Zero-shot LLM rule tree | 2.6019 | 3.8300 | -0.4072 | 0.1507 | 40.02% |
+| Zero-shot pseudo-label tree | 2.6040 | 3.8368 | -0.4072 | 0.1477 | 39.97% |
+| LLM rule + 500-history calibration | 2.7723 | 3.8226 | 0.4627 | 0.1538 | 36.09% |
 | Global event prior | 2.5223 | 3.7432 | -0.7477 | 0.1888 | 41.85% |
 | Random prior control | 2.6466 | 3.8807 | -0.6368 | 0.1280 | 38.99% |
 | Gated LLM correction | 2.5023 | 3.6038 | -0.0230 | 0.2480 | 42.31% |
@@ -33,6 +36,8 @@ Trip-generation 结论：
 
 - 主口径使用固定 no-label gated rule：`gated_trip_suppression_a1_d0p15`，weighted MAE `2.5023`，weighted bias `-0.0230`，weighted R2 `0.2480`。
 - LLM-only pressure baseline 的 weighted MAE 是 `2.7175`，说明 LLM 事件先验能给出方向，但需要 historical household predictor 提供个体化 baseline。
+- Zero-shot LLM rule tree 的 weighted MAE 是 `2.6019`，pseudo-label tree 是 `2.6040`；二者可以作为 cold-start baseline，但数值校准仍弱于 hybrid adapter。
+- LLM rule + 500 historical samples 的 weighted MAE 是 `2.7723`。这条路线把 rule distillation + small-data calibration 融入了方法谱系，但当前 event-shift 任务里会重新出现正向 bias。
 - 相比 LLM-only pressure，hybrid gated adapter 的 weighted MAE 进一步降低 `7.92%`，绝对 weighted bias 降低 `93.83%`。
 - 家庭颗粒度上，gated correction exact hit `17.7%`，within 2 trips `54.5%`，within 3 trips `71.2%`。
 

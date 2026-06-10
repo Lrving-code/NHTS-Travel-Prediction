@@ -250,8 +250,8 @@ Interpretation:
 - The model is learning historical trip-generation behavior, but the 2022 target distribution is shifted downward.
 - The positive bias creates a clear measurable target for event-aware adaptation.
 - LLM priors are useful in the realistic no-2022-label setting, but most current gain comes from event-level downscaling; household-specific LLM ranking adds a smaller incremental benefit.
-- The main paper/presentation should use the fixed gated rule as the strict no-label method. `llm_trip_suppression_a1p25` should be described as a best-MAE sensitivity result, not as a label-free parameter-selection outcome.
+- The main paper/presentation should use the fixed gated rule as the strict no-label method. `llm_trip_suppression_a1p25` should be described as a single-objective sensitivity candidate, not as a label-free parameter-selection outcome.
 
 ## Immediate Next Experiment
 
-Write the Results section around two complementary findings: (1) the fixed no-label gated correction is the primary defensible method because it nearly removes bias while preserving the large MAE reduction, and (2) LLM trip-suppression priors give the best MAE in sensitivity analysis.
+Write the Results section around two complementary findings: (1) the fixed no-label gated correction is the primary defensible method because it nearly removes bias while preserving the large MAE reduction, and (2) the trip-suppression prior gives a useful single-objective sensitivity check.

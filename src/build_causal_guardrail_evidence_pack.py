@@ -27,6 +27,24 @@ PLACEBO_METRICS = (
 LEAKAGE_AUDIT = PROJECT_ROOT / "outputs" / "leakage_audit" / "llm_input_leakage_audit.csv"
 GUARDRAIL_CHECK = PROJECT_ROOT / "outputs" / "leakage_audit" / "llm_guardrail_instruction_check.csv"
 PARETO_POINTS = PROJECT_ROOT / "outputs" / "multi_objective_pareto" / "preference_operating_points.csv"
+ZERO_SHOT_TREE = (
+    PROJECT_ROOT
+    / "outputs"
+    / "zero_shot_llm_rule_tree_baseline"
+    / "zero_shot_llm_rule_tree_metrics.csv"
+)
+IRRELEVANT_PSEUDO_EVENT = (
+    PROJECT_ROOT
+    / "outputs"
+    / "irrelevant_pseudo_event_placebo"
+    / "irrelevant_pseudo_event_placebo_metrics.csv"
+)
+SMALL_DATA_CALIBRATION = (
+    PROJECT_ROOT
+    / "outputs"
+    / "llm_rule_small_data_calibration"
+    / "method_spectrum_metrics.csv"
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -99,6 +117,9 @@ def build_evidence_items() -> tuple[list[EvidenceItem], dict[str, float | int | 
     leakage = read_csv(LEAKAGE_AUDIT)
     guardrail = read_csv(GUARDRAIL_CHECK)
     pareto = read_csv(PARETO_POINTS)
+    zero_shot = read_csv(ZERO_SHOT_TREE)
+    pseudo_event = read_csv(IRRELEVANT_PSEUDO_EVENT)
+    small_data = read_csv(SMALL_DATA_CALIBRATION)
 
     baseline_mae = metric(label_free, "historical_xgboost", "weighted_mae")
     baseline_bias = metric(label_free, "historical_xgboost", "weighted_bias")
@@ -109,10 +130,22 @@ def build_evidence_items() -> tuple[list[EvidenceItem], dict[str, float | int | 
     llm_only_mae = metric(label_free, "llm_only_trip_suppression_a1p25", "weighted_mae")
     catboost_mae = metric(strong, "catboost_gpu", "weighted_mae")
     catboost_bias = metric(strong, "catboost_gpu", "weighted_bias")
+    zero_rule_mae = metric(zero_shot, "zero_shot_llm_rule_tree", "weighted_mae")
+    zero_rule_bias = metric(zero_shot, "zero_shot_llm_rule_tree", "weighted_bias")
+    pseudo_label_tree_mae = metric(zero_shot, "zero_shot_pseudo_label_tree", "weighted_mae")
+    pseudo_label_tree_bias = metric(zero_shot, "zero_shot_pseudo_label_tree", "weighted_bias")
+    small_500_mae = metric(small_data, "llm_rule_small_hist_calibrated_n500", "weighted_mae")
+    small_500_bias = metric(small_data, "llm_rule_small_hist_calibrated_n500", "weighted_bias")
+    small_full_mae = metric(small_data, "llm_rule_full_history_calibrated", "weighted_mae")
+    small_full_bias = metric(small_data, "llm_rule_full_history_calibrated", "weighted_bias")
 
     mae_reduction = (baseline_mae - primary_mae) / baseline_mae
     catboost_gap = (catboost_mae - primary_mae) / catboost_mae
     global_gap = global_mae - primary_mae
+    zero_rule_gap = zero_rule_mae - primary_mae
+    pseudo_label_tree_gap = pseudo_label_tree_mae - primary_mae
+    small_500_gap = small_500_mae - primary_mae
+    small_full_gap = small_full_mae - primary_mae
 
     p_value, permutation_runs = compute_permutation_p_value(
         permutation,
@@ -132,6 +165,19 @@ def build_evidence_items() -> tuple[list[EvidenceItem], dict[str, float | int | 
     placebo_a1p25 = metric(placebo, "placebo_global_2022_suppression_a1p25", "weighted_mae")
     placebo_a1_delta = placebo_a1 - routine_placebo
     placebo_a1p25_delta = placebo_a1p25 - routine_placebo
+
+    pseudo_ranked = pseudo_event.loc[pseudo_event["family"] == "pseudo_event_ranked"].copy()
+    pseudo_gated = pseudo_event.loc[pseudo_event["family"] == "pseudo_event_gated"].copy()
+    if pseudo_ranked.empty or pseudo_gated.empty:
+        raise KeyError("Irrelevant pseudo-event placebo table is missing ranked or gated rows.")
+    best_pseudo_ranked = pseudo_ranked.sort_values("weighted_mae").iloc[0]
+    best_pseudo_gated = pseudo_gated.sort_values("weighted_mae").iloc[0]
+    best_pseudo_ranked_mae = float(best_pseudo_ranked["weighted_mae"])
+    best_pseudo_gated_mae = float(best_pseudo_gated["weighted_mae"])
+    best_pseudo_ranked_name = str(best_pseudo_ranked["method"])
+    best_pseudo_gated_name = str(best_pseudo_gated["method"])
+    best_pseudo_ranked_gap = best_pseudo_ranked_mae - primary_mae
+    best_pseudo_gated_gap = best_pseudo_gated_mae - primary_mae
 
     violation_count = int(pd.to_numeric(leakage["violations"], errors="raise").sum())
     profile_records = audit_record_count(leakage, "household_cohort_profiles")
@@ -249,6 +295,49 @@ def build_evidence_items() -> tuple[list[EvidenceItem], dict[str, float | int | 
             artifact=str(LABEL_FREE_METRICS.relative_to(PROJECT_ROOT)),
         ),
         EvidenceItem(
+            check="Zero-shot LLM-authored rule tree",
+            verdict="Supported as ablation",
+            key_result=(
+                f"zero-shot rule-tree wMAE = {fmt(zero_rule_mae)}, wBias = {fmt(zero_rule_bias)}; "
+                f"pseudo-label tree wMAE = {fmt(pseudo_label_tree_mae)}, wBias = {fmt(pseudo_label_tree_bias)}; "
+                f"primary hybrid wMAE = {fmt(primary_mae)}"
+            ),
+            implication=(
+                "A direct LLM tree is a useful cold-start baseline, but it behaves like a qualitative belief tree "
+                "and remains less calibrated than the routine-model-plus-event-prior design."
+            ),
+            artifact=str(ZERO_SHOT_TREE.relative_to(PROJECT_ROOT)),
+        ),
+        EvidenceItem(
+            check="LLM rule plus small historical calibration",
+            verdict="Useful bridge baseline, not main winner",
+            key_result=(
+                f"rule + 500 historical samples wMAE = {fmt(small_500_mae)}, "
+                f"wBias = {fmt(small_500_bias)}; full-history rule calibration wMAE = "
+                f"{fmt(small_full_mae)}, wBias = {fmt(small_full_bias)}; primary hybrid wMAE = {fmt(primary_mae)}"
+            ),
+            implication=(
+                "Calibrating LLM-extracted rules with routine historical data is a coherent cold-start bridge, "
+                "but it can overpredict 2022 unless the event-shift correction remains explicit."
+            ),
+            artifact=str(SMALL_DATA_CALIBRATION.relative_to(PROJECT_ROOT)),
+        ),
+        EvidenceItem(
+            check="Irrelevant pseudo-event placebo",
+            verdict="Supported as negative control",
+            key_result=(
+                f"best irrelevant ranked pseudo-event {best_pseudo_ranked_name} wMAE = "
+                f"{fmt(best_pseudo_ranked_mae)} (gap {fmt(best_pseudo_ranked_gap)}); "
+                f"best irrelevant gated pseudo-event {best_pseudo_gated_name} wMAE = "
+                f"{fmt(best_pseudo_gated_mae)} (gap {fmt(best_pseudo_gated_gap)})"
+            ),
+            implication=(
+                "The improvement is not reproduced by arbitrary distribution-matched cohort rankings; "
+                "the event prior must remain mechanism-aligned."
+            ),
+            artifact=str(IRRELEVANT_PSEUDO_EVENT.relative_to(PROJECT_ROOT)),
+        ),
+        EvidenceItem(
             check="Planning-oriented operating point",
             verdict="Supported",
             key_result=(
@@ -277,6 +366,18 @@ def build_evidence_items() -> tuple[list[EvidenceItem], dict[str, float | int | 
         "placebo_a1_delta": placebo_a1_delta,
         "placebo_a1p25_delta": placebo_a1p25_delta,
         "global_gap": global_gap,
+        "zero_rule_mae": zero_rule_mae,
+        "zero_rule_gap": zero_rule_gap,
+        "pseudo_label_tree_mae": pseudo_label_tree_mae,
+        "pseudo_label_tree_gap": pseudo_label_tree_gap,
+        "small_500_mae": small_500_mae,
+        "small_500_gap": small_500_gap,
+        "small_full_mae": small_full_mae,
+        "small_full_gap": small_full_gap,
+        "best_pseudo_ranked_mae": best_pseudo_ranked_mae,
+        "best_pseudo_ranked_gap": best_pseudo_ranked_gap,
+        "best_pseudo_gated_mae": best_pseudo_gated_mae,
+        "best_pseudo_gated_gap": best_pseudo_gated_gap,
         "leakage_violations": violation_count,
         "profile_records": profile_records,
         "prompt_records": prompt_records,
@@ -427,6 +528,18 @@ def write_report(items: list[EvidenceItem], scalars: dict[str, float | int | str
             f"- Random-pressure negative control: empirical p = "
             f"`{fmt(float(scalars['permutation_p_value']))}` over "
             f"`{int(scalars['permutation_runs'])}` permutations."
+        ),
+        (
+            f"- Zero-shot LLM rule-tree baseline wMAE `{fmt(float(scalars['zero_rule_mae']))}`; "
+            f"primary hybrid is lower by `{fmt(float(scalars['zero_rule_gap']))}` wMAE."
+        ),
+        (
+            f"- LLM rule + 500 historical calibration wMAE `{fmt(float(scalars['small_500_mae']))}`; "
+            f"full-history rule calibration wMAE `{fmt(float(scalars['small_full_mae']))}`."
+        ),
+        (
+            f"- Best irrelevant ranked pseudo-event wMAE `{fmt(float(scalars['best_pseudo_ranked_mae']))}`; "
+            f"best irrelevant gated pseudo-event wMAE `{fmt(float(scalars['best_pseudo_gated_mae']))}`."
         ),
         (
             f"- Pre-COVID placebo: full 2022-style suppression worsens 2017 wMAE by "

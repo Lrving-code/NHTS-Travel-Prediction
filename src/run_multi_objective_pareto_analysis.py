@@ -410,7 +410,7 @@ def write_report(
     lines.extend(
         [
             "",
-            "Interpretation: the minimum-MAE LLM adapter is slightly more accurate, but the primary gated adapter has much lower aggregate bias and better weighted R2. This is why the project should present the result as a multi-objective operating-point choice rather than a single leaderboard.",
+            "Interpretation: the single-objective sensitivity candidate is slightly more accurate on MAE, but the primary gated adapter has much lower aggregate bias and better weighted R2. This is why the project should present the result as a multi-objective operating-point choice rather than a single leaderboard.",
             "",
             "## Preference-Based Operating Points",
             "",

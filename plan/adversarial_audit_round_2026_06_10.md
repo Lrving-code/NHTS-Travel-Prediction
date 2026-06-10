@@ -59,7 +59,7 @@ Current evidence:
 
 - Global event prior is very strong.
 - Pareto analysis shows low-cost deployment selects `global_trip_suppression_a1`.
-- Cohort-aware gated method has much lower bias than minimum-MAE sensitivity and better R2.
+- Cohort-aware gated method has much lower bias than the single-objective sensitivity candidate and better R2.
 
 Required fix:
 

@@ -26,6 +26,10 @@ LLM_FEATURE_DIR = PROJECT_ROOT / "outputs" / "llm_event_features"
 PARETO_DIR = PROJECT_ROOT / "outputs" / "multi_objective_pareto"
 FIGURE_DIR = FINAL_DIR / "figures" / "presentation_figures"
 ROBUSTNESS_DIR = PROJECT_ROOT / "outputs" / "robustness_checks"
+ZERO_SHOT_RULE_TREE_PATH = PROJECT_ROOT / "outputs" / "zero_shot_llm_rule_tree_baseline" / "zero_shot_llm_rule_tree_metrics.csv"
+SMALL_DATA_CALIBRATION_PATH = (
+    PROJECT_ROOT / "outputs" / "llm_rule_small_data_calibration" / "method_spectrum_metrics.csv"
+)
 EMU_PER_INCH = 914400
 TOTAL_SLIDES = 23
 
@@ -53,6 +57,8 @@ METHOD_LABELS = {
     "historical_xgboost": "Ordinary XGBoost",
     "historical_mean_trend_shift": "Trend / indicator",
     "llm_only_trip_suppression_a1p25": "LLM-only pressure",
+    "zero_shot_llm_rule_tree": "Zero-shot rule tree",
+    "llm_rule_small_hist_calibrated_n500": "Rule + 500 history",
     "global_trip_suppression_a1p25": "Global event rule",
     "random_trip_suppression_a1p25": "Random pressure",
     "gated_trip_suppression_a1_d0p15": "Hybrid gated",
@@ -290,7 +296,7 @@ def small_table(
     header_color: RGBColor = COLORS["navy"],
 ) -> None:
     actual_size = max(font_size, 12)
-    actual_row_h = max(row_h, 0.5)
+    actual_row_h = max(row_h, 0.42)
     for col, header in enumerate(headers):
         xx = x + sum(widths[:col])
         rect(slide, xx, y, widths[col], actual_row_h, header_color)
@@ -334,12 +340,13 @@ def method_comparison_table(
     widths: list[float],
     row_h: float = 0.36,
 ) -> None:
-    actual_row_h = max(row_h, 0.48)
+    actual_row_h = max(row_h, 0.38)
+    table_font = 10.5 if actual_row_h < 0.45 else 12
     headers = ["Method", "传统基线", "LLM先验", "2022标签", "对比作用", "wMAE"]
     for col, header in enumerate(headers):
         xx = x + sum(widths[:col])
         rect(slide, xx, y, widths[col], actual_row_h, COLORS["navy"])
-        text_box(slide, header, xx + 0.04, y + 0.08, widths[col] - 0.08, actual_row_h - 0.14, 12, COLORS["white"], True, PP_ALIGN.CENTER)
+        text_box(slide, header, xx + 0.04, y + 0.07, widths[col] - 0.08, actual_row_h - 0.12, table_font, COLORS["white"], True, PP_ALIGN.CENTER)
     for row_idx, (method, historical, llm_prior, target_label, role, value) in enumerate(rows):
         yy = y + actual_row_h * (row_idx + 1)
         fill = COLORS["light"] if row_idx % 2 == 0 else COLORS["pale"]
@@ -350,12 +357,12 @@ def method_comparison_table(
             if col in {1, 2, 3}:
                 symbol = "●" if cell else "×"
                 color = COLORS["green"] if cell else COLORS["red"]
-                text_box(slide, symbol, xx + 0.05, yy + 0.07, widths[col] - 0.1, actual_row_h - 0.14, 12, color, True, PP_ALIGN.CENTER)
+                text_box(slide, symbol, xx + 0.05, yy + 0.06, widths[col] - 0.1, actual_row_h - 0.12, 12, color, True, PP_ALIGN.CENTER)
             else:
                 text = str(cell)
                 align = PP_ALIGN.RIGHT if col == 5 else PP_ALIGN.LEFT
                 bold = col == 0 or method == "Hybrid gated"
-                text_box(slide, text, xx + 0.06, yy + 0.07, widths[col] - 0.12, actual_row_h - 0.14, 12, COLORS["ink"], bold, align)
+                text_box(slide, text, xx + 0.06, yy + 0.06, widths[col] - 0.12, actual_row_h - 0.12, table_font, COLORS["ink"], bold, align)
 
 
 def draw_bar_chart(
@@ -401,8 +408,26 @@ def read_csv_or_empty(path: Path) -> pd.DataFrame:
     return pd.DataFrame()
 
 
+def append_optional_trip_rows(trip: pd.DataFrame) -> pd.DataFrame:
+    optional_frames: list[pd.DataFrame] = []
+    if ZERO_SHOT_RULE_TREE_PATH.exists():
+        zero = pd.read_csv(ZERO_SHOT_RULE_TREE_PATH)
+        zero = zero[zero["method"].isin(["zero_shot_llm_rule_tree"])]
+        optional_frames.append(zero)
+    if SMALL_DATA_CALIBRATION_PATH.exists():
+        small = pd.read_csv(SMALL_DATA_CALIBRATION_PATH)
+        small = small[small["method"].isin(["llm_rule_small_hist_calibrated_n500"])]
+        optional_frames.append(small)
+    if not optional_frames:
+        return trip
+
+    combined = pd.concat([trip, *optional_frames], ignore_index=True, sort=False)
+    combined = combined.drop_duplicates(subset=["method"], keep="last")
+    return combined
+
+
 def load_results() -> tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    trip = pd.read_csv(FINAL_DIR / "final_metrics_summary.csv")
+    trip = append_optional_trip_rows(pd.read_csv(FINAL_DIR / "final_metrics_summary.csv"))
     acc = pd.read_csv(FINAL_DIR / "household_accuracy_summary.csv")
     mode = pd.read_csv(MODE_DIR / "mode_composition_metrics.csv")
     mode_trips = read_csv_or_empty(MODE_DIR / "mode_specific_trip_count_metrics.csv")
@@ -673,20 +698,22 @@ def add_comparison_slide(prs: Presentation, logo: bytes | None, trip: pd.DataFra
         ("Ordinary XGBoost", True, False, False, "传统方法：家庭属性 -> 出行次数", f"{metric(trip, 'historical_xgboost', 'weighted_mae'):.2f}"),
         ("Trend / indicator", True, False, False, "统一趋势修正，不区分疫情机制", f"{metric(trip, 'historical_mean_trend_shift', 'weighted_mae'):.2f}"),
         ("LLM-only pressure", False, True, False, "只有事件方向，缺少 household baseline", f"{metric(trip, 'llm_only_trip_suppression_a1p25', 'weighted_mae'):.2f}"),
+        ("Zero-shot rule tree", False, True, False, "LLM 直接构建规则树，无数值校准", f"{metric(trip, 'zero_shot_llm_rule_tree', 'weighted_mae'):.2f}"),
+        ("Rule + 500 history", True, True, False, "LLM 规则 + 少量历史标签校准", f"{metric(trip, 'llm_rule_small_hist_calibrated_n500', 'weighted_mae'):.2f}"),
         ("Global event rule", True, False, False, "所有家庭使用同一疫情折减", f"{metric(trip, 'global_trip_suppression_a1p25', 'weighted_mae'):.2f}"),
         ("Random pressure", True, False, False, "随机 pressure 对照", f"{metric(trip, 'random_trip_suppression_a1p25', 'weighted_mae'):.2f}"),
         ("Hybrid gated", True, True, False, "历史基线 × LLM 事件折减", f"{metric(trip, 'gated_trip_suppression_a1_d0p15', 'weighted_mae'):.2f}"),
     ]
-    method_comparison_table(slide, rows, 0.52, 1.18, [2.1, 1.0, 0.9, 0.95, 4.85, 0.75], 0.48)
-    text_box(slide, "● 使用 / used    × 不使用 / not used", 0.65, 5.05, 3.7, 0.24, 12, COLORS["gray"], True)
+    method_comparison_table(slide, rows, 0.52, 1.12, [2.15, 1.0, 0.9, 0.95, 4.8, 0.75], 0.39)
+    text_box(slide, "● 使用 / used    × 不使用 / not used", 0.65, 5.18, 3.7, 0.24, 12, COLORS["gray"], True)
     story_box(
         slide,
-        "对比逻辑：传统 XGBoost 有 household baseline 但缺少疫情机制；LLM-only 有事件方向但缺少家庭数值基线；hybrid 把两者合在一起。",
-        "The comparison isolates the value of each component: household grounding from the traditional supervised baseline and event pressure from the LLM.",
+        "对比逻辑：LLM 直接构树能给出事件方向，但缺少历史行为的数值锚点；小样本规则校准仍偏高估。主方法保留 household baseline，再用 LLM 事件先验做无标签修正。",
+        "The comparison isolates household grounding, zero-shot rule priors, small historical calibration, and the final gated event adapter.",
         0.82,
-        5.38,
+        5.45,
         10.95,
-        1.28,
+        1.14,
         COLORS["teal"],
     )
 
@@ -700,23 +727,27 @@ def add_results_slide(prs: Presentation, logo: bytes | None, trip: pd.DataFrame,
         (METHOD_LABELS["historical_xgboost"], values["baseline"], COLORS["red"]),
         (METHOD_LABELS["historical_mean_trend_shift"], metric(trip, "historical_mean_trend_shift", "weighted_mae"), COLORS["orange"]),
         (METHOD_LABELS["llm_only_trip_suppression_a1p25"], values["llm_only"], COLORS["purple"]),
+        (METHOD_LABELS["zero_shot_llm_rule_tree"], values["zero_rule"], COLORS["blue"]),
+        (METHOD_LABELS["llm_rule_small_hist_calibrated_n500"], values["small_rule"], COLORS["orange"]),
         (METHOD_LABELS["global_trip_suppression_a1p25"], metric(trip, "global_trip_suppression_a1p25", "weighted_mae"), COLORS["teal"]),
         (METHOD_LABELS["gated_trip_suppression_a1_d0p15"], values["gated"], COLORS["green"]),
     ]
-    draw_bar_chart(slide, chart_values, 0.65, 1.28, 6.25, 3.28, 6.0)
+    draw_bar_chart(slide, chart_values, 0.65, 1.22, 6.25, 3.45, 6.0)
     rows = [
         ["Ordinary XGBoost", f"{values['baseline']:.3f}", f"{values['baseline_bias']:+.3f}", f"{values['baseline_r2']:.3f}"],
         ["CatBoost GPU", f"{values['catboost']:.3f}", f"{values['catboost_bias']:+.3f}", f"{values['catboost_r2']:.3f}"],
         ["LLM-only pressure", f"{values['llm_only']:.3f}", f"{values['llm_only_bias']:+.3f}", f"{values['llm_only_r2']:.3f}"],
+        ["Zero-shot tree", f"{values['zero_rule']:.3f}", f"{values['zero_rule_bias']:+.3f}", f"{values['zero_rule_r2']:.3f}"],
+        ["Rule + 500 hist.", f"{values['small_rule']:.3f}", f"{values['small_rule_bias']:+.3f}", f"{values['small_rule_r2']:.3f}"],
         ["Hybrid gated", f"{values['gated']:.3f}", f"{values['gated_bias']:+.3f}", f"{values['gated_r2']:.3f}"],
     ]
-    small_table(slide, ["Method", "wMAE", "wBias", "wR2"], rows, 7.15, 1.28, [2.05, 0.9, 0.9, 0.8], 0.42, 12, COLORS["teal"])
-    metric_card(slide, 7.16, 3.32, 2.05, 0.82, "MAE reduction", f"-{values['mae_reduction']:.1%}", "primary vs XGBoost", COLORS["green"])
-    metric_card(slide, 9.45, 3.32, 2.05, 0.82, "Bias reduction", "-99.4%", "absolute weighted bias", COLORS["blue"])
+    small_table(slide, ["Method", "wMAE", "wBias", "wR2"], rows, 7.15, 1.18, [2.05, 0.9, 0.9, 0.8], 0.42, 12, COLORS["teal"])
+    metric_card(slide, 7.16, 4.32, 2.05, 0.72, "MAE reduction", f"-{values['mae_reduction']:.1%}", "primary vs XGBoost", COLORS["green"])
+    metric_card(slide, 9.45, 4.32, 2.05, 0.72, "Bias reduction", "-99.4%", "absolute weighted bias", COLORS["blue"])
     story_box(
         slide,
-        "CatBoost GPU 等更强表格模型仍明显高估 2022；加入事件折减后，wMAE 降到 2.50，bias 接近 0。",
-        "Stronger tabular baselines still overpredict 2022. Event correction lowers wMAE to 2.50 and removes most systematic bias.",
+        "CatBoost GPU、zero-shot LLM rule tree 和少量历史校准规则都没有超过主方法；加入 gated event adapter 后，wMAE 降到 2.50，bias 接近 0。",
+        "The main adapter outperforms stronger tabular, zero-shot rule-tree, and small-data calibration baselines while removing most systematic bias.",
         0.82,
         5.35,
         10.95,
@@ -1207,6 +1238,12 @@ def create_deck() -> Path:
         "llm_only": llm_only,
         "llm_only_bias": metric(trip, "llm_only_trip_suppression_a1p25", "weighted_bias"),
         "llm_only_r2": metric(trip, "llm_only_trip_suppression_a1p25", "weighted_r2"),
+        "zero_rule": metric(trip, "zero_shot_llm_rule_tree", "weighted_mae"),
+        "zero_rule_bias": metric(trip, "zero_shot_llm_rule_tree", "weighted_bias"),
+        "zero_rule_r2": metric(trip, "zero_shot_llm_rule_tree", "weighted_r2"),
+        "small_rule": metric(trip, "llm_rule_small_hist_calibrated_n500", "weighted_mae"),
+        "small_rule_bias": metric(trip, "llm_rule_small_hist_calibrated_n500", "weighted_bias"),
+        "small_rule_r2": metric(trip, "llm_rule_small_hist_calibrated_n500", "weighted_r2"),
         "mean_bias": metric(trip, "historical_mean_only", "weighted_bias"),
         "trend_bias": metric(trip, "historical_mean_trend_shift", "weighted_bias"),
         "mae_reduction": pct_delta(baseline, gated),

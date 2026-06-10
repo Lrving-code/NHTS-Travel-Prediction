@@ -40,3 +40,4 @@ outputs/llm_event_features/household_cohort_prompts.jsonl
 outputs/llm_event_features/household_cohort_profiles.csv
 outputs/llm_event_features/**/validated/*.csv
 outputs/llm_residual_adaptation/**/household_2022_with_llm_features.csv
+outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_predictions.csv

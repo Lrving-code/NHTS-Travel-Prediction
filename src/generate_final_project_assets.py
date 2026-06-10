@@ -39,6 +39,24 @@ LOGGER = logging.getLogger(__name__)
 OUTPUT_DIR = PROJECT_ROOT / "outputs" / "final_project"
 FIGURE_DIR = OUTPUT_DIR / "figures"
 LABEL_FREE_DIR = PROJECT_ROOT / "outputs" / "label_free_llm_adaptation"
+ZERO_SHOT_RULE_TREE_PATH = (
+    PROJECT_ROOT
+    / "outputs"
+    / "zero_shot_llm_rule_tree_baseline"
+    / "zero_shot_llm_rule_tree_metrics.csv"
+)
+IRRELEVANT_PSEUDO_EVENT_PATH = (
+    PROJECT_ROOT
+    / "outputs"
+    / "irrelevant_pseudo_event_placebo"
+    / "irrelevant_pseudo_event_placebo_metrics.csv"
+)
+SMALL_DATA_CALIBRATION_PATH = (
+    PROJECT_ROOT
+    / "outputs"
+    / "llm_rule_small_data_calibration"
+    / "method_spectrum_metrics.csv"
+)
 
 SELECTED_METHODS = [
     "historical_mean_only",
@@ -98,6 +116,16 @@ def load_label_free_metrics() -> pd.DataFrame:
     if missing:
         raise ValueError(f"Missing selected methods in {path}: {sorted(missing)}")
     return metrics
+
+
+def load_optional_metric_row(path: Path, method: str) -> pd.Series | None:
+    if not path.exists():
+        return None
+    metrics = pd.read_csv(path)
+    rows = metrics.loc[metrics["method"] == method]
+    if rows.empty:
+        return None
+    return rows.iloc[0]
 
 
 def aggregate_metrics(metrics: pd.DataFrame) -> pd.DataFrame:
@@ -395,6 +423,15 @@ def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: di
     baseline = summary[summary["method"] == "historical_xgboost"].iloc[0]
     gated = summary[summary["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
     gated_acc = accuracy[accuracy["method"] == "gated_trip_suppression_a1_d0p15"].iloc[0]
+    zero_rule = load_optional_metric_row(ZERO_SHOT_RULE_TREE_PATH, "zero_shot_llm_rule_tree")
+    zero_tree = load_optional_metric_row(ZERO_SHOT_RULE_TREE_PATH, "zero_shot_pseudo_label_tree")
+    small_500 = load_optional_metric_row(SMALL_DATA_CALIBRATION_PATH, "llm_rule_small_hist_calibrated_n500")
+    small_full = load_optional_metric_row(SMALL_DATA_CALIBRATION_PATH, "llm_rule_full_history_calibrated")
+    pseudo_ranked = load_optional_metric_row(IRRELEVANT_PSEUDO_EVENT_PATH, "pseudo_random_hash_rank_matched_a1")
+    pseudo_gated = load_optional_metric_row(
+        IRRELEVANT_PSEUDO_EVENT_PATH,
+        "pseudo_random_hash_rank_matched_gated_a1_d0p15",
+    )
 
     lines = [
         "# Final Project Report",
@@ -424,6 +461,16 @@ def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: di
             f"| {PLOT_LABELS[method]} | {row.weighted_mae:.4f} | {row.weighted_rmse:.4f} | "
             f"{row.weighted_bias:.4f} | {row.weighted_r2:.4f} |"
         )
+    for label, row in [
+        ("Zero-shot LLM rule tree", zero_rule),
+        ("Zero-shot pseudo-label tree", zero_tree),
+        ("LLM rule + 500-history calibration", small_500),
+    ]:
+        if row is not None:
+            lines.append(
+                f"| {label} | {row.weighted_mae:.4f} | {row.weighted_rmse:.4f} | "
+                f"{row.weighted_bias:.4f} | {row.weighted_r2:.4f} |"
+            )
     lines.extend(
         [
             "",
@@ -449,6 +496,19 @@ def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: di
             f"- Primary absolute weighted bias drops by `{gated.abs_weighted_bias_reduction_pct:.2f}%`.",
             "- LLM-only pressure improves over naive historical baselines but remains weaker than the hybrid adapter, "
             "supporting the design choice that LLMs provide event semantics rather than standalone household predictions.",
+            (
+                f"- Zero-shot LLM rule tree reaches weighted MAE `{zero_rule.weighted_mae:.4f}`, "
+                f"and the pseudo-label tree distilled from it reaches `{zero_tree.weighted_mae:.4f}`; "
+                "both are weaker and more biased than the primary hybrid adapter."
+                if zero_rule is not None and zero_tree is not None
+                else ""
+            ),
+            (
+                f"- LLM rule + 500 historical calibration reaches weighted MAE `{small_500.weighted_mae:.4f}`; "
+                "it is a useful bridge baseline for data-sparse settings, but it reintroduces positive 2022 bias."
+                if small_500 is not None
+                else ""
+            ),
             "",
             "## Household-Level Accuracy",
             "",
@@ -503,6 +563,19 @@ def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: di
             "## Why Not a Zero-Shot LLM Decision Tree",
             "",
             "A decision tree needs labels to learn split thresholds and leaf-level numerical predictions. Without 2022 `CNTTDHH` labels, an LLM-generated tree would be a belief tree or a synthetic-label model rather than a data-fitted 2022 tree. This is why the project uses the LLM as an event-prior generator and keeps numerical prediction grounded in a historical household model trained on real NHTS data.",
+            (
+                f"We now include this as an explicit ablation. A zero-shot LLM-style semantic rule tree reaches weighted MAE `{zero_rule.weighted_mae:.4f}`, while a pseudo-label tree reaches `{zero_tree.weighted_mae:.4f}`. The primary hybrid adapter remains better at weighted MAE `{gated.weighted_mae:.4f}`."
+                if zero_rule is not None and zero_tree is not None
+                else ""
+            ),
+            "",
+            "## LLM Rules Plus Small Historical Calibration",
+            "",
+            (
+                f"We also include the collaborator-proposed bridge route: let an LLM-style rule structure define routine demand leaves, calibrate leaf values with historical samples, and then apply the same 2022 event factor. With 500 historical calibration rows, weighted MAE is `{small_500.weighted_mae:.4f}`; with full-history rule calibration, weighted MAE is `{small_full.weighted_mae:.4f}`. This supports the method spectrum but also shows why routine historical calibration alone can overpredict under a post-pandemic shift."
+                if small_500 is not None and small_full is not None
+                else ""
+            ),
             "",
             "## Robustness Check",
             "",
@@ -510,6 +583,16 @@ def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: di
             "",
             "- 500-run permutation control for the primary gated rule: actual weighted MAE `2.5023`, random-permutation mean `2.5808`, empirical p-value `0.0020`.",
             "- Same-alpha global pressure remains strong: primary gated weighted MAE `2.5023` vs global-a1 weighted MAE `2.5531`.",
+            (
+                f"- LLM rule + small historical calibration is a coherent bridge baseline but not a replacement: 500-row calibration weighted MAE `{small_500.weighted_mae:.4f}`."
+                if small_500 is not None
+                else ""
+            ),
+            (
+                f"- Irrelevant pseudo-event placebo controls are weaker than the primary method: best ranked pseudo-event weighted MAE `{pseudo_ranked.weighted_mae:.4f}`, best gated pseudo-event weighted MAE `{pseudo_gated.weighted_mae:.4f}`."
+                if pseudo_ranked is not None and pseudo_gated is not None
+                else ""
+            ),
             "- Leakage scan passes for LLM-facing profile/feature files: they exclude `HOUSEID`, `CNTTDHH`, and `WTHHFIN`.",
             "",
             "Interpretation for the course report: the dominant contribution is event-level label-free adaptation. Cohort-specific LLM ranking provides measurable incremental signal, but it should not be described as the sole source of improvement.",

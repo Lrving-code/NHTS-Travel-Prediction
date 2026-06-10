@@ -26,7 +26,7 @@ Turn the project into a reproducible zero-label 2022 adaptation study where 2022
 
 ## Current Results
 - Primary strict no-label row: `gated_trip_suppression_a1_d0p15`, weighted MAE `2.5023`, weighted bias `-0.0230`, weighted R2 `0.2480`.
-- Best-MAE sensitivity row: `llm_trip_suppression_a1p25`, weighted MAE `2.4820`, weighted bias `-0.5404`.
+- Single-objective sensitivity candidate: `llm_trip_suppression_a1p25`, weighted MAE `2.4820`, weighted bias `-0.5404`.
 - Historical baseline: weighted MAE `4.3377`, weighted bias `+3.6052`.
 - `llm_trip_suppression_a1p25` improves weighted MAE by `1.60%` over global trip suppression and `6.22%` over random trip suppression.
 

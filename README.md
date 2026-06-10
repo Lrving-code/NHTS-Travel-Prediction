@@ -14,8 +14,12 @@
 - Primary gated weighted MAE reduction: `42.31%`
 - LLM-only pressure weighted MAE: `2.7175`
 - Compared with LLM-only pressure, the primary hybrid gated adapter reduces weighted MAE from `2.7175` to `2.5023` and reduces absolute weighted bias from `0.3732` to `0.0230`.
+- Zero-shot LLM-authored rule tree weighted MAE: `2.6019`; pseudo-label DecisionTree distilled from that rule tree weighted MAE: `2.6040`.
+- Compared with the zero-shot LLM rule tree, the primary hybrid gated adapter is lower by `0.0997` weighted MAE and has much smaller weighted bias (`-0.4072 -> -0.0230`).
+- LLM rule + small historical calibration is implemented as a bridge baseline: 500 historical calibration rows give weighted MAE `2.7723`, and full-history rule calibration gives `2.7870`. This is useful for data-sparse/cold-start framing, but it is not the best setting for the 2022 event-shift task.
 - Gated household accuracy: exact `17.7%`, within 2 trips `54.5%`, within 3 trips `71.2%`
 - Stronger non-LLM baselines still overpredict 2022: best extra baseline is CatBoost GPU with weighted MAE `4.2196` and weighted bias `+3.4873`; the primary gated event adapter is `40.70%` lower in weighted MAE.
+- Irrelevant pseudo-event placebo controls do not reproduce the main result: the best ranked pseudo-event weighted MAE is `2.6274`, and the best gated pseudo-event weighted MAE is `2.5610`.
 - Equity-aware subgroup evaluation: worst-subgroup weighted MAE improves from `8.3778` under historical XGBoost to `4.7091` under the primary gated event adapter; all evaluated subgroups improve relative to historical XGBoost.
 - Multi-objective analysis: calibration-first and balanced profiles select the primary `gated_trip_suppression_a1_d0p15`; low-cost deployment selects `global_trip_suppression_a1`.
 
@@ -50,7 +54,7 @@
 
 和 pure LLM pressure 相比，hybrid gated 方法更稳：pure LLM 能抓到疫情后出行下降方向，但缺少 household-level routine baseline，容易把总量压得过低；hybrid 方法保留传统模型学到的家庭基础出行需求，再用 LLM event priors 做机制修正。
 
-为什么不直接让 LLM 零样本构建 2022 决策树：决策树需要标签来学习 split threshold 和叶节点数值。没有 2022 `CNTTDHH` 标签时，LLM 只能生成 belief tree 或 synthetic labels，优化目标会变成拟合 LLM 自己的假设，而不是拟合真实 NHTS 行为。因此本项目把 LLM 限定为 event-prior generator，把数值预测锚定在真实历史 NHTS 训练出的 household model 上。
+为什么不直接让 LLM 零样本构建 2022 决策树：决策树需要标签来学习 split threshold 和叶节点数值。没有 2022 `CNTTDHH` 标签时，LLM 只能生成 belief tree 或 synthetic labels，优化目标会变成拟合 LLM 自己的假设，而不是拟合真实 NHTS 行为。仓库已经把这个问题做成补充 ablation：zero-shot LLM rule tree 的 weighted MAE 是 `2.6019`，pseudo-label tree 是 `2.6040`，均弱于 primary hybrid gated adapter 的 `2.5023`，尤其 weighted bias 更不稳。因此本项目把 LLM 限定为 event-prior generator，把数值预测锚定在真实历史 NHTS 训练出的 household model 上。
 
 ## 学术问题与贡献
 
@@ -68,6 +72,9 @@
 - 将 LLM 限定为结构化事件先验生成器，而不是直接数值预测器，降低 hallucination 和 target leakage 风险。
 - 使用 cohort-level prompting，把 7,893 个家庭压缩为 1,327 个 cohort；进一步用 batch prompting 将请求数压缩到 89 个 batch prompts（batch size 15），降低请求成本并提高可审计性。
 - 对比 historical mean、ordinary historical XGBoost、historical trend shift、global event rule、random pressure、LLM-only pressure 和 hybrid LLM adapter，说明 hybrid 设计的必要性。
+- 额外实现 zero-shot LLM rule tree / pseudo-label tree baseline，回应“为什么不直接让 LLM 构建 2022 决策树”的审稿问题。
+- 实现 LLM rule + small historical calibration 中间 baseline，回应“先由 LLM 提取规则、再用少量历史数据校准”的合作方案。
+- 通过 irrelevant pseudo-event placebo 检验机制相关性：任意 distribution-matched cohort score 不能替代 post-pandemic event prior。
 
 ## 整体任务设计
 
@@ -109,6 +116,12 @@ predicted trips by mode = predicted total trips * predicted mode share
 - `outputs/robustness_checks/robustness_check_report.md`
 - `outputs/robustness_checks/permutation_pressure_controls.csv`
 - `outputs/robustness_checks/permutation_null_mae.png`
+- `outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_report_zh.md`
+- `outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_metrics.csv`
+- `outputs/llm_rule_small_data_calibration/llm_rule_small_data_calibration_report_zh.md`
+- `outputs/llm_rule_small_data_calibration/method_spectrum_metrics.csv`
+- `outputs/irrelevant_pseudo_event_placebo/irrelevant_pseudo_event_placebo_report.md`
+- `outputs/irrelevant_pseudo_event_placebo/irrelevant_pseudo_event_placebo_metrics.csv`
 - `outputs/temporal_transfer_validation/temporal_transfer_validation_report.md`
 - `outputs/pre_covid_placebo_event_correction/pre_covid_placebo_event_correction_report.md`
 - `outputs/leakage_audit/llm_input_leakage_audit_report.md`
@@ -179,6 +192,9 @@ src/
   run_multi_objective_pareto_analysis.py
   run_equity_aware_evaluation.py
   run_pre_covid_placebo_event_correction.py
+  run_zero_shot_llm_rule_tree_baseline.py
+  run_llm_rule_small_data_calibration.py
+  run_irrelevant_pseudo_event_placebo.py
   run_llm_input_leakage_audit.py
   build_causal_guardrail_evidence_pack.py
   run_stronger_tabular_baselines.py

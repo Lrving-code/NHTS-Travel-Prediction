@@ -18,7 +18,7 @@ This analysis turns the existing adapter grid into a planning-oriented multi-obj
 | llm_trip_suppression_a1p25 | 2.4820 | 0.5404 | 3.6601 | 0.2244 | 89 |
 | gated_trip_suppression_a1_d0p15 | 2.5023 | 0.0230 | 3.6038 | 0.2480 | 89 |
 
-Interpretation: the minimum-MAE LLM adapter is slightly more accurate, but the primary gated adapter has much lower aggregate bias and better weighted R2. This is why the project should present the result as a multi-objective operating-point choice rather than a single leaderboard.
+Interpretation: the single-objective sensitivity candidate is slightly more accurate on MAE, but the primary gated adapter has much lower aggregate bias and better weighted R2. This is why the project should present the result as a multi-objective operating-point choice rather than a single leaderboard.
 
 ## Preference-Based Operating Points
 

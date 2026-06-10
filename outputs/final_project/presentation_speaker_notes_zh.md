@@ -23,6 +23,8 @@ LLM 输出的是结构化事件先验，不直接输出 `CNTTDHH`。
 - 传统 XGBoost / CatBoost：优势是有 household grounding，问题是不知道 2022 疫情机制变化。普通 historical predictor 的 wMAE 是 `4.3377`，wBias 是 `3.6052`，明显高估。
 - 更强表格 baseline 仍然不够。最强非 LLM baseline `catboost_gpu` 的 wMAE 是 `4.2196`，wBias 是 `3.4873`。
 - Pure LLM pressure：优势是知道疫情后出行下降方向，问题是缺少家庭数值基线，wMAE `2.7175`，wBias `-0.3732`。
+- Zero-shot LLM rule tree：已经作为补充 ablation 跑过，wMAE `2.6019`，wBias `-0.4072`，能表达机制方向但校准弱于 hybrid。
+- LLM rule + 500 historical calibration：这是队友路线的 bridge baseline，wMAE `2.7723`，wBias `0.4627`，说明少量历史校准合理但会重新高估 2022。
 - Global event prior：低成本且很强，wMAE `2.5223`，wBias `-0.7477`。这说明主信号确实是 event-level suppression，不能夸大成 cohort LLM ranking 独自贡献全部提升。
 - 我们的 hybrid gated：wMAE `2.5023`，wBias `-0.0230`，wR2 `0.2480`。优势是同时保留 household baseline、event semantics 和 near-zero bias。
 
@@ -53,6 +55,6 @@ LLM 输出的是结构化事件先验，不直接输出 `CNTTDHH`。
 
 - 为什么有两套指标？因为 trip generation 是 count regression，mode composition 是 share-vector prediction。
 - 这是 pure LLM 吗？不是。纯 LLM-style correction 比 XGBoost + LLM 弱，说明 LLM 适合作为 event-prior adapter。
-- 为什么不直接让 LLM 零样本构建 2022 决策树？因为决策树需要标签学习 split threshold 和叶节点数值；没有 2022 标签时，这会变成 LLM belief tree 或 synthetic-label model，数值校准不如历史 household model + event prior。
+- 为什么不直接让 LLM 零样本构建 2022 决策树？我们已经把它作为 ablation 跑过，zero-shot rule tree wMAE `2.6019`，仍弱于主方法。原因是没有标签时 split threshold 和 leaf value 缺少数据校准，更像 LLM belief tree。
 - 有没有用 2022 标签训练？主实验没有。2022 `CNTTDHH` 只在最终 evaluation 中使用。
 - 结果够不够做大作业？够，因为我们有完整数据链路、强 baseline、LLM event prior、无标签修正、稳健性检验、mode 扩展和 10 分钟汇报材料。
