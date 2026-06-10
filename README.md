@@ -111,6 +111,7 @@ predicted trips by mode = predicted total trips * predicted mode share
 - `outputs/final_project/method_comparison_report.md`
 - `outputs/final_project/figures/presentation_figures/`
 - `plan/reviewer_qa_backup_2026.md`（答辩追问与 backup slides 口径）
+- `plan/reference_ppt_integration_audit.md`（同学参考 PPT 与本项目主线的整合口径）
 - `outputs/submission_readiness/submission_readiness_audit.md`（投稿/答辩证据链审计）
 - `outputs/paper_draft/nhts_event_adaptation_paper_draft.md`（论文初稿）
 - `outputs/paper_draft/claim_evidence_matrix.md`（claim-evidence 对照表）

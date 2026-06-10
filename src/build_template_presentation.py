@@ -31,7 +31,7 @@ SMALL_DATA_CALIBRATION_PATH = (
     PROJECT_ROOT / "outputs" / "llm_rule_small_data_calibration" / "method_spectrum_metrics.csv"
 )
 EMU_PER_INCH = 914400
-TOTAL_SLIDES = 23
+TOTAL_SLIDES = 24
 
 LOGGER = logging.getLogger(__name__)
 
@@ -508,7 +508,7 @@ def add_content_slide(prs: Presentation, logo: bytes | None) -> None:
     items = [
         ("01", "Background & gap", "疫情冲击、移动不平等与相关研究缺口"),
         ("02", "Problem & data", "家庭层面多输出 travel behavior system"),
-        ("03", "Method", "传统监督模型 × LLM event-generalizable priors"),
+        ("03", "Method", "传统监督模型 × LLM event priors；蒸馏规则作为桥梁"),
         ("04", "Evaluation", "性能比较、Pareto 选择、置信区间、稳健性检验"),
         ("05", "Insights", "出行强度、方式、目的与未来工作"),
     ]
@@ -883,7 +883,7 @@ def add_multi_objective_slide(prs: Presentation, logo: bytes | None) -> None:
     story_box(
         slide,
         "关键讲法：LLM 不是直接报一个答案，而是把事件机制转成候选修正；最终由规划目标选择 Pareto operating point。",
-        "Key message: the LLM supplies event mechanisms; a deterministic grid/solver selects the operating point under planning objectives.",
+        "Key message: LLM supplies event mechanisms; the solver selects a planning operating point.",
         8.05,
         5.18,
         4.1,
@@ -1116,32 +1116,91 @@ def add_purpose_slide(prs: Presentation, logo: bytes | None, purpose: pd.DataFra
     )
 
 
-def add_scalability_slide(prs: Presentation, logo: bytes | None) -> None:
+def add_method_spectrum_slide(prs: Presentation, logo: bytes | None, values: dict[str, float]) -> None:
     slide = blank_slide(prs)
     set_background(slide)
     add_frame(
         slide,
         "14",
-        "LLM 蒸馏与扩展 / Distillation & Scaling",
-        "把大模型泛化能力转成可审计、低调用量的事件适配器",
+        "方法谱系 / Method Spectrum",
+        "把 LLM 蒸馏路线并入同一条实验演化链",
         21,
         logo,
     )
+    cards = [
+        ("Data-only", "历史数据拟合", values["baseline"], values["baseline_bias"], COLORS["red"]),
+        ("Pure LLM prior", "事件方向可用", values["llm_only"], values["llm_only_bias"], COLORS["purple"]),
+        ("LLM rule tree", "零样本规则", values["zero_rule"], values["zero_rule_bias"], COLORS["orange"]),
+        ("Rule + history", "少量历史校准", values["small_rule"], values["small_rule_bias"], COLORS["teal"]),
+        ("Hybrid adapter", "历史基线+事件修正", values["gated"], values["gated_bias"], COLORS["green"]),
+    ]
+    for idx, (title, note, mae, bias, color) in enumerate(cards):
+        x = 0.62 + idx * 2.46
+        rect(slide, x, 1.24, 2.15, 1.18, COLORS["light"], COLORS["line"], True)
+        rect(slide, x, 1.24, 2.15, 0.06, color)
+        text_box(slide, title, x + 0.12, 1.42, 1.92, 0.22, 11.5, color, True, PP_ALIGN.CENTER)
+        text_box(slide, note, x + 0.12, 1.73, 1.92, 0.22, 9.2, COLORS["gray"], False, PP_ALIGN.CENTER)
+        text_box(slide, f"wMAE {mae:.3f}", x + 0.12, 1.96, 1.92, 0.2, 10.5, COLORS["ink"], True, PP_ALIGN.CENTER)
+        text_box(slide, f"bias {bias:+.3f}", x + 0.12, 2.17, 1.92, 0.18, 8.5, COLORS["gray"], False, PP_ALIGN.CENTER)
+        if idx < len(cards) - 1:
+            arrow(slide, x + 2.19, 1.75, 0.24, 0.14, COLORS["gray"])
+
+    small_table(
+        slide,
+        ["阶段", "核心假设", "最适合回答的问题", "本项目结论"],
+        [
+            ["Data-only", "历史样本足够表达未来", "常态年份迁移", "2022 出现系统性高估"],
+            ["Pure LLM", "预训练知识可直接预测", "零样本方向判断", "方向有用，数值校准不足"],
+            ["LLM rule", "把常识蒸馏为规则树", "老师追问的零样本 baseline", "wMAE 2.602，弱于 hybrid"],
+            ["Rule + history", "用少量历史标签校准规则", "data-sparse / cold-start", "合理桥梁，但不是本任务最优"],
+            ["Hybrid adapter", "历史模型学 routine，LLM 学 event shift", "目标年无标签疫情修正", "wMAE 2.502，bias 接近 0"],
+        ],
+        0.68,
+        3.04,
+        [1.55, 3.15, 3.15, 3.25],
+        0.46,
+        12,
+        COLORS["navy2"],
+    )
+    story_box(
+        slide,
+        "整合口径：同学方案中的 LLM 规则蒸馏不是被否定，而是作为 data-sparse/cold-start 的中间路线；我们的主任务是 post-pandemic event shift，因此需要历史 household grounding。",
+        "The rule-distillation route is a bridge for sparse-data settings; the main NHTS 2022 task still benefits from anchoring routine mobility in historical survey labels.",
+        0.82,
+        6.18,
+        10.95,
+        0.72,
+        COLORS["blue"],
+    )
+
+
+def add_scalability_slide(prs: Presentation, logo: bytes | None) -> None:
+    slide = blank_slide(prs)
+    set_background(slide)
+    add_frame(
+        slide,
+        "15",
+        "LLM 蒸馏与部署 / Distillation & Deployment",
+        "从逐户调用转成 batch prior、规则适配和置信度回退",
+        22,
+        logo,
+    )
     stages = [
-        ("Direct LLM", "逐户预测成本高，且数值校准弱"),
-        ("Cohort batching", "1,327 cohorts -> 89 prompts"),
-        ("Event-prior distillation", "validated JSON -> s_event"),
-        ("Fixed adapter", "no-label rule; no per-household LLM"),
+        ("Direct LLM", "逐户预测成本高；校准弱"),
+        ("Cohort batch", "1,327 cohorts -> 89 prompts"),
+        ("Structured priors", "JSON schema -> event variables"),
+        ("Rule adapter", "fixed no-label correction"),
+        ("Confidence gate", "global fallback; online LLM optional"),
     ]
     for idx, (title, note) in enumerate(stages):
-        x = 0.72 + idx * 3.05
-        color = COLORS["red"] if idx == 0 else COLORS["teal"] if idx == 1 else COLORS["orange"] if idx == 2 else COLORS["green"]
-        rect(slide, x, 1.26, 2.55, 1.08, COLORS["light"], COLORS["line"], True)
-        rect(slide, x, 1.26, 2.55, 0.055, color)
-        text_box(slide, title, x + 0.14, 1.46, 2.27, 0.24, 12, color, True, PP_ALIGN.CENTER)
-        text_box(slide, note, x + 0.16, 1.78, 2.23, 0.36, 12, COLORS["gray"], False, PP_ALIGN.CENTER)
+        x = 0.58 + idx * 2.5
+        color = [COLORS["red"], COLORS["teal"], COLORS["orange"], COLORS["green"], COLORS["purple"]][idx]
+        rect(slide, x, 1.22, 2.18, 1.08, COLORS["light"], COLORS["line"], True)
+        rect(slide, x, 1.22, 2.18, 0.055, color)
+        text_box(slide, title, x + 0.12, 1.42, 1.94, 0.24, 11.5, color, True, PP_ALIGN.CENTER)
+        text_box(slide, note, x + 0.14, 1.73, 1.9, 0.38, 10.0, COLORS["gray"], False, PP_ALIGN.CENTER)
         if idx < len(stages) - 1:
-            arrow(slide, x + 2.62, 1.72, 0.28, 0.14, COLORS["gray"])
+            arrow(slide, x + 2.22, 1.70, 0.24, 0.14, COLORS["gray"])
 
     metric_card(slide, 0.95, 2.95, 2.35, 0.84, "Household requests", "-98.9%", "7893 -> 89 prompts", COLORS["blue"])
     metric_card(slide, 3.65, 2.95, 2.35, 0.84, "Batch size", "15", "stable JSON parsing", COLORS["teal"])
@@ -1153,9 +1212,9 @@ def add_scalability_slide(prs: Presentation, logo: bytes | None) -> None:
         ["部署层", "在本研究中的角色", "为什么这样设计"],
         [
             ["Batch prior", "离线生成 cohort 级疫情先验", "保留 LLM 泛化能力，避免逐户调用"],
-            ["Schema validation", "检查数值范围、字段完整性", "降低 hallucination 和格式错误"],
+            ["Rule distillation", "把自然语言判断压缩成 s_event 和 fixed adapter", "比直接 LLM 输出 CNTTDHH 更可审计"],
             ["Confidence gate", "低置信 cohort 退回 global pressure", "主实验保持 no-label、可复现"],
-            ["LLM fallback", "作为线上扩展，不进入主结果", "有预算时处理边界样本"],
+            ["LLM fallback", "作为线上部署扩展，不进入主结果", "有预算时处理边界样本"],
         ],
         0.82,
         4.17,
@@ -1166,7 +1225,7 @@ def add_scalability_slide(prs: Presentation, logo: bytes | None) -> None:
     )
     text_box(
         slide,
-        "汇报口径：LLM 不是每户都报答案，而是把 pandemic context 蒸馏成结构化 event priors；主方法在预测阶段是 deterministic adapter，低置信 LLM 回退属于可部署扩展。",
+        "汇报口径：LLM 不是每户都报答案，而是把 pandemic context 蒸馏成结构化 event priors；主实验预测阶段是 deterministic adapter，低置信 LLM 回退属于可部署扩展。",
         0.95,
         6.48,
         11.0,
@@ -1180,7 +1239,7 @@ def add_scalability_slide(prs: Presentation, logo: bytes | None) -> None:
 def add_contribution_slide(prs: Presentation, logo: bytes | None) -> None:
     slide = blank_slide(prs)
     set_background(slide)
-    add_frame(slide, "15", "研究逻辑链 / Research Logic", "从问题定义到方法优势的完整闭环", 22, logo)
+    add_frame(slide, "16", "研究逻辑链 / Research Logic", "从问题定义到方法优势的完整闭环", 23, logo)
     small_table(
         slide,
         ["环节", "怎么做", "证据 / 结果"],
@@ -1206,7 +1265,7 @@ def add_contribution_slide(prs: Presentation, logo: bytes | None) -> None:
 def add_final_slide(prs: Presentation, logo: bytes | None, values: dict[str, float]) -> None:
     slide = blank_slide(prs)
     set_background(slide, COLORS["navy"])
-    add_frame(slide, "END", "总结 / Conclusion", "传统出行基线 + 疫情事件修正", 23, logo, True)
+    add_frame(slide, "END", "总结 / Conclusion", "传统出行基线 + 疫情事件修正", 24, logo, True)
     rect(slide, 0.82, 1.45, 11.15, 2.2, RGBColor(30, 64, 91), RGBColor(71, 85, 105), True)
     text_box(slide, "我们研究的不是“LLM 直接预测出行次数”，而是：\n当 2022 疫情后分布变化打破历史连续性时，能否用 LLM 的事件泛化能力，为传统 household travel model 提供无标签修正先验。", 1.12, 1.73, 10.5, 0.9, 15, COLORS["white"], True, PP_ALIGN.CENTER)
     metric_card(slide, 1.0, 4.25, 2.45, 0.9, "Accuracy", f"-{values['mae_reduction']:.1%}", "weighted MAE", COLORS["blue"], COLORS["white"])
@@ -1460,6 +1519,7 @@ def create_deck() -> Path:
     add_llm_role_slide(prs, logo, values)
     add_mode_slide(prs, logo, mode, values)
     add_purpose_slide(prs, logo, purpose)
+    add_method_spectrum_slide(prs, logo, values)
     add_scalability_slide(prs, logo)
     add_contribution_slide(prs, logo)
     add_final_slide(prs, logo, values)

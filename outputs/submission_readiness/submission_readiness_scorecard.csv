@@ -25,8 +25,8 @@ Literature and paper story,2025-2026 literature grounding,PASS,1.0,Literature gr
 Literature and paper story,Single paper spine,PASS,1.0,paper_logic_chain.md states the event-adaptation spine.,Keep.
 Literature and paper story,Reviewer Q&A backup,PASS,1.0,Reviewer Q&A backup document exists.,Keep.
 Literature and paper story,Paper draft and claim ledger,PASS,1.0,Paper draft and claim-evidence matrix exist.,Keep.
-Presentation readiness,Main deck plus backup,PASS,1.0,Template PPT has 31 slides with B1-B8 backup.,Keep.
-Presentation readiness,Key defense content in deck,PASS,1.0,Deck contains literature anchors and method-defense baselines.,Keep.
+Presentation readiness,Main deck plus backup,PASS,1.0,Template PPT has 32 slides with B1-B8 backup.,Keep.
+Presentation readiness,Key defense content in deck,PASS,1.0,"Deck contains literature anchors, method spectrum, and distillation deployment content.",Keep.
 Presentation readiness,Speaker notes,PASS,1.0,Chinese speaker notes include talk path and backup map.,Keep.
 Reproducibility and GPU,Stronger baseline script,PASS,1.0,Strong baseline script and metrics exist.,Keep.
 Reproducibility and GPU,GPU execution evidence,PASS,1.0,label_free_llm_adaptation_metrics.csv records device=cuda.,Keep.

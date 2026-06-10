@@ -20,23 +20,33 @@ LLM 输出的是结构化事件先验，不直接输出 `CNTTDHH`。
 
 ## 10 分钟主讲路径
 
-正式模板 PPT 的前 23 页是主讲路径。END 之后的 B1-B8 是 backup Q&A，不主动讲，只有在讨论环节老师追问时跳转。
+正式模板 PPT 的前 24 页是主讲路径。END 之后的 B1-B8 是 backup Q&A，不主动讲，只有在讨论环节老师追问时跳转。
 
 建议时间分配：
 
 - 背景与研究问题：1.5 分钟。
 - 数据、技术路线和 LLM 事件先验：2 分钟。
 - 方法比较和主结果：2.5 分钟。
-- 稳健性、异质性、多目标和 mode/purpose 扩展：2 分钟。
+- 稳健性、异质性、多目标、mode/purpose 和方法谱系：2 分钟。
 - 总结与边界：2 分钟。
 
 如果时间不够，优先保留：研究问题、技术路线、方法比较、主结果、稳健性边界和总结；error distribution、subgroup、mode/purpose 可以快速带过。
+
+## 方法谱系怎么讲
+
+这里要把同学的“LLM 知识蒸馏 + 低置信度回退”路线融合进来，而不是讲成两套互相竞争的方案。推荐说法是：
+
+```text
+data-only fitting -> pure LLM -> LLM rule tree -> LLM rule + small historical calibration -> historical model + LLM event adapter
+```
+
+这条链条说明：纯 LLM 和 LLM rule tree 都能提供事件方向和可解释规则，但缺少真实 NHTS 数值校准；少量历史校准是 data-sparse/cold-start 场景的合理桥梁；当前 2022 NHTS 主任务有多年历史调查数据，因此最强方法是保留 historical household grounding，再用 LLM event prior 修正疫情冲击。
 
 ## LLM 蒸馏与调用效率怎么讲
 
 推荐口径是：纯 LLM 逐户调用有两个问题，一是成本和延迟随 household 数量线性增加，二是缺少 NHTS 数值校准。我们的做法不是让 LLM 逐户报 `CNTTDHH`，而是先把家庭聚合成 cohort，再用 batch size 15 生成结构化 event priors。主实验一共从 1,327 个 cohorts 压缩到 89 个 prompts，相比 7,893 个 household 逐户调用减少约 98.9% 请求。
 
-蒸馏后的先验进入固定 adapter，所以正式预测阶段不再调用 LLM。低置信度回退可以作为未来线上部署扩展：如果某个 cohort 的事件先验不稳定，可以再触发 LLM 或改用 global pressure fallback。但主结果为了保持 no-label 和可复现，使用的是固定规则，不把在线 LLM fallback 混入 2022 evaluation。
+蒸馏后的先验进入固定 adapter，所以正式预测阶段不再调用 LLM。低置信度回退可以作为未来线上部署扩展：如果某个 cohort 的事件先验不稳定，可以再触发 LLM 或改用 global pressure fallback。但主结果为了保持 no-label 和可复现，使用的是固定规则，不把在线 LLM fallback 混入 2022 evaluation。也不要直接使用参考 PPT 中的 75%/25% 调用比例，除非后续我们真的按这个阈值跑出可复现实验。
 
 ## 各方法怎么比较
 

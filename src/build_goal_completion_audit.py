@@ -176,10 +176,22 @@ def build_requirements() -> list[RequirementEvidence]:
             "outputs/submission_readiness/environment_manifest.json",
         ),
         pass_if(
-            slide_count >= 31
-            and all(term in deck_text for term in ["B7", "B8", "PSRC microdata", "ELLMob", "CausalMob", "AgentMob", "Distillation & Scaling"]),
+            slide_count >= 32
+            and all(
+                term in deck_text
+                for term in [
+                    "B7",
+                    "B8",
+                    "PSRC microdata",
+                    "ELLMob",
+                    "CausalMob",
+                    "AgentMob",
+                    "Method Spectrum",
+                    "Distillation & Deployment",
+                ]
+            ),
             "10-minute PPT and backup Q&A are current",
-            f"Template deck has {slide_count} slides and includes literature, external-validation, and LLM-distillation backup content.",
+            f"Template deck has {slide_count} slides and includes literature, external-validation, method-spectrum, and LLM-distillation content.",
             "outputs/final_project/NHTS_Travel_Behavior_Template_Presentation.pptx",
         ),
         pass_if(

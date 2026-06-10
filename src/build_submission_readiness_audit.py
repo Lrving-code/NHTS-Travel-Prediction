@@ -353,9 +353,9 @@ def audit_presentation() -> list[Check]:
     checks: list[Check] = []
     slide_count, text = ppt_text("outputs/final_project/NHTS_Travel_Behavior_Template_Presentation.pptx")
     backup_markers = ["B1", "B2", "B3", "B4", "B5", "B6", "B7", "B8"]
-    if slide_count >= 31 and all(term in text for term in backup_markers):
+    if slide_count >= 32 and all(term in text for term in backup_markers):
         checks.append(pass_check(category, "Main deck plus backup", f"Template PPT has {slide_count} slides with B1-B8 backup."))
-    elif slide_count >= 23:
+    elif slide_count >= 24:
         checks.append(
             partial_check(
                 category,
@@ -366,8 +366,19 @@ def audit_presentation() -> list[Check]:
         )
     else:
         checks.append(fail_check(category, "Main deck plus backup", f"Template PPT has {slide_count} slides.", "Regenerate the deck."))
-    if all(term in text for term in ["ELLMob", "CausalMob", "AgentMob", "Zero-shot rule tree", "Rule + 500 history"]):
-        checks.append(pass_check(category, "Key defense content in deck", "Deck contains literature anchors and method-defense baselines."))
+    if all(
+        term in text
+        for term in [
+            "ELLMob",
+            "CausalMob",
+            "AgentMob",
+            "Zero-shot rule tree",
+            "Rule + 500 history",
+            "Method Spectrum",
+            "Distillation & Deployment",
+        ]
+    ):
+        checks.append(pass_check(category, "Key defense content in deck", "Deck contains literature anchors, method spectrum, and distillation deployment content."))
     else:
         checks.append(
             partial_check(
