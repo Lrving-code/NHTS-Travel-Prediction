@@ -548,6 +548,54 @@ def audit_multi_output_evaluation() -> list[Check]:
             )
         )
 
+    mode_choice_transfer_path = PROJECT_ROOT / "outputs/mode_choice_transfer/mode_choice_transfer_metrics.csv"
+    mode_choice_report_path = "outputs/mode_choice_transfer/mode_choice_transfer_report.md"
+    mode_choice_confusion_path = "outputs/mode_choice_transfer/xgboost_unweighted_test_confusion_matrix.png"
+    if mode_choice_transfer_path.exists():
+        mode_choice_metrics = pd.read_csv(mode_choice_transfer_path)
+        selected = mode_choice_metrics.loc[
+            (mode_choice_metrics["method"] == "xgboost_unweighted")
+            & (mode_choice_metrics["split"] == "test_2022")
+        ]
+        balanced = mode_choice_metrics.loc[
+            (mode_choice_metrics["method"] == "xgboost_class_balanced")
+            & (mode_choice_metrics["split"] == "test_2022")
+        ]
+        if (
+            not selected.empty
+            and not balanced.empty
+            and float(selected["accuracy"].iloc[0]) >= 0.93
+            and float(selected["macro_f1"].iloc[0]) >= 0.45
+            and float(balanced["balanced_accuracy"].iloc[0]) >= 0.60
+            and exists(mode_choice_report_path)
+            and exists(mode_choice_confusion_path)
+        ):
+            checks.append(
+                pass_check(
+                    category,
+                    "Trip-level mode-choice transfer",
+                    "2017-trained harmonized MODE_GROUP XGBoost reaches 2022 accuracy >=0.93 and macro F1 >=0.45; class-balanced variant reaches balanced accuracy >=0.60.",
+                )
+            )
+        else:
+            checks.append(
+                partial_check(
+                    category,
+                    "Trip-level mode-choice transfer",
+                    "Mode-choice transfer metrics exist but do not meet reporting thresholds or are missing report/figure artifacts.",
+                    "Run src/run_mode_choice_transfer_experiment.py --device cuda and inspect rare-mode metrics.",
+                )
+            )
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Trip-level mode-choice transfer",
+                "Missing mode-choice transfer metrics.",
+                "Run src/run_mode_choice_transfer_experiment.py --device cuda.",
+            )
+        )
+
     operating_points_path = PROJECT_ROOT / "outputs/multi_objective_pareto/preference_operating_points.csv"
     uncertainty_plot_path = "outputs/multi_objective_pareto/trip_uncertainty_tradeoff.png"
     if operating_points_path.exists():

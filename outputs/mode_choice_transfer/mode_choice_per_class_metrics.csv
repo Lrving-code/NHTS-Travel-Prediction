@@ -1,0 +1,43 @@
+method,split,mode_group,label,precision,recall,f1,support
+historical_prior_2017,validation,private_vehicle,Private vehicle,0.8662967273908454,1.0,0.9283590488871097,160018
+historical_prior_2017,validation,walk,Walk,0.0,0.0,0.0,16258
+historical_prior_2017,validation,bike_micromobility,Bike or micromobility,0.0,0.0,0.0,1772
+historical_prior_2017,validation,bus_paratransit,"Bus, shuttle, or paratransit",0.0,0.0,0.0,4051
+historical_prior_2017,validation,rail_transit,Rail transit,0.0,0.0,0.0,895
+historical_prior_2017,validation,taxi_ridehail,Taxi or ride-hail,0.0,0.0,0.0,562
+historical_prior_2017,validation,air_water_other,"Air, water, or other",0.0,0.0,0.0,1159
+historical_prior_2017,test_2022,private_vehicle,Private vehicle,0.8820557379159426,1.0,0.9373322161995794,27409
+historical_prior_2017,test_2022,walk,Walk,0.0,0.0,0.0,2103
+historical_prior_2017,test_2022,bike_micromobility,Bike or micromobility,0.0,0.0,0.0,304
+historical_prior_2017,test_2022,bus_paratransit,"Bus, shuttle, or paratransit",0.0,0.0,0.0,849
+historical_prior_2017,test_2022,rail_transit,Rail transit,0.0,0.0,0.0,155
+historical_prior_2017,test_2022,taxi_ridehail,Taxi or ride-hail,0.0,0.0,0.0,118
+historical_prior_2017,test_2022,air_water_other,"Air, water, or other",0.0,0.0,0.0,136
+xgboost_unweighted,validation,private_vehicle,Private vehicle,0.9608482472690859,0.9833956179929758,0.9719911918490631,160018
+xgboost_unweighted,validation,walk,Walk,0.8080253689474326,0.8149833927912412,0.8114894659480647,16258
+xgboost_unweighted,validation,bike_micromobility,Bike or micromobility,0.5411764705882353,0.1038374717832957,0.17424242424242425,1772
+xgboost_unweighted,validation,bus_paratransit,"Bus, shuttle, or paratransit",0.7932367149758454,0.6079980251789682,0.6883733929569592,4051
+xgboost_unweighted,validation,rail_transit,Rail transit,0.6231343283582089,0.37318435754189944,0.46680642907058,895
+xgboost_unweighted,validation,taxi_ridehail,Taxi or ride-hail,0.5116279069767442,0.07829181494661921,0.13580246913580246,562
+xgboost_unweighted,validation,air_water_other,"Air, water, or other",0.8322851153039832,0.3425366695427092,0.48533007334963324,1159
+xgboost_unweighted,test_2022,private_vehicle,Private vehicle,0.9669242435184516,0.9769783647706958,0.9719253035224943,27409
+xgboost_unweighted,test_2022,walk,Walk,0.7232375979112271,0.7902995720399429,0.7552828902522154,2103
+xgboost_unweighted,test_2022,bike_micromobility,Bike or micromobility,0.27472527472527475,0.16447368421052633,0.205761316872428,304
+xgboost_unweighted,test_2022,bus_paratransit,"Bus, shuttle, or paratransit",0.7151664611590629,0.6831566548881036,0.6987951807228916,849
+xgboost_unweighted,test_2022,rail_transit,Rail transit,0.7,0.13548387096774195,0.22702702702702704,155
+xgboost_unweighted,test_2022,taxi_ridehail,Taxi or ride-hail,0.07142857142857142,0.00847457627118644,0.015151515151515152,118
+xgboost_unweighted,test_2022,air_water_other,"Air, water, or other",0.7777777777777778,0.25735294117647056,0.3867403314917127,136
+xgboost_class_balanced,validation,private_vehicle,Private vehicle,0.9930865391832275,0.7441787798872627,0.8508014532256394,160018
+xgboost_class_balanced,validation,walk,Walk,0.665132949096721,0.844691844015254,0.7442351984825905,16258
+xgboost_class_balanced,validation,bike_micromobility,Bike or micromobility,0.07846966080856296,0.6123024830699775,0.1391114815052247,1772
+xgboost_class_balanced,validation,bus_paratransit,"Bus, shuttle, or paratransit",0.36312779711586274,0.7210565292520366,0.4830095080611823,4051
+xgboost_class_balanced,validation,rail_transit,Rail transit,0.11479346781940442,0.8011173184357542,0.20081221117490547,895
+xgboost_class_balanced,validation,taxi_ridehail,Taxi or ride-hail,0.040471810410128775,0.6654804270462633,0.07630317249821483,562
+xgboost_class_balanced,validation,air_water_other,"Air, water, or other",0.11339902926901015,0.6652286453839517,0.1937672782106057,1159
+xgboost_class_balanced,test_2022,private_vehicle,Private vehicle,0.9940158499110464,0.6726987485862308,0.8023847861090561,27409
+xgboost_class_balanced,test_2022,walk,Walk,0.6127864897466827,0.724679029957204,0.6640522875816993,2103
+xgboost_class_balanced,test_2022,bike_micromobility,Bike or micromobility,0.03620418259500787,0.5296052631578947,0.0677752052199537,304
+xgboost_class_balanced,test_2022,bus_paratransit,"Bus, shuttle, or paratransit",0.42875731945348083,0.7762073027090695,0.5523889354568315,849
+xgboost_class_balanced,test_2022,rail_transit,Rail transit,0.07295719844357977,0.4838709677419355,0.12679628064243448,155
+xgboost_class_balanced,test_2022,taxi_ridehail,Taxi or ride-hail,0.028011204481792718,0.5932203389830508,0.05349636988918609,118
+xgboost_class_balanced,test_2022,air_water_other,"Air, water, or other",0.13851992409867173,0.5367647058823529,0.22021116138763197,136

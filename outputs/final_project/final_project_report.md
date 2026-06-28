@@ -109,6 +109,12 @@ Purpose-composition results:
 - Traditional XGBoost purpose weighted TV: `0.5661`.
 - LLM purpose prior is not the overall best row, but it adds a third behavior dimension and exposes a clear future-work target for purpose-specific event adaptation.
 
+Trip-level harmonized mode-choice transfer:
+
+- A 2017-trained XGBoost model on harmonized `MODE_GROUP` reaches 2022 accuracy `0.9373`, balanced accuracy `0.4309`, and macro F1 `0.4658`.
+- The class-balanced variant reaches higher balanced accuracy `0.6167` but lower macro F1 `0.3553`, so the result should be reported as a trade-off rather than a solved full mode-choice task.
+- This extension uses 2022 mode labels only for evaluation, after year-specific `TRPTRANS` codes are mapped into comparable mode groups.
+
 ## Efficiency
 
 - Household rows in 2022: `7,893`.

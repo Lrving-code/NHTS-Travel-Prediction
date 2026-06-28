@@ -4,7 +4,7 @@
 
 作为“大数据与城市规划”课程大作业，本项目已经足够拿出来汇报，而且亮点比较清楚：它不是普通的跨年监督预测，而是把 2022 NHTS 预测定义为 post-pandemic distribution shift，再用 LLM event prior 做 label-free correction。
 
-作为论文，目前还不够直接说“顶刊稳投”，但已经从 course-paper 原型推进到更完整的 workshop / short-paper seed：核心 NHTS 实验、机制验证、PSRC 外部 pre/post 复刻、稳健性、论文初稿和答辩材料都齐了。如果要投正式交通规划或数据挖掘论文，下一步重点是 LaTeX 化、advisor feedback、额外地区复刻和更强的 mode-choice 实验。
+作为论文，目前还不够直接说“顶刊稳投”，但已经从 course-paper 原型推进到更完整的 workshop / short-paper seed：核心 NHTS 实验、机制验证、PSRC 外部 pre/post 复刻、稳健性、harmonized mode-choice transfer baseline、论文初稿和答辩材料都齐了。如果要投正式交通规划或数据挖掘论文，下一步重点是 LaTeX 化、advisor feedback、额外地区复刻和更细粒度的 mode-choice event adapter。
 
 一句话判断：**大作业可以讲，论文还需要补证据链**。当前最适合的题目不是“LLM 提高 NHTS 预测准确率”，而是“在目标年份标签不可用时，如何用 LLM 事件先验修正历史出行模型的 distribution shift”。
 
@@ -18,7 +18,7 @@
 - Zero-shot LLM rule tree weighted MAE: `2.7508`; pseudo-label tree distilled from it: `2.7767`. These baselines answer the direct "why not let the LLM build a 2022 tree" question and remain weaker than the hybrid adapter.
 - LLM rule + 500 historical calibration weighted MAE: `2.7723`; full-history rule calibration: `2.7870`. This integrates the collaborator's rule-distillation + small-data calibration idea, but it is not the strongest setting for the 2022 event-shift task.
 - Irrelevant pseudo-event controls do not reproduce the main method: best ranked pseudo-event weighted MAE `2.6274`, best gated pseudo-event weighted MAE `2.5610`.
-- Transit-share weighted MAE improves from `0.0325` to `0.0269`, but full mode composition improves only modestly.
+- Transit-share weighted MAE improves from `0.0325` to `0.0269`, but full mode composition improves only modestly. The added trip-level harmonized mode-choice transfer baseline reaches 2022 accuracy `0.9373`, balanced accuracy `0.4309`, and macro F1 `0.4658`, showing a stronger mode-choice check while preserving a rare-mode limitation.
 - Household exact rounded accuracy improves from `5.84%` to `17.72%`; weighted within-2-trips coverage improves from `23.39%` to `53.95%`.
 - External mechanism validation supports the event-prior direction: ACS worked-from-home commute share changes from `5.7%` in 2019 to `15.2%` in 2022, while public-transportation commute share changes from `5.0%` to `3.1%`.
 - BTS daily mobility is useful as a compatibility guardrail but not as an external numeric target: its device-based trips/person do not align with NHTS travel-diary `CNTTDHH`.
@@ -59,7 +59,7 @@ Current version is not ready for a full paper because:
 1. It validates one shock year only: 2022 NHTS.
 2. The LLM context is retrospective; GPT-5.5 may already know COVID-era mobility facts.
 3. The strongest improvement is close to global event downscaling, so cohort-specific LLM ranking should not be overclaimed.
-4. Mode composition improvement is concentrated in transit and does not yet form a complete mode-choice model.
+4. Mode composition improvement is concentrated in transit; the harmonized trip-level mode-choice baseline is now implemented, but rare-mode macro F1 remains a limitation.
 5. External household validation exists, but it is one regional PSRC replication; a stronger paper would benefit from additional regions or shocks.
 
 Adversarial reviewer concern: the strongest alternative explanation is that most of the gain comes from a global 2022 shock correction, not from rich LLM reasoning. The current version now addresses this with LLM-only, zero-shot rule-tree, random-prior, irrelevant pseudo-event, and global-prior controls. A paper would still need stronger external evidence that cohort-specific semantic priors add value beyond a calibrated shock scalar across multiple shocks or regions.

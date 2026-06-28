@@ -41,6 +41,7 @@ LLM 输出的是结构化事件先验，不直接输出 `CNTTDHH`。
 ## Mode Extension 怎么讲
 
 出行方式结构是第二个家庭层面的预测输出。XGBoost + LLM 把 transit-share weighted MAE 从 `0.0325` 降到 `0.0269`，说明 LLM 的 transit avoidance prior 对公共交通这一项有帮助；但总体 mode composition 改善不大，所以汇报时要把它讲成 mode-structure 维度，而不是夸大成主要增益。
+另外我们补了 trip-level harmonized mode-choice transfer baseline：2017 训练的 XGBoost 在 2022 `MODE_GROUP` 上 accuracy `0.9373`、balanced accuracy `0.4309`、macro F1 `0.4658`。这个可以证明方式选择链路更完整，但 rare modes 仍然难，所以不能夸大成完整 mode-choice 已解决。
 
 进一步的 planning 输出是 mode-specific trip volume：用预测总出行次数乘以预测 mode share，得到各方式出行量。这个比单独报 mode share 更接近城市规划里的需求评估。
 

@@ -34,6 +34,7 @@
 - XGBoost + LLM transit prior weighted total variation: `0.1985`
 - Transit-share weighted MAE: `0.0325 -> 0.0269`
 - 该目标用于补充“怎么出行”的方式结构维度，和 `CNTTDHH` 一起构成 household travel behavior prediction。
+- Trip-level harmonized mode-choice transfer 已补充为更强的方式选择检查：2017-trained XGBoost 在 2022 `MODE_GROUP` 上 accuracy `0.9373`、balanced accuracy `0.4309`、macro F1 `0.4658`；class-balanced variant 的 balanced accuracy 为 `0.6167`，但 macro F1 和 log-loss 更差，因此应作为 trade-off 报告，而不是宣称 full mode-choice 已解决。
 
 行为目标 3 是 household-level purpose composition：
 
@@ -308,6 +309,14 @@ python src\run_mode_choice_branch.py all
 
 该分支保留原压缩包中的共同字段筛选、缺失值处理、2017 训练/验证划分、2022 迁移测试集构建，并将原脚本中的个人机器路径改为仓库相对路径。由于 NHTS 2017 与 2022 的 raw `TRPTRANS` 编码含义不同，该分支不会直接把 raw code 当成同一标签，而是先映射为跨年一致的 `MODE_GROUP`，再生成出行方式建模数据和 harmonized mode-shift 诊断。生成的中间文件默认写入 `data/interim/mode_choice_branch/`，报告和建模数据集默认写入 `outputs/mode_choice_branch/`，两者均不提交到 git。
 
+harmonized trip-level mode-choice transfer 实验：
+
+```powershell
+python src\run_mode_choice_transfer_experiment.py --device cuda
+```
+
+该实验使用 2017 `MODE_GROUP` 训练、2017 validation 选择 operating point、2022 `MODE_GROUP` 只做最终评估。小型结果文件写入 `outputs/mode_choice_transfer/`，逐行建模数据仍留在 git ignored 的 `outputs/mode_choice_branch/`。
+
 purpose-composition 与统计验证：
 
 ```powershell
@@ -404,16 +413,16 @@ purpose-composition 扩展使用同一组 trip-level files，并额外依赖跨�
 
 ## 重要注意事项
 
-- 当前版本足够作为“大数据与城市规划”课程大作业汇报；如果要发展成论文，应按 `outputs/final_project/project_quality_assessment.md` 继续推进 LaTeX 化、advisor feedback、额外地区复刻和更强的 mode-choice 实验。
+- 当前版本足够作为“大数据与城市规划”课程大作业汇报；如果要发展成论文，应按 `outputs/final_project/project_quality_assessment.md` 继续推进 LaTeX 化、advisor feedback、额外地区复刻和更细粒度的 mode-choice event adapter。
 - 主实验不使用 2022 `CNTTDHH` 标签训练或校准，2022 标签只用于最终 evaluation。
 - 汇报主口径使用固定 `gated_trip_suppression_a1_d0p15` no-label rule；参数扫描结果只放内部附录，不进入公开方法比较主表。
 - Count-model baseline 是 reviewer-facing transparent baseline，不是 exhaustively optimized zero-inflated/negative-binomial state of the art；Poisson/Tweedie solver warning 已记录在 `outputs/count_model_baselines/count_model_solver_diagnostics.csv`，negative-binomial GLM 的 alpha 失败和未收敛信息记录在 `outputs/negative_binomial_baseline/negative_binomial_diagnostics.csv`，zero-inflated Poisson 的未收敛状态记录在 `outputs/zero_inflated_count_baseline/zero_inflated_count_diagnostics.csv`。
 - 本地/open-source LLM prior replication 已在 RTX 4090 上跑通 32 cohort Qwen sensitivity control；当前只能表述为可复现性与敏感性控制实验，不能表述为已完成的大规模开源模型替代方案。
 - 稳健性检验显示 global event pressure 是很强的 baseline；应把贡献表述为 event-level label-free adaptation + selective cohort refinement，cohort-specific LLM ranking 是增量证据，不是唯一或主导来源。
 - 外部验证现在包括 mechanism-level ACS/BTS 证据和 PSRC household-level direct pre/post microdata。PSRC 的结果支持 event-adaptation principle，但不要把它表述为 NHTS 2022 数值预测的直接外部验证。
-- mode-composition 是探索性扩展：总体 weighted TV 改善较小，最清楚的结果是 transit-share weighted MAE 和 mode-specific trip volume 改善。
+- mode-composition 是探索性扩展：总体 weighted TV 改善较小，最清楚的结果是 transit-share weighted MAE 和 mode-specific trip volume 改善；trip-level harmonized mode-choice baseline 已补充，但 rare-mode macro F1 仍是限制。
 - purpose-composition 是综合目标扩展和边界实验：它说明项目可以预测“为什么出行”，但当前 LLM purpose prior 还不是整体最优。
 - LLM 的核心价值应表述为 event-generalizable priors，而不是逐户直接预测；batch prompting 是工程加速，prospective event context 是防止 retrospective leakage 的论文级改进方向。
-- `TRPTRANS` 编码在 2017 和 2022 不能直接按数字对齐，mode-composition 扩展使用 year-specific official codebook mapping。
+- `TRPTRANS` 编码在 2017 和 2022 不能直接按数字对齐，mode-composition 和 trip-level mode-choice transfer 都必须使用 year-specific official codebook mapping 到 harmonized mode groups。
 - `outputs/share_package/` 是本地分享包目录，默认 git ignored。
 - 不要提交 `.env`、API key、原始 LLM JSONL 请求日志或原始 NHTS 大文件。

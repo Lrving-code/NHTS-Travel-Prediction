@@ -27,6 +27,7 @@ Historical prediction overestimates 2022 trips. The primary fixed no-label gated
 
 ## Mode Extension
 Mode composition is the second household-level output. XGBoost + LLM reduces transit-share weighted MAE from `0.0325` to `0.0269`, while the overall mode-composition improvement is small.
+The trip-level harmonized mode-choice transfer baseline reaches 2022 accuracy `0.9373`, balanced accuracy `0.4309`, and macro F1 `0.4658`; it is useful behavior-system evidence, but rare modes remain hard.
 
 Mode-specific trip volume is the derived planning output: predicted total trips multiplied by predicted mode shares. It is more interpretable for planning than a standalone mode-share number.
 

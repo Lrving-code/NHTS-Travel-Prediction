@@ -70,6 +70,11 @@ Mode-composition 结论：
 - 但公共交通这一项改善明显：transit-share weighted MAE 从 `0.0325` 降到 `0.0269`。
 - LLM-only corrected transit MAE 是 `0.0451`，说明 LLM 知道方向，但需要历史预测器提供 household-specific baseline。
 
+## Trip-level mode-choice transfer
+
+- 2017 训练的 harmonized `MODE_GROUP` XGBoost 在 2022 上 accuracy `0.9373`、balanced accuracy `0.4309`、macro F1 `0.4658`。
+- Class-balanced variant 的 balanced accuracy 是 `0.6167`，但 macro F1 是 `0.3553`，所以它是 rare-mode trade-off，不是主结论。
+
 ## 最终口径
 
 不要把这个项目讲成“LLM 替代传统模型”。更准确的说法是：历史预测器学习 routine mobility，LLM 提供疫情事件先验，两者结合后能在不使用 2022 标签训练的前提下修正 post-pandemic distribution shift。

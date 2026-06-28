@@ -174,7 +174,7 @@ The strongest alternative explanation is that a global post-pandemic downscaling
 1. The main NHTS evaluation focuses on one shock year, 2022.
 2. The LLM may contain broad post-pandemic mobility knowledge from pretraining; the prospective event-context file, frozen ACS/BTS context package, and 89-batch prompt leakage audit reduce but do not fully eliminate retrospective knowledge concerns.
 3. The global event prior is strong, so cohort-specific LLM ranking should be described as incremental.
-4. Mode and purpose extensions are useful for planning relevance but are not yet full mode-choice or purpose-choice models.
+4. Mode and purpose extensions are useful for planning relevance. A harmonized trip-level mode-choice transfer baseline is now implemented, but rare-mode macro F1 remains limited; purpose-choice is still an exploratory extension.
 5. PSRC is a regional external survey with different sampling and diary protocols, so it validates transfer of the principle rather than exact NHTS numerical accuracy.
 6. The current count-model baselines include Poisson, Tweedie, zero-inflated Poisson, and a stable negative-binomial GLM check with solver diagnostics recorded; a submission version could still add more carefully regularized or survey-weighted count variants if time permits.
 7. A local/open-source LLM prior-replication protocol and a 32-cohort CUDA sensitivity control are implemented on the RTX 4090. The local Qwen run produced valid structured priors, but agreement with the GPT-reference priors is limited; therefore, local LLM replication should be presented as a reproducibility and sensitivity control, not as a full-scale replacement for the main prior source.

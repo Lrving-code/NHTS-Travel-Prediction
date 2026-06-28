@@ -70,6 +70,11 @@ Mode-composition takeaway:
 - XGBoost + LLM transit prior reduces transit-share weighted MAE from `0.0325` to `0.0269`.
 - LLM-only corrected transit MAE is `0.0451`, showing that LLM event priors help directionally but need a household-level historical predictor.
 
+## Trip-Level Mode-Choice Transfer
+
+- 2017-trained harmonized `MODE_GROUP` XGBoost reaches 2022 accuracy `0.9373`, balanced accuracy `0.4309`, and macro F1 `0.4658`.
+- The class-balanced variant reaches balanced accuracy `0.6167` but macro F1 `0.3553`, so report it as a rare-mode trade-off.
+
 ## Final Interpretation
 
 The strongest claim is not that LLMs replace mobility models. The stronger and more defensible claim is that LLM event priors repair historical mobility predictors under post-pandemic event shift.

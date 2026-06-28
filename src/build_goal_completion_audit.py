@@ -287,6 +287,14 @@ def build_requirements() -> list[RequirementEvidence]:
             "src/mode_choice_branch/common.py",
         ),
         pass_if(
+            exists("outputs/mode_choice_transfer/mode_choice_transfer_metrics.csv")
+            and exists("outputs/mode_choice_transfer/mode_choice_transfer_report.md")
+            and "macro F1 `0.4658`" in read_text("outputs/mode_choice_transfer/mode_choice_transfer_report.md"),
+            "Trip-level mode-choice transfer baseline exists",
+            "2017-trained harmonized MODE_GROUP XGBoost transfer baseline is reported with accuracy, balanced accuracy, macro F1, and rare-mode limitations.",
+            "outputs/mode_choice_transfer/mode_choice_transfer_report.md",
+        ),
+        pass_if(
             "device=cuda" in read_text("outputs/submission_readiness/submission_readiness_audit.md")
             and exists("outputs/submission_readiness/environment_manifest.json"),
             "GPU and reproducibility evidence exist",

@@ -11,7 +11,8 @@
 9. Mode distribution shift.
 10. Mode-composition method comparison.
 11. Pure LLM-style baseline.
-12. Metric guide.
-13. LLM contribution.
-14. Caveats.
-15. Final takeaway.
+12. Trip-level mode-choice transfer.
+13. Metric guide.
+14. LLM contribution.
+15. Caveats.
+16. Final takeaway.

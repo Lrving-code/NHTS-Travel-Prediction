@@ -166,10 +166,11 @@ def save_dataset_files(
     }
     for split_name, (features_frame, target_series) in split_payloads.items():
         combined = features_frame.copy()
-        combined[MODE_GROUP_COLUMN] = target_series.to_numpy()
+        named_target = target_series.rename(MODE_GROUP_COLUMN)
+        combined[MODE_GROUP_COLUMN] = named_target.to_numpy()
         combined.to_csv(output_dir / f"{split_name}.csv", index=False)
         features_frame.to_csv(output_dir / f"X_{split_name}.csv", index=False)
-        target_series.to_csv(output_dir / f"y_{split_name}.csv", index=False)
+        named_target.to_csv(output_dir / f"y_{split_name}.csv", index=False)
 
     return feature_path
 

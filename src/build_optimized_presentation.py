@@ -29,6 +29,8 @@ LOGGER = logging.getLogger(__name__)
 FINAL_DIR = PROJECT_ROOT / "outputs" / "final_project"
 FINAL_FIGURE_DIR = FINAL_DIR / "figures"
 MODE_DIR = PROJECT_ROOT / "outputs" / "mode_composition_extension"
+MODE_CHOICE_TRANSFER_DIR = PROJECT_ROOT / "outputs" / "mode_choice_transfer"
+MODE_CHOICE_TRANSFER_PATH = MODE_CHOICE_TRANSFER_DIR / "mode_choice_transfer_metrics.csv"
 STRONG_BASELINE_PATH = PROJECT_ROOT / "outputs" / "strong_baselines" / "strong_tabular_baseline_metrics.csv"
 ZERO_SHOT_RULE_TREE_PATH = (
     PROJECT_ROOT
@@ -109,6 +111,13 @@ def load_strong_baselines() -> pd.DataFrame:
         LOGGER.warning("Missing stronger baseline table: %s", STRONG_BASELINE_PATH)
         return pd.DataFrame()
     return pd.read_csv(STRONG_BASELINE_PATH)
+
+
+def load_mode_choice_transfer_metrics() -> pd.DataFrame:
+    if not MODE_CHOICE_TRANSFER_PATH.exists():
+        LOGGER.warning("Missing mode-choice transfer table: %s", MODE_CHOICE_TRANSFER_PATH)
+        return pd.DataFrame(columns=["method", "split"])
+    return pd.read_csv(MODE_CHOICE_TRANSFER_PATH)
 
 
 def load_zero_shot_rule_tree_metrics() -> pd.DataFrame:
@@ -319,6 +328,13 @@ def write_method_report(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFram
     mode_base = mode[mode["method"] == "historical_xgboost"].iloc[0]
     mode_best = mode[mode["method"] == "llm_transit_avoidance_a1"].iloc[0]
     llm_only_best = mode[mode["method"] == "llm_only_2017_mean_transit_a1.25"].iloc[0]
+    mode_choice = load_mode_choice_transfer_metrics()
+    mode_choice_xgb = mode_choice.loc[
+        (mode_choice["method"] == "xgboost_unweighted") & (mode_choice["split"] == "test_2022")
+    ]
+    mode_choice_balanced = mode_choice.loc[
+        (mode_choice["method"] == "xgboost_class_balanced") & (mode_choice["split"] == "test_2022")
+    ]
     llm_only_gain = 100.0 * (trip_llm_only.weighted_mae - trip_gated.weighted_mae) / trip_llm_only.weighted_mae
     llm_only_bias_gain = 100.0 * (
         abs(trip_llm_only.weighted_bias) - abs(trip_gated.weighted_bias)
@@ -437,6 +453,19 @@ def write_method_report(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFram
             f"- XGBoost + LLM transit prior reduces transit-share weighted MAE from `{mode_base.transit_share_weighted_mae:.4f}` to `{mode_best.transit_share_weighted_mae:.4f}`.",
             f"- LLM-only corrected transit MAE is `{llm_only_best.transit_share_weighted_mae:.4f}`, showing that LLM event priors help directionally but need a household-level historical predictor.",
             "",
+            "## Trip-Level Mode-Choice Transfer",
+            "",
+            (
+                f"- 2017-trained harmonized `MODE_GROUP` XGBoost reaches 2022 accuracy `{mode_choice_xgb.iloc[0].accuracy:.4f}`, balanced accuracy `{mode_choice_xgb.iloc[0].balanced_accuracy:.4f}`, and macro F1 `{mode_choice_xgb.iloc[0].macro_f1:.4f}`."
+                if not mode_choice_xgb.empty
+                else "- Mode-choice transfer metrics are not available."
+            ),
+            (
+                f"- The class-balanced variant reaches balanced accuracy `{mode_choice_balanced.iloc[0].balanced_accuracy:.4f}` but macro F1 `{mode_choice_balanced.iloc[0].macro_f1:.4f}`, so report it as a rare-mode trade-off."
+                if not mode_choice_balanced.empty
+                else ""
+            ),
+            "",
             "## Final Interpretation",
             "",
             "The strongest claim is not that LLMs replace mobility models. The stronger and more defensible claim is that LLM event priors repair historical mobility predictors under post-pandemic event shift.",
@@ -459,6 +488,13 @@ def write_method_report_zh(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataF
     mode_base = mode[mode["method"] == "historical_xgboost"].iloc[0]
     mode_best = mode[mode["method"] == "llm_transit_avoidance_a1"].iloc[0]
     llm_only_best = mode[mode["method"] == "llm_only_2017_mean_transit_a1.25"].iloc[0]
+    mode_choice = load_mode_choice_transfer_metrics()
+    mode_choice_xgb = mode_choice.loc[
+        (mode_choice["method"] == "xgboost_unweighted") & (mode_choice["split"] == "test_2022")
+    ]
+    mode_choice_balanced = mode_choice.loc[
+        (mode_choice["method"] == "xgboost_class_balanced") & (mode_choice["split"] == "test_2022")
+    ]
     llm_only_gain = 100.0 * (trip_llm_only.weighted_mae - trip_gated.weighted_mae) / trip_llm_only.weighted_mae
     llm_only_bias_gain = 100.0 * (
         abs(trip_llm_only.weighted_bias) - abs(trip_gated.weighted_bias)
@@ -570,6 +606,19 @@ def write_method_report_zh(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataF
             f"- XGBoost + LLM transit prior 把 weighted TV 从 `{mode_base.weighted_total_variation:.4f}` 降到 `{mode_best.weighted_total_variation:.4f}`，总体提升较小。",
             f"- 但公共交通这一项改善明显：transit-share weighted MAE 从 `{mode_base.transit_share_weighted_mae:.4f}` 降到 `{mode_best.transit_share_weighted_mae:.4f}`。",
             f"- LLM-only corrected transit MAE 是 `{llm_only_best.transit_share_weighted_mae:.4f}`，说明 LLM 知道方向，但需要历史预测器提供 household-specific baseline。",
+            "",
+            "## Trip-level mode-choice transfer",
+            "",
+            (
+                f"- 2017 训练的 harmonized `MODE_GROUP` XGBoost 在 2022 上 accuracy `{mode_choice_xgb.iloc[0].accuracy:.4f}`、balanced accuracy `{mode_choice_xgb.iloc[0].balanced_accuracy:.4f}`、macro F1 `{mode_choice_xgb.iloc[0].macro_f1:.4f}`。"
+                if not mode_choice_xgb.empty
+                else "- Mode-choice transfer metrics 暂不可用。"
+            ),
+            (
+                f"- Class-balanced variant 的 balanced accuracy 是 `{mode_choice_balanced.iloc[0].balanced_accuracy:.4f}`，但 macro F1 是 `{mode_choice_balanced.iloc[0].macro_f1:.4f}`，所以它是 rare-mode trade-off，不是主结论。"
+                if not mode_choice_balanced.empty
+                else ""
+            ),
             "",
             "## 最终口径",
             "",
@@ -685,6 +734,13 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
     mode_base = mode[mode["method"] == "historical_xgboost"].iloc[0]
     mode_best = mode[mode["method"] == "llm_transit_avoidance_a1"].iloc[0]
     llm_only_best = mode[mode["method"] == "llm_only_2017_mean_transit_a1.25"].iloc[0]
+    mode_choice = load_mode_choice_transfer_metrics()
+    mode_choice_xgb = mode_choice.loc[
+        (mode_choice["method"] == "xgboost_unweighted") & (mode_choice["split"] == "test_2022")
+    ]
+    mode_choice_balanced = mode_choice.loc[
+        (mode_choice["method"] == "xgboost_class_balanced") & (mode_choice["split"] == "test_2022")
+    ]
 
     slide = prs.slides.add_slide(blank)
     slide.background.fill.solid()
@@ -870,6 +926,50 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
         15,
     )
 
+    if not mode_choice_xgb.empty and not mode_choice_balanced.empty:
+        selected_mode = mode_choice_xgb.iloc[0]
+        balanced_mode = mode_choice_balanced.iloc[0]
+        slide = base_slide("Trip-level mode-choice transfer", "Harmonized MODE_GROUP avoids raw TRPTRANS code mismatch")
+        add_table(
+            slide,
+            [
+                ["Model", "Accuracy", "Balanced acc.", "Macro F1"],
+                [
+                    "XGBoost",
+                    f"{selected_mode.accuracy:.4f}",
+                    f"{selected_mode.balanced_accuracy:.4f}",
+                    f"{selected_mode.macro_f1:.4f}",
+                ],
+                [
+                    "Class-balanced",
+                    f"{balanced_mode.accuracy:.4f}",
+                    f"{balanced_mode.balanced_accuracy:.4f}",
+                    f"{balanced_mode.macro_f1:.4f}",
+                ],
+            ],
+            0.75,
+            1.25,
+            5.7,
+            1.35,
+            11,
+        )
+        add_bullets(
+            slide,
+            [
+                "Train on 2017 labels; use 2022 labels only for final evaluation.",
+                "Accuracy is high because private vehicle dominates.",
+                "Macro F1 and the confusion matrix expose rare-mode limitations.",
+            ],
+            0.9,
+            3.0,
+            5.55,
+            2.4,
+            16,
+        )
+        confusion_path = MODE_CHOICE_TRANSFER_DIR / "xgboost_unweighted_test_confusion_matrix.png"
+        if confusion_path.exists():
+            add_picture(slide, confusion_path, 6.85, 1.2, 5.75)
+
     slide = base_slide("Metric guide", "How to read the numbers")
     add_table(
         slide,
@@ -921,7 +1021,7 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
             "Do not claim that LLM directly predicts household trip counts.",
             "Keep parameter-sweep sensitivity rows in appendix/internal analysis, not in the main comparison.",
             "Present trip generation and mode composition as two household-level outputs, not as separate projects.",
-            "Mode composition is weaker overall than trip-count adaptation, but it adds the mode-structure dimension.",
+            "Mode composition and trip-level mode choice add behavior-system evidence, but rare modes remain harder.",
             "Future work should add external event context, stronger LLM priors, and prospective validation.",
         ],
         0.95,
@@ -963,6 +1063,15 @@ def write_speaker_notes(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
     trip_global = trip[trip["method"] == "global_trip_suppression_a1p25"].iloc[0]
     mode_base = mode[mode["method"] == "historical_xgboost"].iloc[0]
     mode_best = mode[mode["method"] == "llm_transit_avoidance_a1"].iloc[0]
+    mode_choice = load_mode_choice_transfer_metrics()
+    mode_choice_xgb = mode_choice.loc[
+        (mode_choice["method"] == "xgboost_unweighted") & (mode_choice["split"] == "test_2022")
+    ]
+    mode_choice_sentence = (
+        f"The trip-level harmonized mode-choice transfer baseline reaches 2022 accuracy `{mode_choice_xgb.iloc[0].accuracy:.4f}`, balanced accuracy `{mode_choice_xgb.iloc[0].balanced_accuracy:.4f}`, and macro F1 `{mode_choice_xgb.iloc[0].macro_f1:.4f}`; it is useful behavior-system evidence, but rare modes remain hard."
+        if not mode_choice_xgb.empty
+        else ""
+    )
     best_strong = None if strong.empty else strong.sort_values("weighted_mae").iloc[0]
     lines = [
         "# Presentation Speaker Notes",
@@ -1001,6 +1110,7 @@ def write_speaker_notes(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
         "",
         "## Mode Extension",
         f"Mode composition is the second household-level output. XGBoost + LLM reduces transit-share weighted MAE from `{mode_base.transit_share_weighted_mae:.4f}` to `{mode_best.transit_share_weighted_mae:.4f}`, while the overall mode-composition improvement is small.",
+        mode_choice_sentence,
         "",
         "Mode-specific trip volume is the derived planning output: predicted total trips multiplied by predicted mode shares. It is more interpretable for planning than a standalone mode-share number.",
         "",
@@ -1027,6 +1137,15 @@ def write_speaker_notes_zh(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
     trip_global = trip[trip["method"] == "global_trip_suppression_a1p25"].iloc[0]
     mode_base = mode[mode["method"] == "historical_xgboost"].iloc[0]
     mode_best = mode[mode["method"] == "llm_transit_avoidance_a1"].iloc[0]
+    mode_choice = load_mode_choice_transfer_metrics()
+    mode_choice_xgb = mode_choice.loc[
+        (mode_choice["method"] == "xgboost_unweighted") & (mode_choice["split"] == "test_2022")
+    ]
+    mode_choice_sentence = (
+        f"另外我们补了 trip-level harmonized mode-choice transfer baseline：2017 训练的 XGBoost 在 2022 `MODE_GROUP` 上 accuracy `{mode_choice_xgb.iloc[0].accuracy:.4f}`、balanced accuracy `{mode_choice_xgb.iloc[0].balanced_accuracy:.4f}`、macro F1 `{mode_choice_xgb.iloc[0].macro_f1:.4f}`。这个可以证明方式选择链路更完整，但 rare modes 仍然难，所以不能夸大成完整 mode-choice 已解决。"
+        if not mode_choice_xgb.empty
+        else ""
+    )
     best_strong = None if strong.empty else strong.sort_values("weighted_mae").iloc[0]
     lines = [
         "# 中文汇报讲稿",
@@ -1078,6 +1197,7 @@ def write_speaker_notes_zh(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
         "## Mode Extension 怎么讲",
         "",
         f"出行方式结构是第二个家庭层面的预测输出。XGBoost + LLM 把 transit-share weighted MAE 从 `{mode_base.transit_share_weighted_mae:.4f}` 降到 `{mode_best.transit_share_weighted_mae:.4f}`，说明 LLM 的 transit avoidance prior 对公共交通这一项有帮助；但总体 mode composition 改善不大，所以汇报时要把它讲成 mode-structure 维度，而不是夸大成主要增益。",
+        mode_choice_sentence,
         "",
         "进一步的 planning 输出是 mode-specific trip volume：用预测总出行次数乘以预测 mode share，得到各方式出行量。这个比单独报 mode share 更接近城市规划里的需求评估。",
         "",
@@ -1117,10 +1237,11 @@ def write_storyboard() -> Path:
         "9. Mode distribution shift.",
         "10. Mode-composition method comparison.",
         "11. Pure LLM-style baseline.",
-        "12. Metric guide.",
-        "13. LLM contribution.",
-        "14. Caveats.",
-        "15. Final takeaway.",
+        "12. Trip-level mode-choice transfer.",
+        "13. Metric guide.",
+        "14. LLM contribution.",
+        "15. Caveats.",
+        "16. Final takeaway.",
     ]
     path.write_text("\n".join(lines), encoding="utf-8")
     return path

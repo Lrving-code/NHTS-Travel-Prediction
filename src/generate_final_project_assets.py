@@ -57,6 +57,7 @@ SMALL_DATA_CALIBRATION_PATH = (
     / "llm_rule_small_data_calibration"
     / "method_spectrum_metrics.csv"
 )
+MODE_CHOICE_TRANSFER_PATH = PROJECT_ROOT / "outputs" / "mode_choice_transfer" / "mode_choice_transfer_metrics.csv"
 
 SELECTED_METHODS = [
     "historical_mean_only",
@@ -432,6 +433,15 @@ def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: di
         IRRELEVANT_PSEUDO_EVENT_PATH,
         "pseudo_random_hash_rank_matched_gated_a1_d0p15",
     )
+    mode_choice_rows = pd.DataFrame(columns=["method", "split"])
+    if MODE_CHOICE_TRANSFER_PATH.exists():
+        mode_choice_rows = pd.read_csv(MODE_CHOICE_TRANSFER_PATH)
+    mode_choice_test = mode_choice_rows.loc[
+        (mode_choice_rows["method"] == "xgboost_unweighted") & (mode_choice_rows["split"] == "test_2022")
+    ]
+    mode_choice_balanced = mode_choice_rows.loc[
+        (mode_choice_rows["method"] == "xgboost_class_balanced") & (mode_choice_rows["split"] == "test_2022")
+    ]
 
     lines = [
         "# Final Project Report",
@@ -579,6 +589,20 @@ def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: di
             "",
             "- Traditional XGBoost purpose weighted TV: `0.5661`.",
             "- LLM purpose prior is not the overall best row, but it adds a third behavior dimension and exposes a clear future-work target for purpose-specific event adaptation.",
+            "",
+            "Trip-level harmonized mode-choice transfer:",
+            "",
+            (
+                f"- A 2017-trained XGBoost model on harmonized `MODE_GROUP` reaches 2022 accuracy `{mode_choice_test.iloc[0].accuracy:.4f}`, balanced accuracy `{mode_choice_test.iloc[0].balanced_accuracy:.4f}`, and macro F1 `{mode_choice_test.iloc[0].macro_f1:.4f}`."
+                if not mode_choice_test.empty
+                else "- Mode-choice transfer metrics are not available; run `python src\\run_mode_choice_transfer_experiment.py --device cuda`."
+            ),
+            (
+                f"- The class-balanced variant reaches higher balanced accuracy `{mode_choice_balanced.iloc[0].balanced_accuracy:.4f}` but lower macro F1 `{mode_choice_balanced.iloc[0].macro_f1:.4f}`, so the result should be reported as a trade-off rather than a solved full mode-choice task."
+                if not mode_choice_balanced.empty
+                else ""
+            ),
+            "- This extension uses 2022 mode labels only for evaluation, after year-specific `TRPTRANS` codes are mapped into comparable mode groups.",
             "",
             "## Efficiency",
             "",

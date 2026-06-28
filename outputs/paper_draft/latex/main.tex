@@ -270,10 +270,10 @@ The current evidence has five limitations.
 First, the main \nhts{} evaluation focuses on one shock year, 2022.
 Second, the LLM may contain broad post-pandemic mobility knowledge from pretraining; the prospective event-context file reduces but does not fully eliminate retrospective knowledge concerns.
 Third, the global event prior is strong, so cohort-specific LLM ranking should be described as incremental.
-Fourth, mode and purpose extensions are useful for planning relevance but are not yet full mode-choice or purpose-choice models.
+Fourth, mode and purpose extensions are useful for planning relevance. A harmonized trip-level mode-choice transfer baseline is implemented, but rare-mode macro F1 remains limited; purpose-choice is still exploratory.
 Fifth, PSRC is a regional external survey with different sampling and diary protocols, so it validates transfer of the principle rather than exact \nhts{} numerical accuracy.
 Sixth, the current count-model baselines include transparent Poisson, Tweedie, and stable negative-binomial GLM checks with solver diagnostics recorded; a submission version should still add zero-inflated or more carefully regularized count variants if time permits.
-Seventh, a local/open-source LLM prior-replication protocol and environment audit are implemented, but the current Python environment has CPU-only PyTorch despite an available RTX 4090; local LLM replication should not be presented as completed evidence until CUDA-enabled generation outputs exist.
+Seventh, a local/open-source LLM prior-replication protocol and environment audit are implemented, and a 32-cohort CUDA sensitivity control has been run on the RTX 4090. The local run is useful as reproducibility evidence, but it should be presented as a sensitivity control rather than a full replacement for the main prior source.
 
 \section{Conclusion}
 
