@@ -57,10 +57,12 @@ No PARTIAL items were detected.
 | Causal and leakage guardrails | Frozen event-context corpus | PASS | 1.0 | outputs/event_context_corpus/frozen_event_context_audit.md |
 | Causal and leakage guardrails | Frozen-context batch prompts | PASS | 1.0 | outputs/event_context_corpus/frozen_context_batch_prompt_summary.md |
 | Causal and leakage guardrails | Frozen-context prompt leakage audit | PASS | 1.0 | outputs/event_context_corpus/leakage_audit/llm_input_leakage_audit_report.md |
+| Causal and leakage guardrails | Frozen-context integrity manifest | PASS | 1.0 | outputs/event_context_corpus/frozen_context_integrity_report.md |
 | Causal and leakage guardrails | Pre-COVID placebo | PASS | 1.0 | outputs/pre_covid_placebo_event_correction/pre_covid_placebo_event_correction_report.md |
 | Causal and leakage guardrails | No-target-label framing | PASS | 1.0 | Final report states target-year labels are evaluation-only. |
 | Causal and leakage guardrails | Frozen context leakage boundary | PASS | 1.0 | Frozen context corpus separates prompt-context facts, guardrails, validation-only evidence, and candidate sources. |
 | Causal and leakage guardrails | Frozen-context prompt leakage result | PASS | 1.0 | 1327 cohort records and 89 frozen-context batches checked; violations=0; required guardrails present=True. |
+| Causal and leakage guardrails | Frozen-context integrity hashes | PASS | 1.0 | 16 artifacts hashed across 5 roles; missing=0; all SHA256 values present. |
 | Mobility behavior system | Mode composition | PASS | 1.0 | outputs/mode_composition_extension/mode_composition_metrics.csv |
 | Mobility behavior system | Mode-specific trips | PASS | 1.0 | outputs/mode_composition_extension/mode_specific_trip_count_metrics.csv |
 | Mobility behavior system | Purpose composition | PASS | 1.0 | outputs/purpose_composition_extension/purpose_composition_metrics.csv |

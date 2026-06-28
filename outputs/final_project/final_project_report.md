@@ -114,7 +114,7 @@ Purpose-composition results:
 
 ## LLM Generalization Role
 
-The LLM should be framed as an event-generalization module, not as a direct predictor. It maps pandemic mechanisms such as remote work, transit avoidance, online delivery substitution, and uneven recovery onto unlabeled household cohorts. A prospective event-context file is included at `plan/prospective_event_context_2022.md`, and a frozen source package is now included under `outputs/event_context_corpus/`. The frozen package separates ACS/BTS prompt-context facts, PSRC validation-only evidence, candidate sources not used, and batch prompts for 1,327 cohorts. Its prompt leakage audit checks all 89 frozen-context batches with `0` violations, making the allowed event context more auditable and reducing retrospective-world-knowledge risk.
+The LLM should be framed as an event-generalization module, not as a direct predictor. It maps pandemic mechanisms such as remote work, transit avoidance, online delivery substitution, and uneven recovery onto unlabeled household cohorts. A prospective event-context file is included at `plan/prospective_event_context_2022.md`, and a frozen source package is now included under `outputs/event_context_corpus/`. The frozen package separates ACS/BTS prompt-context facts, PSRC validation-only evidence, candidate sources not used, and batch prompts for 1,327 cohorts. Its prompt leakage audit checks all 89 frozen-context batches with `0` violations, and its SHA256 integrity manifest hashes 16 source, prompt, corpus, and audit artifacts, making the allowed event context more auditable and reducing retrospective-world-knowledge risk.
 
 ## Why Not a Zero-Shot LLM Decision Tree
 

@@ -387,6 +387,7 @@ def audit_guardrails() -> list[Check]:
         "Frozen event-context corpus": "outputs/event_context_corpus/frozen_event_context_audit.md",
         "Frozen-context batch prompts": "outputs/event_context_corpus/frozen_context_batch_prompt_summary.md",
         "Frozen-context prompt leakage audit": "outputs/event_context_corpus/leakage_audit/llm_input_leakage_audit_report.md",
+        "Frozen-context integrity manifest": "outputs/event_context_corpus/frozen_context_integrity_report.md",
         "Pre-COVID placebo": "outputs/pre_covid_placebo_event_correction/pre_covid_placebo_event_correction_report.md",
     }
     for item, path in required.items():
@@ -465,6 +466,39 @@ def audit_guardrails() -> list[Check]:
                 "Frozen-context prompt leakage result",
                 "Frozen-context prompt leakage audit CSV files are missing.",
                 "Run src/run_llm_input_leakage_audit.py with outputs/event_context_corpus/frozen_context_batch_prompts.jsonl.",
+            )
+        )
+    integrity_path = PROJECT_ROOT / "outputs/event_context_corpus/frozen_context_integrity_manifest.csv"
+    if integrity_path.exists():
+        integrity = pd.read_csv(integrity_path)
+        exists_mask = integrity["exists"].astype(str).str.lower() == "true"
+        missing = int((~exists_mask).sum())
+        hash_ready = bool((integrity["sha256"].astype(str).str.len() == 64).all())
+        role_count = int(integrity["role"].nunique())
+        if len(integrity) >= 16 and missing == 0 and hash_ready and role_count >= 5:
+            checks.append(
+                pass_check(
+                    category,
+                    "Frozen-context integrity hashes",
+                    f"{len(integrity)} artifacts hashed across {role_count} roles; missing=0; all SHA256 values present.",
+                )
+            )
+        else:
+            checks.append(
+                partial_check(
+                    category,
+                    "Frozen-context integrity hashes",
+                    f"rows={len(integrity)}, roles={role_count}, missing={missing}, hash_ready={hash_ready}.",
+                    "Run src/build_frozen_context_integrity_manifest.py and inspect missing hashes.",
+                )
+            )
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Frozen-context integrity hashes",
+                "Frozen-context integrity manifest is missing.",
+                "Run src/build_frozen_context_integrity_manifest.py.",
             )
         )
     return checks
