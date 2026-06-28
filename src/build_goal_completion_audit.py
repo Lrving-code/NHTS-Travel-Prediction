@@ -105,9 +105,13 @@ def build_requirements() -> list[RequirementEvidence]:
     latex_bib = read_text("outputs/paper_draft/latex/references.bib")
     citation_log = read_text("outputs/paper_draft/latex/citation_verification_log.md")
     top_venue_audit_path = (
-        "outputs/paper_draft/top_venue_adversarial_audit_round3.md"
-        if exists("outputs/paper_draft/top_venue_adversarial_audit_round3.md")
-        else "outputs/paper_draft/top_venue_adversarial_audit_round2.md"
+        "outputs/paper_draft/top_venue_adversarial_audit_round4.md"
+        if exists("outputs/paper_draft/top_venue_adversarial_audit_round4.md")
+        else (
+            "outputs/paper_draft/top_venue_adversarial_audit_round3.md"
+            if exists("outputs/paper_draft/top_venue_adversarial_audit_round3.md")
+            else "outputs/paper_draft/top_venue_adversarial_audit_round2.md"
+        )
     )
     top_venue_audit = read_text(top_venue_audit_path)
     cohort_value_report = read_text("outputs/cohort_prior_value_analysis/cohort_prior_value_report.md")

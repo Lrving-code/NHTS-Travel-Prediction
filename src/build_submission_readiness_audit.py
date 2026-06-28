@@ -820,8 +820,13 @@ def audit_literature_and_story() -> list[Check]:
                 "Create outputs/paper_draft/latex/main.tex, references.bib, and citation_verification_log.md.",
             )
         )
+    round4_path = "outputs/paper_draft/top_venue_adversarial_audit_round4.md"
     round3_path = "outputs/paper_draft/top_venue_adversarial_audit_round3.md"
     round2_path = "outputs/paper_draft/top_venue_adversarial_audit_round2.md"
+    round4_ready = exists(round4_path) and contains_text(
+        round4_path,
+        ["Remaining Top-Tier Risks", "Safe Claim", "Next Experiment Gate", "external credential/model-cache blockers"],
+    )
     round3_ready = exists(round3_path) and contains_text(
         round3_path,
         ["Remaining Top-Tier Risks", "Safe Claim", "Next Experiment Gate"],
@@ -830,7 +835,9 @@ def audit_literature_and_story() -> list[Check]:
         round2_path,
         ["Remaining Top-Tier Risks", "Safe Top-Line Claim", "Recommended Next Experiments"],
     )
-    if round3_ready:
+    if round4_ready:
+        checks.append(pass_check(category, "Top-venue adversarial audit", "Round-4 audit states remaining risks, safe claims, next experiment gates, and frozen-context replay blockers."))
+    elif round3_ready:
         checks.append(pass_check(category, "Top-venue adversarial audit", "Round-3 audit states remaining risks, safe claims, and next experiment gates."))
     elif round2_ready:
         checks.append(pass_check(category, "Top-venue adversarial audit", "Round-2 top-venue audit states remaining risks and safe claims."))
@@ -840,7 +847,7 @@ def audit_literature_and_story() -> list[Check]:
                 category,
                 "Top-venue adversarial audit",
                 "Missing explicit top-venue adversarial audit.",
-                "Create outputs/paper_draft/top_venue_adversarial_audit_round3.md.",
+                "Create outputs/paper_draft/top_venue_adversarial_audit_round4.md.",
             )
         )
     return checks

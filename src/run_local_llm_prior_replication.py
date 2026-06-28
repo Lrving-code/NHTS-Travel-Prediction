@@ -311,6 +311,7 @@ def write_run_summary(
     comparison: pd.DataFrame,
     output_dir: Path,
     args: argparse.Namespace,
+    error_records: list[dict[str, Any]] | None = None,
 ) -> None:
     lines = [
         "# Local/Open-Source LLM Prior Replication Report",
@@ -322,7 +323,15 @@ def write_run_summary(
         f"- Successful local priors: `{success_count}`",
         f"- Invalid/error records: `{error_count}`",
         f"- Output directory: `{output_dir}`",
+        f"- Error log: `{output_dir / 'local_llm_event_feature_errors.jsonl'}`",
     ]
+    if error_records:
+        lines.extend(["", "## Runtime Errors", "", "| Cohort | Error |", "|---|---|"])
+        for record in error_records[:10]:
+            error_text = " ".join(str(record.get("error", "unknown")).split())[:240]
+            lines.append(f"| {record.get('cohort_id', 'runtime')} | {error_text} |")
+        if len(error_records) > 10:
+            lines.append(f"| ... | {len(error_records) - 10} additional errors omitted from report. |")
     if comparison.empty:
         lines.extend(
             [
@@ -390,7 +399,23 @@ def main() -> None:
         write_run_summary(audit, len(records), 0, 0, pd.DataFrame(), args.output_dir, args)
         raise RuntimeError(audit.recommendation)
     device = "cuda" if audit.torch_cuda_available else "cpu"
-    tokenizer, model = load_local_model(args, device)
+    try:
+        tokenizer, model = load_local_model(args, device)
+    except (OSError, RuntimeError, ValueError) as error:
+        error_records = [{"cohort_id": "runtime_model_load", "error": str(error)}]
+        write_invalid(error_records, args.output_dir)
+        write_run_summary(
+            audit,
+            len(records),
+            0,
+            len(error_records),
+            pd.DataFrame(),
+            args.output_dir,
+            args,
+            error_records,
+        )
+        LOGGER.error("Local model load failed: %s", error)
+        return
     parsed_records: list[LocalGenerationRecord] = []
     error_records: list[dict[str, Any]] = []
     for record in records:
@@ -404,7 +429,16 @@ def main() -> None:
     write_records(parsed_records, args.output_dir)
     write_invalid(error_records, args.output_dir)
     comparison = compare_with_reference(parsed_records, args.reference_features, args.output_dir)
-    write_run_summary(audit, len(records), len(parsed_records), len(error_records), comparison, args.output_dir, args)
+    write_run_summary(
+        audit,
+        len(records),
+        len(parsed_records),
+        len(error_records),
+        comparison,
+        args.output_dir,
+        args,
+        error_records,
+    )
 
 
 if __name__ == "__main__":

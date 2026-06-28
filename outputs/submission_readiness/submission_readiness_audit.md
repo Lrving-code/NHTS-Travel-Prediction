@@ -81,7 +81,7 @@ No PARTIAL items were detected.
 | Literature and paper story | Reviewer Q&A backup | PASS | 1.0 | Reviewer Q&A backup document exists. |
 | Literature and paper story | Paper draft and claim ledger | PASS | 1.0 | Paper draft and claim-evidence matrix exist. |
 | Literature and paper story | LaTeX manuscript and verified references | PASS | 1.0 | LaTeX skeleton, core figures, BibTeX, and citation verification log exist. |
-| Literature and paper story | Top-venue adversarial audit | PASS | 1.0 | Round-3 audit states remaining risks, safe claims, and next experiment gates. |
+| Literature and paper story | Top-venue adversarial audit | PASS | 1.0 | Round-4 audit states remaining risks, safe claims, next experiment gates, and frozen-context replay blockers. |
 | Presentation readiness | Main deck plus backup | PASS | 1.0 | 0611 final PPT has 38 slides for a 15-minute course defense. |
 | Presentation readiness | Key defense content in deck | PASS | 1.0 | Final deck contains title framing, 2025-2026 literature anchors, selector/correction branches, method comparison, and behavior-system extensions. |
 | Presentation readiness | Speaker notes | PASS | 1.0 | Final 15-minute pure-Chinese speaker script exists and follows slide order. |
