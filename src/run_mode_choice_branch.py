@@ -1,4 +1,4 @@
-"""Command entry point for the archive-derived mode-choice processing branch."""
+"""Command entry point for the harmonized mode-choice processing branch."""
 
 from __future__ import annotations
 
@@ -35,12 +35,12 @@ def parse_args() -> argparse.Namespace:
     add_common_paths(preprocess)
     preprocess.add_argument("--tables", default="hh,per,trip,veh", help="Comma-separated table names.")
 
-    datasets = subparsers.add_parser("build-datasets", help="Build TRPTRANS train/validation/test CSV files.")
+    datasets = subparsers.add_parser("build-datasets", help="Build harmonized mode-group train/validation/test CSV files.")
     add_common_paths(datasets)
     datasets.add_argument("--test-size", type=float, default=0.2)
     datasets.add_argument("--random-state", type=int, default=42)
 
-    trptrans = subparsers.add_parser("trptrans-report", help="Analyze raw TRPTRANS distribution shifts.")
+    trptrans = subparsers.add_parser("trptrans-report", help="Analyze harmonized TRPTRANS-derived mode shifts.")
     add_common_paths(trptrans)
     trptrans.add_argument("--no-plot", action="store_true", help="Skip chart generation.")
 

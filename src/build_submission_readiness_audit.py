@@ -519,6 +519,45 @@ def audit_multi_output_evaluation() -> list[Check]:
             checks.append(pass_check(category, item, path))
         else:
             checks.append(fail_check(category, item, f"Missing {path}.", "Regenerate this evaluation artifact."))
+    operating_points_path = PROJECT_ROOT / "outputs/multi_objective_pareto/preference_operating_points.csv"
+    uncertainty_plot_path = "outputs/multi_objective_pareto/trip_uncertainty_tradeoff.png"
+    if operating_points_path.exists():
+        operating_points = pd.read_csv(operating_points_path)
+        rows = operating_points.loc[operating_points["profile"] == "uncertainty_aware_reporting"]
+        uncertainty_covered = (
+            not rows.empty and str(rows["uncertainty_covered"].iloc[0]).lower() == "true"
+        )
+        if (
+            not rows.empty
+            and rows["method"].iloc[0] == "gated_trip_suppression_a1_d0p15"
+            and uncertainty_covered
+            and exists(uncertainty_plot_path)
+        ):
+            checks.append(
+                pass_check(
+                    category,
+                    "Uncertainty-aware Pareto profile",
+                    "uncertainty_aware_reporting selects the primary gated adapter with bootstrap coverage; uncertainty trade-off figure exists.",
+                )
+            )
+        else:
+            checks.append(
+                partial_check(
+                    category,
+                    "Uncertainty-aware Pareto profile",
+                    "Missing uncertainty profile, expected selected method, bootstrap coverage, or uncertainty figure.",
+                    "Run src/run_multi_objective_pareto_analysis.py after statistical validation outputs exist.",
+                )
+            )
+    else:
+        checks.append(
+            fail_check(
+                category,
+                "Uncertainty-aware Pareto profile",
+                "Missing preference operating points.",
+                "Run src/run_multi_objective_pareto_analysis.py.",
+            )
+        )
     return checks
 
 

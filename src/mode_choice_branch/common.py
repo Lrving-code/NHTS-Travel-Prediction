@@ -12,13 +12,14 @@ import pandas as pd
 
 LOGGER = logging.getLogger(__name__)
 TARGET_COLUMN = "TRPTRANS"
+MODE_GROUP_COLUMN = "MODE_GROUP"
 HOUSEHOLD_ID = "HOUSEID"
 PERSON_ID = "PERSONID"
 DEFAULT_RAW_ROOT = Path("data/raw")
 DEFAULT_INTERIM_DIR = Path("data/interim/mode_choice_branch")
 DEFAULT_OUTPUT_DIR = Path("outputs/mode_choice_branch")
 NEGATIVE_MISSING_CODES: tuple[object, ...] = ("-1", "-2", "-7", "-8", "-9", -1, -2, -7, -8, -9)
-INVALID_TARGET_CODES: tuple[str, ...] = ("", "-1", "-2", "-7", "-8", "-9", "97", "98", "99")
+INVALID_TARGET_CODES: tuple[str, ...] = ("", "-1", "-2", "-7", "-8", "-9", "98", "99")
 
 
 @dataclass(frozen=True)
@@ -139,31 +140,120 @@ FEATURE_GROUPS: dict[str, tuple[str, ...]] = {
 }
 
 
-TRPTRANS_LABELS: dict[int, str] = {
-    1: "bus or streetcar",
-    2: "taxi or ridehail",
-    3: "private vehicle driver",
-    4: "walk",
-    5: "carpool passenger",
-    6: "company vehicle",
-    7: "motorcycle or scooter",
-    8: "subway or light rail",
-    9: "commuter rail",
-    10: "train or intercity bus",
-    11: "ferry",
-    12: "other",
-    13: "streetcar",
-    14: "airport shuttle",
-    15: "campus shuttle",
-    16: "bikeshare",
-    17: "shared e-scooter",
-    18: "private vehicle passenger",
-    19: "special shuttle",
-    20: "bicycle",
-    21: "freight truck",
-    97: "refused",
-    98: "do not know",
-    99: "not ascertained",
+TRPTRANS_LABELS_BY_YEAR: dict[int, dict[int, str]] = {
+    2017: {
+        1: "walk",
+        2: "bicycle",
+        3: "car",
+        4: "suv",
+        5: "van",
+        6: "pickup truck",
+        7: "golf cart or segway",
+        8: "motorcycle or moped",
+        9: "rv or atv",
+        10: "school bus",
+        11: "public or commuter bus",
+        12: "paratransit",
+        13: "private charter or shuttle bus",
+        14: "city-to-city bus",
+        15: "amtrak or commuter rail",
+        16: "subway or light rail",
+        17: "taxi limo or ridehail",
+        18: "rental car or carshare",
+        19: "airplane",
+        20: "boat ferry or water taxi",
+        97: "other",
+    },
+    2022: {
+        1: "car",
+        2: "van",
+        3: "suv or crossover",
+        4: "pickup truck",
+        6: "recreational vehicle",
+        7: "motorcycle",
+        8: "public or commuter bus",
+        9: "school bus",
+        10: "streetcar or trolley",
+        11: "subway or elevated rail",
+        12: "commuter rail",
+        13: "amtrak",
+        14: "airplane",
+        15: "taxicab or limo",
+        16: "ride-sharing service",
+        17: "paratransit",
+        18: "bicycle or bikeshare",
+        19: "e-scooter",
+        20: "walk",
+        21: "other",
+    },
+}
+
+MODE_GROUP_LABELS: dict[str, str] = {
+    "private_vehicle": "Private vehicle",
+    "walk": "Walk",
+    "bike_micromobility": "Bike or micromobility",
+    "bus_paratransit": "Bus, shuttle, or paratransit",
+    "rail_transit": "Rail transit",
+    "taxi_ridehail": "Taxi or ride-hail",
+    "air_water_other": "Air, water, or other",
+}
+
+MODE_GROUP_ORDER: tuple[str, ...] = (
+    "private_vehicle",
+    "walk",
+    "bike_micromobility",
+    "bus_paratransit",
+    "rail_transit",
+    "taxi_ridehail",
+    "air_water_other",
+)
+
+MODE_GROUP_MAPPINGS: dict[int, dict[int, str]] = {
+    2017: {
+        1: "walk",
+        2: "bike_micromobility",
+        3: "private_vehicle",
+        4: "private_vehicle",
+        5: "private_vehicle",
+        6: "private_vehicle",
+        7: "bike_micromobility",
+        8: "private_vehicle",
+        9: "private_vehicle",
+        10: "bus_paratransit",
+        11: "bus_paratransit",
+        12: "bus_paratransit",
+        13: "bus_paratransit",
+        14: "bus_paratransit",
+        15: "rail_transit",
+        16: "rail_transit",
+        17: "taxi_ridehail",
+        18: "private_vehicle",
+        19: "air_water_other",
+        20: "air_water_other",
+        97: "air_water_other",
+    },
+    2022: {
+        1: "private_vehicle",
+        2: "private_vehicle",
+        3: "private_vehicle",
+        4: "private_vehicle",
+        6: "private_vehicle",
+        7: "private_vehicle",
+        8: "bus_paratransit",
+        9: "bus_paratransit",
+        10: "rail_transit",
+        11: "rail_transit",
+        12: "rail_transit",
+        13: "rail_transit",
+        14: "air_water_other",
+        15: "taxi_ridehail",
+        16: "taxi_ridehail",
+        17: "bus_paratransit",
+        18: "bike_micromobility",
+        19: "bike_micromobility",
+        20: "walk",
+        21: "air_water_other",
+    },
 }
 
 
@@ -201,6 +291,15 @@ def parse_table_names(raw_value: str) -> tuple[str, ...]:
     if not names:
         raise ValueError("At least one table name is required.")
     return names
+
+
+def map_trptrans_to_mode_group(series: pd.Series, year: int) -> pd.Series:
+    """Map year-specific raw TRPTRANS codes into comparable mode groups."""
+    if year not in MODE_GROUP_MAPPINGS:
+        raise ValueError(f"Unsupported NHTS year for mode harmonization: {year}")
+    numeric = pd.to_numeric(series, errors="coerce").astype("Int64")
+    mapped = numeric.map(MODE_GROUP_MAPPINGS[year]).astype("string")
+    return mapped.mask(mapped.isna())
 
 
 def read_csv_selected(path: Path, columns: Iterable[str], **read_csv_kwargs: object) -> pd.DataFrame:

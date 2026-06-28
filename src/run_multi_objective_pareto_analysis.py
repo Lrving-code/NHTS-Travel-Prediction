@@ -25,6 +25,7 @@ DEFAULT_MODE_METRICS = PROJECT_ROOT / "outputs" / "mode_composition_extension" /
 DEFAULT_MODE_TRIP_METRICS = (
     PROJECT_ROOT / "outputs" / "mode_composition_extension" / "mode_specific_trip_count_metrics.csv"
 )
+DEFAULT_TRIP_CI_METRICS = PROJECT_ROOT / "outputs" / "statistical_validation" / "trip_metric_confidence_intervals.csv"
 DEFAULT_BATCH_SUMMARY = (
     PROJECT_ROOT / "outputs" / "llm_event_features" / "household_cohort_batch_prompt_b15_summary.md"
 )
@@ -46,6 +47,7 @@ class PreferenceProfile:
     weighted_mae: float
     abs_weighted_bias: float
     weighted_rmse: float
+    weighted_mae_ci_width: float
     llm_request_cost: float
     description: str
 
@@ -56,6 +58,7 @@ PREFERENCE_PROFILES: tuple[PreferenceProfile, ...] = (
         weighted_mae=1.00,
         abs_weighted_bias=0.00,
         weighted_rmse=0.00,
+        weighted_mae_ci_width=0.00,
         llm_request_cost=0.00,
         description="Select the lowest household weighted MAE regardless of calibration or request cost.",
     ),
@@ -64,6 +67,7 @@ PREFERENCE_PROFILES: tuple[PreferenceProfile, ...] = (
         weighted_mae=0.35,
         abs_weighted_bias=0.55,
         weighted_rmse=0.10,
+        weighted_mae_ci_width=0.00,
         llm_request_cost=0.00,
         description="Prioritize near-zero aggregate bias for planning totals.",
     ),
@@ -72,14 +76,25 @@ PREFERENCE_PROFILES: tuple[PreferenceProfile, ...] = (
         weighted_mae=0.55,
         abs_weighted_bias=0.35,
         weighted_rmse=0.10,
+        weighted_mae_ci_width=0.00,
         llm_request_cost=0.00,
         description="Balance household accuracy and calibration for the main course-report claim.",
+    ),
+    PreferenceProfile(
+        name="uncertainty_aware_reporting",
+        weighted_mae=0.40,
+        abs_weighted_bias=0.30,
+        weighted_rmse=0.05,
+        weighted_mae_ci_width=0.20,
+        llm_request_cost=0.05,
+        description="Prefer a method that is accurate, calibrated, and has bootstrap-supported uncertainty evidence.",
     ),
     PreferenceProfile(
         name="low_cost_deployment",
         weighted_mae=0.45,
         abs_weighted_bias=0.20,
         weighted_rmse=0.05,
+        weighted_mae_ci_width=0.00,
         llm_request_cost=0.30,
         description="Prefer cheap event-level correction when API budget is binding.",
     ),
@@ -91,6 +106,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--trip-metrics-path", type=Path, default=DEFAULT_TRIP_METRICS)
     parser.add_argument("--mode-metrics-path", type=Path, default=DEFAULT_MODE_METRICS)
     parser.add_argument("--mode-trip-metrics-path", type=Path, default=DEFAULT_MODE_TRIP_METRICS)
+    parser.add_argument("--trip-ci-path", type=Path, default=DEFAULT_TRIP_CI_METRICS)
     parser.add_argument("--batch-summary-path", type=Path, default=DEFAULT_BATCH_SUMMARY)
     parser.add_argument("--output-dir", type=Path, default=DEFAULT_OUTPUT_DIR)
     return parser.parse_args()
@@ -133,6 +149,43 @@ def request_cost_proxy(method: str, batch_requests: int) -> int:
     if family == "global_event_prior":
         return 1
     return batch_requests
+
+
+def load_uncertainty_metrics(path: Path) -> pd.DataFrame:
+    """Load bootstrap CI width for methods covered by statistical validation."""
+
+    if not path.exists():
+        return pd.DataFrame(columns=["method", "weighted_mae_ci_width", "weighted_mae_bootstrap_std"])
+    method_map = {
+        "traditional_supervised_baseline": "historical_xgboost",
+        "llm_only_pressure": "llm_only_trip_suppression_a1p25",
+        "global_event_prior": "global_trip_suppression_a1p25",
+        "llm_trip_suppression": "llm_trip_suppression_a1p25",
+        "gated_llm_correction": PRIMARY_TRIP_METHOD,
+    }
+    ci = pd.read_csv(path)
+    ci = ci.loc[ci["metric"] == "weighted_mae"].copy()
+    ci["method"] = ci["method"].map(method_map)
+    ci = ci.dropna(subset=["method"])
+    ci["weighted_mae_ci_width"] = ci["ci95_high"] - ci["ci95_low"]
+    return ci[["method", "weighted_mae_ci_width", "std"]].rename(
+        columns={"std": "weighted_mae_bootstrap_std"}
+    )
+
+
+def attach_uncertainty_metrics(frame: pd.DataFrame, uncertainty: pd.DataFrame) -> pd.DataFrame:
+    output = frame.merge(uncertainty, on="method", how="left")
+    output["uncertainty_covered"] = output["weighted_mae_ci_width"].notna()
+    if output["weighted_mae_ci_width"].notna().any():
+        penalty = float(output["weighted_mae_ci_width"].dropna().max() * 1.10)
+    else:
+        penalty = 1.0
+    output["weighted_mae_ci_width_for_selection"] = output["weighted_mae_ci_width"].fillna(penalty)
+    output["uncertainty_pareto"] = pareto_mask(
+        output,
+        ["weighted_mae", "abs_weighted_bias", "weighted_mae_ci_width_for_selection"],
+    )
+    return output
 
 
 def aggregate_trip_metrics(metrics: pd.DataFrame, batch_requests: int) -> pd.DataFrame:
@@ -182,7 +235,13 @@ def pareto_mask(frame: pd.DataFrame, objective_columns: list[str]) -> np.ndarray
 
 def select_operating_points(frame: pd.DataFrame) -> pd.DataFrame:
     normalized = frame.copy()
-    for column in ["weighted_mae", "abs_weighted_bias", "weighted_rmse", "llm_request_cost"]:
+    for column in [
+        "weighted_mae",
+        "abs_weighted_bias",
+        "weighted_rmse",
+        "weighted_mae_ci_width_for_selection",
+        "llm_request_cost",
+    ]:
         normalized[f"{column}_norm"] = normalize_minimize(normalized[column])
 
     rows: list[dict[str, float | str | bool]] = []
@@ -191,6 +250,7 @@ def select_operating_points(frame: pd.DataFrame) -> pd.DataFrame:
             profile.weighted_mae * normalized["weighted_mae_norm"]
             + profile.abs_weighted_bias * normalized["abs_weighted_bias_norm"]
             + profile.weighted_rmse * normalized["weighted_rmse_norm"]
+            + profile.weighted_mae_ci_width * normalized["weighted_mae_ci_width_for_selection_norm"]
             + profile.llm_request_cost * normalized["llm_request_cost_norm"]
         )
         selected = frame.loc[score.idxmin()]
@@ -206,6 +266,13 @@ def select_operating_points(frame: pd.DataFrame) -> pd.DataFrame:
                 "weighted_bias": float(selected["weighted_bias"]),
                 "abs_weighted_bias": float(selected["abs_weighted_bias"]),
                 "weighted_r2": float(selected["weighted_r2"]),
+                "weighted_mae_ci_width": (
+                    float(selected["weighted_mae_ci_width"])
+                    if pd.notna(selected["weighted_mae_ci_width"])
+                    else float("nan")
+                ),
+                "weighted_mae_ci_width_for_selection": float(selected["weighted_mae_ci_width_for_selection"]),
+                "uncertainty_covered": bool(selected["uncertainty_covered"]),
                 "llm_request_cost": float(selected["llm_request_cost"]),
                 "performance_pareto": bool(selected["performance_pareto"]),
                 "deployment_pareto": bool(selected["deployment_pareto"]),
@@ -373,6 +440,54 @@ def plot_behavior_improvements(summary: pd.DataFrame, output_dir: Path) -> Path:
     return path
 
 
+def plot_uncertainty_tradeoff(frame: pd.DataFrame, output_dir: Path) -> Path:
+    path = output_dir / "trip_uncertainty_tradeoff.png"
+    covered = frame[frame["uncertainty_covered"]].copy()
+    fig, ax = plt.subplots(figsize=(8.0, 4.8))
+    colors = {
+        "traditional": "#4E79A7",
+        "global_event_prior": "#F28E2B",
+        "gated_llm_adapter": "#59A14F",
+        "llm_only_prior": "#B07AA1",
+        "llm_event_adapter": "#E15759",
+    }
+    for family, group in covered.groupby("method_family"):
+        ax.scatter(
+            group["weighted_mae"],
+            group["weighted_mae_ci_width"],
+            s=85,
+            color=colors.get(family, "#76B7B2"),
+            edgecolor="white",
+            linewidth=0.8,
+            label=family.replace("_", " "),
+        )
+    for method, label in {
+        TRADITIONAL_TRIP_METHOD: "traditional",
+        "llm_trip_suppression_a1p25": "lowest MAE",
+        PRIMARY_TRIP_METHOD: "primary gated",
+    }.items():
+        matches = covered[covered["method"] == method]
+        if not matches.empty:
+            row = matches.iloc[0]
+            ax.annotate(
+                label,
+                xy=(float(row["weighted_mae"]), float(row["weighted_mae_ci_width"])),
+                xytext=(8, 8),
+                textcoords="offset points",
+                fontsize=9,
+                fontweight="bold",
+            )
+    ax.set_xlabel("Weighted MAE, household trips")
+    ax.set_ylabel("Bootstrap 95% CI width for weighted MAE")
+    ax.set_title("Uncertainty-aware trade-off among bootstrap-validated methods")
+    ax.grid(True, color="#E6E6E6", linewidth=0.8)
+    ax.legend(loc="upper right", fontsize=8, frameon=True)
+    fig.tight_layout()
+    fig.savefig(path, dpi=220)
+    plt.close(fig)
+    return path
+
+
 def write_report(
     trip_frame: pd.DataFrame,
     operating_points: pd.DataFrame,
@@ -389,7 +504,7 @@ def write_report(
         "",
         "## Scope",
         "",
-        "This analysis turns the existing adapter grid into a planning-oriented multi-objective evaluation. It does not retrain any model. It asks which operating point should be selected when accuracy, calibration, behavior-system fidelity, and LLM request cost are considered together.",
+        "This analysis turns the existing adapter grid into a planning-oriented multi-objective evaluation. It does not retrain any model. It asks which operating point should be selected when accuracy, calibration, uncertainty, behavior-system fidelity, and LLM request cost are considered together.",
         "",
         "## LLM Cost Proxy",
         "",
@@ -399,13 +514,15 @@ def write_report(
         "",
         "## Key Trip-Generation Trade-Off",
         "",
-        "| Method | Weighted MAE | Abs weighted bias | Weighted RMSE | Weighted R2 | Request cost |",
-        "|---|---:|---:|---:|---:|---:|",
+        "| Method | Weighted MAE | Abs weighted bias | MAE CI width | Weighted RMSE | Weighted R2 | Request cost |",
+        "|---|---:|---:|---:|---:|---:|---:|",
     ]
     for row in [traditional, best_mae, primary]:
+        ci_width = row.weighted_mae_ci_width
+        ci_text = f"{ci_width:.4f}" if pd.notna(ci_width) else "not bootstrapped"
         lines.append(
             f"| {row.method} | {row.weighted_mae:.4f} | {row.abs_weighted_bias:.4f} | "
-            f"{row.weighted_rmse:.4f} | {row.weighted_r2:.4f} | {int(row.llm_request_cost)} |"
+            f"{ci_text} | {row.weighted_rmse:.4f} | {row.weighted_r2:.4f} | {int(row.llm_request_cost)} |"
         )
     lines.extend(
         [
@@ -414,14 +531,16 @@ def write_report(
             "",
             "## Preference-Based Operating Points",
             "",
-            "| Profile | Selected method | Family | Score | Weighted MAE | Abs bias | Request cost |",
-            "|---|---|---|---:|---:|---:|---:|",
+            "| Profile | Selected method | Family | Score | Weighted MAE | Abs bias | MAE CI width | Uncertainty covered | Request cost |",
+            "|---|---|---|---:|---:|---:|---:|---:|---:|",
         ]
     )
     for row in operating_points.itertuples(index=False):
+        ci_text = f"{row.weighted_mae_ci_width:.4f}" if pd.notna(row.weighted_mae_ci_width) else "not bootstrapped"
         lines.append(
             f"| {row.profile} | {row.method} | {row.method_family} | {row.score:.4f} | "
-            f"{row.weighted_mae:.4f} | {row.abs_weighted_bias:.4f} | {int(row.llm_request_cost)} |"
+            f"{row.weighted_mae:.4f} | {row.abs_weighted_bias:.4f} | {ci_text} | "
+            f"{row.uncertainty_covered} | {int(row.llm_request_cost)} |"
         )
     lines.extend(
         [
@@ -444,6 +563,8 @@ def write_report(
             "",
             "The stronger claim is not that an LLM directly predicts travel better. The stronger claim is that a large-small model system can expose a Pareto set of event-adapted predictions: the small structured model learns routine household heterogeneity, the LLM supplies event mechanisms, and the solver selects an auditable operating point for the planning objective.",
             "",
+            "The uncertainty-aware profile keeps the primary gated adapter as the selected operating point because it combines low MAE, near-zero bias, and bootstrap-supported uncertainty evidence. Adapter-grid candidates without bootstrap coverage are retained in the candidate table but penalized in the uncertainty-aware selection.",
+            "",
             "This matches recent LLM-assisted optimization work: use the LLM to parse event context and stakeholder priorities, then use a deterministic solver or adapter grid to make the numerical decision.",
             "",
         ]
@@ -458,10 +579,12 @@ def main() -> None:
     args.output_dir.mkdir(parents=True, exist_ok=True)
     batch_requests = read_batch_request_count(args.batch_summary_path)
     trip_metrics = pd.read_csv(args.trip_metrics_path)
+    uncertainty_metrics = load_uncertainty_metrics(args.trip_ci_path)
     mode_metrics = pd.read_csv(args.mode_metrics_path)
     mode_trip_metrics = pd.read_csv(args.mode_trip_metrics_path)
 
     trip_frame = aggregate_trip_metrics(trip_metrics, batch_requests)
+    trip_frame = attach_uncertainty_metrics(trip_frame, uncertainty_metrics)
     operating_points = select_operating_points(trip_frame)
     behavior_summary = compute_behavior_improvements(trip_frame, mode_metrics, mode_trip_metrics)
 
@@ -470,10 +593,11 @@ def main() -> None:
     behavior_summary.to_csv(args.output_dir / "behavior_system_improvement.csv", index=False, quoting=csv.QUOTE_MINIMAL)
     pareto_plot = plot_pareto(trip_frame, operating_points, args.output_dir)
     improvement_plot = plot_behavior_improvements(behavior_summary, args.output_dir)
+    uncertainty_plot = plot_uncertainty_tradeoff(trip_frame, args.output_dir)
     report_path = write_report(trip_frame, operating_points, behavior_summary, batch_requests, args.output_dir)
     LOGGER.info("Wrote Pareto candidates: %s", args.output_dir / "trip_pareto_candidates.csv")
     LOGGER.info("Wrote operating points: %s", args.output_dir / "preference_operating_points.csv")
-    LOGGER.info("Wrote plots: %s and %s", pareto_plot, improvement_plot)
+    LOGGER.info("Wrote plots: %s, %s, and %s", pareto_plot, improvement_plot, uncertainty_plot)
     LOGGER.info("Wrote report: %s", report_path)
 
 

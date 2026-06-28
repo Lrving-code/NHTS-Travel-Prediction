@@ -18,6 +18,7 @@ The project is now stronger on provenance and rebuttal readiness than the Round-
 | Retrospective world knowledge | `outputs/event_context_corpus/` freezes ACS/BTS prompt-context facts, PSRC validation-only evidence, candidate sources not used, and 89 batch prompts | Improved from "plan only" to auditable provenance package. |
 | Prompt leakage boundary | Frozen context audit reports `0` forbidden target-field hits in allowed fact summaries; frozen-context prompt leakage audit checks 1,327 cohort records and 89 batches with `0` violations | Stronger input-level guardrail. |
 | Context immutability | Frozen-context integrity manifest hashes 16 source, prompt, corpus, and audit artifacts with SHA256 | Later prompt/context drift is detectable. |
+| Planning-objective robustness | Multi-objective Pareto now includes an uncertainty-aware reporting profile and a bootstrap CI-width trade-off figure | Stronger support for reporting the primary gated adapter as an operating point, not just a leaderboard row. |
 | Downstream consistency | README, method reports, paper draft, final project report, and audits use the same zero-shot metrics | Lower presentation/rebuttal risk. |
 
 ## Remaining Top-Tier Risks

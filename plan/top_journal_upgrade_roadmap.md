@@ -52,7 +52,7 @@ Already strong enough for a course presentation:
 - Transit-share weighted MAE improves by `17.35%`.
 - Batch prompting reduces cohort requests from `1327` to `89`.
 - A frozen event-context corpus now records ACS/BTS source facts, PSRC validation-only evidence, candidate sources not used, and the 89 frozen-context batch prompts; the prompt leakage audit checks all 1,327 cohort records with `0` violations, and an integrity manifest hashes 16 frozen-context artifacts.
-- Pareto analysis now shows different operating points for minimum error, balanced reporting, and low-cost deployment.
+- Pareto analysis now shows different operating points for minimum error, balanced reporting, uncertainty-aware reporting, and low-cost deployment.
 
 Not yet enough for a top-journal paper:
 

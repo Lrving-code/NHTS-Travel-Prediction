@@ -39,7 +39,7 @@ Trip-count takeaway:
 - Zero-shot LLM rule tree reaches weighted MAE `2.7508`, while the pseudo-label tree reaches `2.7767`. Direct LLM-authored trees are useful cold-start baselines, but their numerical calibration remains weaker than the hybrid adapter.
 - LLM rule + 500 historical samples reaches weighted MAE `2.7723`. It integrates the rule-distillation plus small-data calibration route, but it reintroduces positive bias under the 2022 event shift.
 - Compared with LLM-only pressure, the hybrid gated adapter reduces weighted MAE by `7.92%` and absolute weighted bias by `93.83%`.
-- Gated household accuracy: exact `17.7%`, within 2 trips `54.5%`, within 3 trips `71.2%`.
+- Gated household accuracy: exact `17.8%`, within 2 trips `54.0%`, within 3 trips `71.1%`.
 
 ## Stronger Non-LLM Tabular Baselines
 

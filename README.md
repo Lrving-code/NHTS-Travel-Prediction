@@ -23,7 +23,7 @@
 - Irrelevant pseudo-event placebo controls do not reproduce the main result: the best ranked pseudo-event weighted MAE is `2.6274`, and the best gated pseudo-event weighted MAE is `2.5610`.
 - Cohort-prior value analysis: the primary gated adapter is `0.0508` weighted-MAE lower than a same-alpha global prior and `0.0201` lower than the reported low-cost `global_trip_suppression_a1p25`; it beats same-alpha global prior in `77.8%` of evaluated subgroup cells. The gate uses cohort-specific pressure for `17.5%` of survey-weighted households, so the paper-safe interpretation is "global event correction plus selective cohort refinement."
 - Equity-aware subgroup evaluation: worst-subgroup weighted MAE improves from `8.3778` under historical XGBoost to `4.7091` under the primary gated event adapter; all evaluated subgroups improve relative to historical XGBoost.
-- Multi-objective analysis: calibration-first and balanced profiles select the primary `gated_trip_suppression_a1_d0p15`; low-cost deployment selects `global_trip_suppression_a1`.
+- Multi-objective analysis: calibration-first, balanced, and uncertainty-aware profiles select the primary `gated_trip_suppression_a1_d0p15`; low-cost deployment selects `global_trip_suppression_a1`.
 - External mechanism validation: ACS commute statistics show worked-from-home share stayed much higher in 2022 than 2019 (`5.7% -> 15.2%`) and public-transportation commute share stayed lower (`5.0% -> 3.1%`), supporting the remote-work and transit-avoidance event priors. BTS daily mobility is retained as a compatibility guardrail: its device-based trip counts should not be used as direct numeric labels for NHTS household `CNTTDHH`.
 - External household microdata validation: PSRC 2017+2019->2023 pre/post replication improves weighted MAE (`3.4271 -> 3.2498`) and weighted bias (`+1.0532 -> +0.2605`) when an ACS-derived remote-work suppression factor is applied without target-year PSRC label calibration. A BTS device-mobility recovery factor is retained as a negative compatibility guardrail because it worsens the household-survey transfer.
 - Frozen event-context corpus: `outputs/event_context_corpus/` packages ACS/BTS source facts, PSRC validation-only evidence, candidate sources not used, and 89 batch prompts for 1,327 cohorts under a no-target-label prompt policy. A frozen-context prompt leakage audit checks all 1,327 cohort records with `0` violations and required guardrails present; a SHA256 integrity manifest hashes 16 source, prompt, corpus, and audit artifacts. This reduces the retrospective-world-knowledge risk by making the allowed event context explicit and auditable.
@@ -182,6 +182,7 @@ predicted trips by mode = predicted total trips * predicted mode share
 - `outputs/multi_objective_pareto/multi_objective_pareto_report.md`
 - `outputs/multi_objective_pareto/preference_operating_points.csv`
 - `outputs/multi_objective_pareto/trip_pareto_frontier.png`
+- `outputs/multi_objective_pareto/trip_uncertainty_tradeoff.png`
 - `outputs/multi_objective_pareto/behavior_system_improvement.png`
 
 移动不平等与分组稳健性：
@@ -220,7 +221,7 @@ data/
 src/
   build_household_dataset.py
   run_mode_choice_branch.py
-  mode_choice_branch/              # 从 refs 中 data_processing 副本整理来的出行方式预测数据处理分支
+  mode_choice_branch/              # 从 refs 中 data_processing 副本整理来的跨年出行方式预测数据处理分支
   build_llm_household_profiles.py
   generate_llm_event_features.py
   run_household_baseline.py
@@ -305,7 +306,7 @@ python src\run_mode_choice_branch.py trptrans-report
 python src\run_mode_choice_branch.py all
 ```
 
-该分支保留原压缩包中的共同字段筛选、缺失值处理、2017 训练/验证划分、2022 迁移测试集构建和 `TRPTRANS` 分布诊断逻辑，并将原脚本中的个人机器路径改为仓库相对路径。生成的中间文件默认写入 `data/interim/mode_choice_branch/`，报告和建模数据集默认写入 `outputs/mode_choice_branch/`，两者均不提交到 git。
+该分支保留原压缩包中的共同字段筛选、缺失值处理、2017 训练/验证划分、2022 迁移测试集构建，并将原脚本中的个人机器路径改为仓库相对路径。由于 NHTS 2017 与 2022 的 raw `TRPTRANS` 编码含义不同，该分支不会直接把 raw code 当成同一标签，而是先映射为跨年一致的 `MODE_GROUP`，再生成出行方式建模数据和 harmonized mode-shift 诊断。生成的中间文件默认写入 `data/interim/mode_choice_branch/`，报告和建模数据集默认写入 `outputs/mode_choice_branch/`，两者均不提交到 git。
 
 purpose-composition 与统计验证：
 

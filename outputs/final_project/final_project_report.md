@@ -68,12 +68,12 @@ Interpretation: external data supports the event semantics used by the LLM adapt
 
 ## Household-Level Accuracy
 
-- Gated MAE: `2.4738` trips per household.
-- Gated RMSE: `3.5872` trips per household.
-- Exact rounded hit rate: `17.7%`.
-- Within 1 trip: `29.8%`.
-- Within 2 trips: `54.5%`.
-- Within 3 trips: `71.2%`.
+- Unweighted household MAE: `2.4783` trips per household.
+- Unweighted household RMSE: `3.5801` trips per household.
+- Exact rounded hit rate: `17.8%`.
+- Within 1 trip: `29.9%`.
+- Within 2 trips: `54.0%`.
+- Within 3 trips: `71.1%`.
 
 ## Statistical Validation
 
@@ -85,6 +85,10 @@ Household bootstrap resampling gives the following 95% confidence intervals:
 - Paired absolute-bias reduction: `[3.3582, 3.6696]`.
 
 This supports the claim that the main trip-count improvement is not a single point-estimate artifact.
+
+## Multi-Objective Operating Point
+
+The Pareto analysis in `outputs/multi_objective_pareto/` now treats uncertainty as an explicit planning objective, using the bootstrap 95% CI width for weighted MAE where available. The minimum-MAE sensitivity profile selects `llm_trip_suppression_a1p25`, but that row has much larger aggregate bias. The calibration-first, balanced, and uncertainty-aware reporting profiles all select the primary `gated_trip_suppression_a1_d0p15`, because it combines low MAE, near-zero bias, better weighted R2, and bootstrap-supported uncertainty evidence. The low-cost deployment profile still selects `global_trip_suppression_a1`, and is explicitly marked as not bootstrapped in the Pareto report.
 
 ## Behavior-System Extension
 

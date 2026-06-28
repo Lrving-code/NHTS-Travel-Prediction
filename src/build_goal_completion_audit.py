@@ -264,9 +264,11 @@ def build_requirements() -> list[RequirementEvidence]:
         pass_if(
             exists("outputs/mode_composition_extension/mode_composition_metrics.csv")
             and exists("outputs/purpose_composition_extension/purpose_composition_metrics.csv")
-            and exists("outputs/multi_objective_pareto/preference_operating_points.csv"),
+            and exists("outputs/multi_objective_pareto/preference_operating_points.csv")
+            and exists("outputs/multi_objective_pareto/trip_uncertainty_tradeoff.png")
+            and "uncertainty_aware_reporting" in read_text("outputs/multi_objective_pareto/multi_objective_pareto_report.md"),
             "Multi-objective mobility evaluation exists",
-            "Trip count, mode composition, purpose composition, equity, and Pareto evidence are present.",
+            "Trip count, mode composition, purpose composition, equity, uncertainty-aware Pareto, and planning trade-off evidence are present.",
             "outputs/multi_objective_pareto/preference_operating_points.csv",
         ),
         pass_if(

@@ -15,11 +15,14 @@ from .common import (
     DEFAULT_OUTPUT_DIR,
     FEATURE_GROUPS,
     HOUSEHOLD_ID,
-    INVALID_TARGET_CODES,
+    MODE_GROUP_COLUMN,
+    MODE_GROUP_LABELS,
+    MODE_GROUP_ORDER,
     MODE_CHOICE_FEATURES,
     PERSON_ID,
     TABLE_SPECS,
     TARGET_COLUMN,
+    map_trptrans_to_mode_group,
     preprocessed_path,
 )
 
@@ -91,7 +94,7 @@ def resolve_feature_columns(frame: pd.DataFrame) -> tuple[str, ...]:
 def normalize_target(series: pd.Series) -> pd.Series:
     """Return a cleaned string target label series."""
     target = series.astype("string").str.strip()
-    target = target.mask(target.isna() | target.isin(INVALID_TARGET_CODES))
+    target = target.mask(target.isna() | (target == ""))
     return target
 
 
@@ -163,7 +166,7 @@ def save_dataset_files(
     }
     for split_name, (features_frame, target_series) in split_payloads.items():
         combined = features_frame.copy()
-        combined[TARGET_COLUMN] = target_series.to_numpy()
+        combined[MODE_GROUP_COLUMN] = target_series.to_numpy()
         combined.to_csv(output_dir / f"{split_name}.csv", index=False)
         features_frame.to_csv(output_dir / f"X_{split_name}.csv", index=False)
         target_series.to_csv(output_dir / f"y_{split_name}.csv", index=False)
@@ -174,10 +177,15 @@ def save_dataset_files(
 def target_distribution_frame(targets: dict[str, pd.Series]) -> pd.DataFrame:
     """Create a target-distribution table across splits."""
     distributions = {split: series.value_counts(normalize=True) * 100 for split, series in targets.items()}
-    all_modes = sorted(set().union(*(distribution.index for distribution in distributions.values())))
+    observed_modes = set().union(*(distribution.index for distribution in distributions.values()))
+    ordered_modes = [mode for mode in MODE_GROUP_ORDER if mode in observed_modes]
+    ordered_modes.extend(sorted(observed_modes - set(ordered_modes)))
     rows = []
-    for mode in all_modes:
-        row = {"TRPTRANS": mode}
+    for mode in ordered_modes:
+        row = {
+            MODE_GROUP_COLUMN: mode,
+            "label": MODE_GROUP_LABELS.get(str(mode), str(mode)),
+        }
         for split, distribution in distributions.items():
             row[f"{split}_percent"] = distribution.get(mode, 0.0)
         rows.append(row)
@@ -202,7 +210,9 @@ def write_dataset_report(
     lines = [
         "# Mode-Choice Dataset Report",
         "",
-        "This branch predicts trip-level `TRPTRANS` using 2017 data for training/validation and 2022 data for transfer testing.",
+        "This branch predicts trip-level harmonized `MODE_GROUP` using 2017 data for training/validation and 2022 data for transfer testing.",
+        "",
+        "`TRPTRANS` code meanings differ between the 2017 and 2022 NHTS codebooks, so raw codes are first mapped into comparable mode groups before modeling.",
         "",
         "| Split | Rows | Features |",
         "|---|---:|---:|",
@@ -222,13 +232,13 @@ def write_dataset_report(
             "",
             "## Target Distribution",
             "",
-            "| TRPTRANS | Train (%) | Validation (%) | Test 2022 (%) |",
-            "|---|---:|---:|---:|",
+            "| Mode group | Label | Train (%) | Validation (%) | Test 2022 (%) |",
+            "|---|---|---:|---:|---:|",
         ]
     )
     for row in distribution.itertuples(index=False):
         lines.append(
-            f"| {row.TRPTRANS} | {row.train_percent:.2f} | "
+            f"| {row.MODE_GROUP} | {row.label} | {row.train_percent:.2f} | "
             f"{row.validation_percent:.2f} | {row.test_percent:.2f} |"
         )
 
@@ -239,7 +249,7 @@ def write_dataset_report(
             "",
             "- `train.csv`, `validation.csv`, `test.csv`: features and target in one file.",
             "- `X_train.csv`, `X_validation.csv`, `X_test.csv`: feature matrices.",
-            "- `y_train.csv`, `y_validation.csv`, `y_test.csv`: target vectors.",
+            "- `y_train.csv`, `y_validation.csv`, `y_test.csv`: harmonized target vectors.",
             "- `features.txt`: resolved post-merge feature columns.",
             "- `target_distribution.csv`: target distribution across splits.",
             "",
@@ -260,8 +270,10 @@ def build_mode_choice_datasets(
     merged_2022 = merge_trip_person_household(data, 2022)
     features = resolve_feature_columns(merged_2017)
 
-    x_2017_raw, y_2017 = drop_invalid_targets(merged_2017.loc[:, features], merged_2017[TARGET_COLUMN])
-    x_2022_raw, y_2022 = drop_invalid_targets(merged_2022.loc[:, features], merged_2022[TARGET_COLUMN])
+    y_2017_raw = map_trptrans_to_mode_group(merged_2017[TARGET_COLUMN], 2017)
+    y_2022_raw = map_trptrans_to_mode_group(merged_2022[TARGET_COLUMN], 2022)
+    x_2017_raw, y_2017 = drop_invalid_targets(merged_2017.loc[:, features], y_2017_raw)
+    x_2022_raw, y_2022 = drop_invalid_targets(merged_2022.loc[:, features], y_2022_raw)
     x_2017, x_2022 = encode_feature_frames(x_2017_raw, x_2022_raw)
 
     stratify_target = stratify_or_none(y_2017, test_size)
@@ -292,7 +304,7 @@ def build_mode_choice_datasets(
         validation_rows=len(y_validation),
         test_rows=len(y_2022),
         feature_count=len(features),
-        target_column=TARGET_COLUMN,
+        target_column=MODE_GROUP_COLUMN,
         feature_path=feature_path,
         report_path=report_path,
     )

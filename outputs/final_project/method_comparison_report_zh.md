@@ -39,7 +39,7 @@ Trip-generation 结论：
 - Zero-shot LLM rule tree 的 weighted MAE 是 `2.7508`，pseudo-label tree 是 `2.7767`；二者可以作为 cold-start baseline，但数值校准仍弱于 hybrid adapter。
 - LLM rule + 500 historical samples 的 weighted MAE 是 `2.7723`。这条路线把 rule distillation + small-data calibration 融入了方法谱系，但当前 event-shift 任务里会重新出现正向 bias。
 - 相比 LLM-only pressure，hybrid gated adapter 的 weighted MAE 进一步降低 `7.92%`，绝对 weighted bias 降低 `93.83%`。
-- 家庭颗粒度上，gated correction exact hit `17.7%`，within 2 trips `54.5%`，within 3 trips `71.2%`。
+- 家庭颗粒度上，gated correction exact hit `17.8%`，within 2 trips `54.0%`，within 3 trips `71.1%`。
 
 ## 更强非 LLM 表格 baseline
 

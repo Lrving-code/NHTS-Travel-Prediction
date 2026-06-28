@@ -539,8 +539,8 @@ def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: di
             "",
             "## Household-Level Accuracy",
             "",
-            f"- Gated MAE: `{gated_acc.unweighted_mae:.4f}` trips per household.",
-            f"- Gated RMSE: `{gated_acc.unweighted_rmse:.4f}` trips per household.",
+            f"- Unweighted household MAE: `{gated_acc.unweighted_mae:.4f}` trips per household.",
+            f"- Unweighted household RMSE: `{gated_acc.unweighted_rmse:.4f}` trips per household.",
             f"- Exact rounded hit rate: `{pct(gated_acc.exact_rounded_accuracy)}`.",
             f"- Within 1 trip: `{pct(gated_acc.within_1_trip)}`.",
             f"- Within 2 trips: `{pct(gated_acc.within_2_trips)}`.",
@@ -556,6 +556,10 @@ def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: di
             "- Paired absolute-bias reduction: `[3.3582, 3.6696]`.",
             "",
             "This supports the claim that the main trip-count improvement is not a single point-estimate artifact.",
+            "",
+            "## Multi-Objective Operating Point",
+            "",
+            "The Pareto analysis in `outputs/multi_objective_pareto/` now treats uncertainty as an explicit planning objective, using the bootstrap 95% CI width for weighted MAE where available. The minimum-MAE sensitivity profile selects `llm_trip_suppression_a1p25`, but that row has much larger aggregate bias. The calibration-first, balanced, and uncertainty-aware reporting profiles all select the primary `gated_trip_suppression_a1_d0p15`, because it combines low MAE, near-zero bias, better weighted R2, and bootstrap-supported uncertainty evidence. The low-cost deployment profile still selects `global_trip_suppression_a1`, and is explicitly marked as not bootstrapped in the Pareto report.",
             "",
             "## Behavior-System Extension",
             "",
@@ -585,7 +589,7 @@ def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: di
             "",
             "## LLM Generalization Role",
             "",
-            "The LLM should be framed as an event-generalization module, not as a direct predictor. It maps pandemic mechanisms such as remote work, transit avoidance, online delivery substitution, and uneven recovery onto unlabeled household cohorts. A prospective event-context file is included at `plan/prospective_event_context_2022.md` to make this role more auditable and reduce retrospective leakage risk.",
+            "The LLM should be framed as an event-generalization module, not as a direct predictor. It maps pandemic mechanisms such as remote work, transit avoidance, online delivery substitution, and uneven recovery onto unlabeled household cohorts. A prospective event-context file is included at `plan/prospective_event_context_2022.md`, and a frozen source package is now included under `outputs/event_context_corpus/`. The frozen package separates ACS/BTS prompt-context facts, PSRC validation-only evidence, candidate sources not used, and batch prompts for 1,327 cohorts. Its prompt leakage audit checks all 89 frozen-context batches with `0` violations, and its SHA256 integrity manifest hashes 16 source, prompt, corpus, and audit artifacts, making the allowed event context more auditable and reducing retrospective-world-knowledge risk.",
             "",
             "## Why Not a Zero-Shot LLM Decision Tree",
             "",
@@ -643,7 +647,7 @@ def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: di
             "Do not overstate the mode-composition or purpose-composition extensions. The strongest result remains trip generation under event-driven temporal adaptation; the extensions show a broader behavior system and planning relevance.",
         ]
     )
-    path.write_text("\n".join(lines), encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
 
 
@@ -691,7 +695,7 @@ def write_storyboard() -> Path:
         "## Slide 10: Takeaway",
         "- LLMs are useful here as event-prior generators, not direct numerical predictors.",
     ]
-    path.write_text("\n".join(lines), encoding="utf-8")
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
 
 
