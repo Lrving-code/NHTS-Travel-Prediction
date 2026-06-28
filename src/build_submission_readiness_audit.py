@@ -384,6 +384,8 @@ def audit_guardrails() -> list[Check]:
         "Leakage audit": "outputs/leakage_audit/llm_input_leakage_audit_report.md",
         "Causal evidence pack": "outputs/causal_guardrails/causal_guardrail_evidence_report.md",
         "Prospective event context": "plan/prospective_event_context_2022.md",
+        "Frozen event-context corpus": "outputs/event_context_corpus/frozen_event_context_audit.md",
+        "Frozen-context batch prompts": "outputs/event_context_corpus/frozen_context_batch_prompt_summary.md",
         "Pre-COVID placebo": "outputs/pre_covid_placebo_event_correction/pre_covid_placebo_event_correction_report.md",
     }
     for item, path in required.items():
@@ -400,6 +402,30 @@ def audit_guardrails() -> list[Check]:
                 "No-target-label framing",
                 "Final report does not clearly restate the evaluation-only target-label rule.",
                 "Add a short no-label protocol paragraph.",
+            )
+        )
+    if contains_text(
+        "outputs/event_context_corpus/frozen_event_context_audit.md",
+        [
+            "Frozen allowed prompt-context facts",
+            "Forbidden target-field hits in allowed fact summaries: `0`",
+            "external_validation_only_not_prompt_context",
+        ],
+    ):
+        checks.append(
+            pass_check(
+                category,
+                "Frozen context leakage boundary",
+                "Frozen context corpus separates prompt-context facts, guardrails, validation-only evidence, and candidate sources.",
+            )
+        )
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Frozen context leakage boundary",
+                "Frozen context corpus is missing or does not state the allowed/validation-only boundary.",
+                "Run src/build_frozen_event_context_corpus.py and inspect the audit.",
             )
         )
     return checks
@@ -604,10 +630,19 @@ def audit_literature_and_story() -> list[Check]:
                 "Create outputs/paper_draft/latex/main.tex, references.bib, and citation_verification_log.md.",
             )
         )
-    if exists("outputs/paper_draft/top_venue_adversarial_audit_round2.md") and contains_text(
-        "outputs/paper_draft/top_venue_adversarial_audit_round2.md",
+    round3_path = "outputs/paper_draft/top_venue_adversarial_audit_round3.md"
+    round2_path = "outputs/paper_draft/top_venue_adversarial_audit_round2.md"
+    round3_ready = exists(round3_path) and contains_text(
+        round3_path,
+        ["Remaining Top-Tier Risks", "Safe Claim", "Next Experiment Gate"],
+    )
+    round2_ready = exists(round2_path) and contains_text(
+        round2_path,
         ["Remaining Top-Tier Risks", "Safe Top-Line Claim", "Recommended Next Experiments"],
-    ):
+    )
+    if round3_ready:
+        checks.append(pass_check(category, "Top-venue adversarial audit", "Round-3 audit states remaining risks, safe claims, and next experiment gates."))
+    elif round2_ready:
         checks.append(pass_check(category, "Top-venue adversarial audit", "Round-2 top-venue audit states remaining risks and safe claims."))
     else:
         checks.append(
@@ -615,7 +650,7 @@ def audit_literature_and_story() -> list[Check]:
                 category,
                 "Top-venue adversarial audit",
                 "Missing explicit top-venue adversarial audit.",
-                "Create outputs/paper_draft/top_venue_adversarial_audit_round2.md.",
+                "Create outputs/paper_draft/top_venue_adversarial_audit_round3.md.",
             )
         )
     return checks

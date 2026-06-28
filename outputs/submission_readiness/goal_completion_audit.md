@@ -16,13 +16,14 @@ Overall status: `ARTIFACT_GATE_PASS`
 | Paper draft and claim-evidence ledger exist | PASS | Draft manuscript and claim matrix constrain paper-level wording. | `outputs/paper_draft/nhts_event_adaptation_paper_draft.md` |
 | LaTeX manuscript and citation verification package exist | PASS | LaTeX skeleton, core figures, BibTeX, and citation verification log are present. | `outputs/paper_draft/latex/main.tex` |
 | Classical travel-demand and survey-weighting grounding is present | PASS | LaTeX cites verified discrete-choice, count-data, and NHTS weighting references. | `outputs/paper_draft/latex/references.bib` |
-| Top-venue adversarial audit is explicit | PASS | Round-2 audit records remaining top-tier risks and safe claims. | `outputs/paper_draft/top_venue_adversarial_audit_round2.md` |
+| Top-venue adversarial audit is explicit | PASS | Latest top-venue audit records remaining risks, safe claims, and next experiment gates. | `outputs/paper_draft/top_venue_adversarial_audit_round3.md` |
 | Local open-source LLM GPU sensitivity control exists | PASS | Script, CUDA-ready audit, 32 successful local priors, and local-vs-reference comparison exist. | `outputs/local_llm_prior_replication/local_llm_prior_replication_report.md` |
 | Primary NHTS result is documented | PASS | Historical XGBoost to gated adapter improvement is in the audit. | `outputs/final_project/final_metrics_summary.csv` |
 | Strong baselines and LLM rule-tree ablations exist | PASS | Strong tabular, transparent Poisson/Tweedie/negative-binomial/zero-inflated count-model, zero-shot rule tree, pseudo-label tree, and small-calibration evidence are present. | `outputs/strong_baselines/strong_tabular_baseline_metrics.csv` |
 | Robustness and placebo controls exist | PASS | Permutation, irrelevant pseudo-event, and cohort-prior value controls are present. | `outputs/robustness_checks/permutation_pressure_controls.csv` |
 | Strong global-prior risk is quantified | PASS | Cohort-prior value analysis reports same-alpha global comparison and subgroup-cell win share. | `outputs/cohort_prior_value_analysis/cohort_prior_value_report.md` |
 | Causal/leakage guardrails are documented | PASS | Causal evidence pack and leakage audit exist. | `outputs/causal_guardrails/causal_guardrail_evidence_report.md` |
+| Frozen event-context corpus exists | PASS | ACS/BTS context facts, PSRC validation-only evidence, and 89 frozen-context batch prompts are documented. | `outputs/event_context_corpus/frozen_event_context_audit.md` |
 | Temporal validation is documented | PASS | Pre-COVID transfer and placebo event correction reports exist. | `outputs/temporal_transfer_validation/temporal_transfer_validation_report.md` |
 | External household microdata replication exists | PASS | PSRC 2017+2019->2023 direct pre/post replication is in the audit. | `outputs/external_validation/psrc_household_external_validation_report.md` |
 | Multi-objective mobility evaluation exists | PASS | Trip count, mode composition, purpose composition, equity, and Pareto evidence are present. | `outputs/multi_objective_pareto/preference_operating_points.csv` |

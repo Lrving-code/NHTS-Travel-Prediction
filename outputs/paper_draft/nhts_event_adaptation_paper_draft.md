@@ -17,7 +17,7 @@ This framing is motivated by recent mobility research. ELLMob frames event-drive
 1. We formulate 2022 NHTS household trip generation as event-driven temporal adaptation rather than ordinary cross-year forecasting.
 2. We introduce a label-free LLM event-prior adapter that corrects a historical household predictor without using 2022 `CNTTDHH` labels for calibration.
 3. We evaluate against a broad method spectrum: historical mean, ordinary XGBoost, trend shift, transparent Poisson/Tweedie/negative-binomial/zero-inflated count models, CatBoost GPU, LLM-only pressure, global event prior, random prior, zero-shot LLM rule tree, pseudo-label tree, and LLM rule plus historical calibration.
-4. We add robustness and credibility checks: leakage audit, prospective event context, placebo events, permutation controls, cohort-prior value analysis, bootstrap confidence intervals, equity-aware subgroup analysis, and external ACS/BTS/PSRC validation.
+4. We add robustness and credibility checks: leakage audit, prospective/frozen event context, placebo events, permutation controls, cohort-prior value analysis, bootstrap confidence intervals, equity-aware subgroup analysis, and external ACS/BTS/PSRC validation.
 5. We extend the behavior system beyond total trip generation to mode composition, mode-specific trip volume, and exploratory purpose composition while keeping trip generation as the main contribution.
 
 ## 2. Problem Definition
@@ -172,7 +172,7 @@ The strongest alternative explanation is that a global post-pandemic downscaling
 ## 7. Limitations
 
 1. The main NHTS evaluation focuses on one shock year, 2022.
-2. The LLM may contain broad post-pandemic mobility knowledge from pretraining; the prospective event-context file reduces but does not fully eliminate retrospective knowledge concerns.
+2. The LLM may contain broad post-pandemic mobility knowledge from pretraining; the prospective event-context file and frozen ACS/BTS context package reduce but do not fully eliminate retrospective knowledge concerns.
 3. The global event prior is strong, so cohort-specific LLM ranking should be described as incremental.
 4. Mode and purpose extensions are useful for planning relevance but are not yet full mode-choice or purpose-choice models.
 5. PSRC is a regional external survey with different sampling and diary protocols, so it validates transfer of the principle rather than exact NHTS numerical accuracy.

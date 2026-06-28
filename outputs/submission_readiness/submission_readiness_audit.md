@@ -54,8 +54,11 @@ No PARTIAL items were detected.
 | Causal and leakage guardrails | Leakage audit | PASS | 1.0 | outputs/leakage_audit/llm_input_leakage_audit_report.md |
 | Causal and leakage guardrails | Causal evidence pack | PASS | 1.0 | outputs/causal_guardrails/causal_guardrail_evidence_report.md |
 | Causal and leakage guardrails | Prospective event context | PASS | 1.0 | plan/prospective_event_context_2022.md |
+| Causal and leakage guardrails | Frozen event-context corpus | PASS | 1.0 | outputs/event_context_corpus/frozen_event_context_audit.md |
+| Causal and leakage guardrails | Frozen-context batch prompts | PASS | 1.0 | outputs/event_context_corpus/frozen_context_batch_prompt_summary.md |
 | Causal and leakage guardrails | Pre-COVID placebo | PASS | 1.0 | outputs/pre_covid_placebo_event_correction/pre_covid_placebo_event_correction_report.md |
 | Causal and leakage guardrails | No-target-label framing | PASS | 1.0 | Final report states target-year labels are evaluation-only. |
+| Causal and leakage guardrails | Frozen context leakage boundary | PASS | 1.0 | Frozen context corpus separates prompt-context facts, guardrails, validation-only evidence, and candidate sources. |
 | Mobility behavior system | Mode composition | PASS | 1.0 | outputs/mode_composition_extension/mode_composition_metrics.csv |
 | Mobility behavior system | Mode-specific trips | PASS | 1.0 | outputs/mode_composition_extension/mode_specific_trip_count_metrics.csv |
 | Mobility behavior system | Purpose composition | PASS | 1.0 | outputs/purpose_composition_extension/purpose_composition_metrics.csv |
@@ -71,7 +74,7 @@ No PARTIAL items were detected.
 | Literature and paper story | Reviewer Q&A backup | PASS | 1.0 | Reviewer Q&A backup document exists. |
 | Literature and paper story | Paper draft and claim ledger | PASS | 1.0 | Paper draft and claim-evidence matrix exist. |
 | Literature and paper story | LaTeX manuscript and verified references | PASS | 1.0 | LaTeX skeleton, core figures, BibTeX, and citation verification log exist. |
-| Literature and paper story | Top-venue adversarial audit | PASS | 1.0 | Round-2 top-venue audit states remaining risks and safe claims. |
+| Literature and paper story | Top-venue adversarial audit | PASS | 1.0 | Round-3 audit states remaining risks, safe claims, and next experiment gates. |
 | Presentation readiness | Main deck plus backup | PASS | 1.0 | 0611 final PPT has 38 slides for a 15-minute course defense. |
 | Presentation readiness | Key defense content in deck | PASS | 1.0 | Final deck contains title framing, 2025-2026 literature anchors, selector/correction branches, method comparison, and behavior-system extensions. |
 | Presentation readiness | Speaker notes | PASS | 1.0 | Final 15-minute pure-Chinese speaker script exists and follows slide order. |

@@ -26,6 +26,7 @@
 - Multi-objective analysis: calibration-first and balanced profiles select the primary `gated_trip_suppression_a1_d0p15`; low-cost deployment selects `global_trip_suppression_a1`.
 - External mechanism validation: ACS commute statistics show worked-from-home share stayed much higher in 2022 than 2019 (`5.7% -> 15.2%`) and public-transportation commute share stayed lower (`5.0% -> 3.1%`), supporting the remote-work and transit-avoidance event priors. BTS daily mobility is retained as a compatibility guardrail: its device-based trip counts should not be used as direct numeric labels for NHTS household `CNTTDHH`.
 - External household microdata validation: PSRC 2017+2019->2023 pre/post replication improves weighted MAE (`3.4271 -> 3.2498`) and weighted bias (`+1.0532 -> +0.2605`) when an ACS-derived remote-work suppression factor is applied without target-year PSRC label calibration. A BTS device-mobility recovery factor is retained as a negative compatibility guardrail because it worsens the household-survey transfer.
+- Frozen event-context corpus: `outputs/event_context_corpus/` packages ACS/BTS source facts, PSRC validation-only evidence, candidate sources not used, and 89 batch prompts for 1,327 cohorts under a no-target-label prompt policy. This reduces the retrospective-world-knowledge risk by making the allowed event context explicit and auditable.
 
 行为目标 2 是 household-level mode composition：
 

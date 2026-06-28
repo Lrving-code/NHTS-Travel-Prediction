@@ -104,10 +104,16 @@ def build_requirements() -> list[RequirementEvidence]:
     latex_main = read_text("outputs/paper_draft/latex/main.tex")
     latex_bib = read_text("outputs/paper_draft/latex/references.bib")
     citation_log = read_text("outputs/paper_draft/latex/citation_verification_log.md")
-    top_venue_audit = read_text("outputs/paper_draft/top_venue_adversarial_audit_round2.md")
+    top_venue_audit_path = (
+        "outputs/paper_draft/top_venue_adversarial_audit_round3.md"
+        if exists("outputs/paper_draft/top_venue_adversarial_audit_round3.md")
+        else "outputs/paper_draft/top_venue_adversarial_audit_round2.md"
+    )
+    top_venue_audit = read_text(top_venue_audit_path)
     cohort_value_report = read_text("outputs/cohort_prior_value_analysis/cohort_prior_value_report.md")
     local_llm_audit = read_text("outputs/local_llm_prior_replication/local_llm_environment_audit.md")
     local_llm_report = read_text("outputs/local_llm_prior_replication/local_llm_prior_replication_report.md")
+    frozen_context_audit = read_text("outputs/event_context_corpus/frozen_event_context_audit.md")
 
     return [
         pass_if(
@@ -169,10 +175,10 @@ def build_requirements() -> list[RequirementEvidence]:
             "outputs/paper_draft/latex/references.bib",
         ),
         pass_if(
-            all(term in top_venue_audit for term in ["Remaining Top-Tier Risks", "Safe Top-Line Claim", "Recommended Next Experiments"]),
+            all(term in top_venue_audit for term in ["Remaining Top-Tier Risks", "Safe Claim", "Next Experiment Gate"]),
             "Top-venue adversarial audit is explicit",
-            "Round-2 audit records remaining top-tier risks and safe claims.",
-            "outputs/paper_draft/top_venue_adversarial_audit_round2.md",
+            "Latest top-venue audit records remaining risks, safe claims, and next experiment gates.",
+            top_venue_audit_path,
         ),
         pass_if(
             (
@@ -227,6 +233,15 @@ def build_requirements() -> list[RequirementEvidence]:
             "Causal/leakage guardrails are documented",
             "Causal evidence pack and leakage audit exist.",
             "outputs/causal_guardrails/causal_guardrail_evidence_report.md",
+        ),
+        pass_if(
+            exists("outputs/event_context_corpus/frozen_event_context_sources.csv")
+            and exists("outputs/event_context_corpus/frozen_event_context_prompt.md")
+            and exists("outputs/event_context_corpus/frozen_context_batch_prompt_summary.md")
+            and "Forbidden target-field hits in allowed fact summaries: `0`" in frozen_context_audit,
+            "Frozen event-context corpus exists",
+            "ACS/BTS context facts, PSRC validation-only evidence, and 89 frozen-context batch prompts are documented.",
+            "outputs/event_context_corpus/frozen_event_context_audit.md",
         ),
         pass_if(
             exists("outputs/temporal_transfer_validation/temporal_transfer_validation_report.md")
