@@ -42,49 +42,56 @@ This keeps the paper from becoming a stitched-together project. Every component 
 
 ## Current Evidence Strength
 
-Already strong enough for a course presentation:
+Current status after the 2026-06-29 audit:
 
+- The project is strong enough for the course presentation and has a coherent paper-grade artifact package.
 - 2022 is empirically different from pre-COVID transfer years.
 - Traditional XGBoost strongly overpredicts 2022 household trips.
-- The fixed no-label gated adapter reduces weighted MAE by `42.31%` and nearly removes aggregate weighted bias.
+- The fixed no-label gated adapter reduces weighted MAE by about `42.3%` and nearly removes aggregate weighted bias.
 - Bootstrap confidence intervals support the trip-count gain.
-- Mode-specific trip volume improves by `32.32%`.
-- Transit-share weighted MAE improves by `17.35%`.
+- Mode-specific trip volume and transit-share metrics improve under the behavior-system extension.
+- Trip-level harmonized mode-choice transfer is now survey-weighted and reports weighted accuracy, weighted balanced accuracy, and weighted macro F1.
 - Batch prompting reduces cohort requests from `1327` to `89`.
 - A frozen event-context corpus now records ACS/BTS source facts, PSRC validation-only evidence, candidate sources not used, and the 89 frozen-context batch prompts; the prompt leakage audit checks all 1,327 cohort records with `0` violations, and an integrity manifest hashes 16 frozen-context artifacts.
 - Pareto analysis now shows different operating points for minimum error, balanced reporting, uncertainty-aware reporting, and low-cost deployment.
+- The LaTeX manuscript now has a successful manual `pdflatex -> bibtex -> pdflatex -> pdflatex -> pdflatex` compile record, with no undefined citations and no overfull hbox in the main results table.
 
-Not yet enough for a top-journal paper:
+Remaining top-tier risks:
 
 - Only one target shock year and one national survey system.
-- External validation is still weak.
+- External validation has improved through PSRC household microdata replication, but it is still a principle-level external replication rather than a direct NHTS numerical validation.
 - Purpose composition remains an exploratory output rather than a strong positive result.
-- LLM priors are not yet generated from a fully frozen citation-backed RAG corpus.
+- LLM priors are not yet fully regenerated from the frozen event-context corpus. The replay code exists, but execution needs either `CURSOR_API_AUTH_TOKEN` or a cached/downloadable local instruction model.
 - Causal claims are currently plausibility claims, not identified treatment effects.
-- Baselines should include stronger non-LLM adaptation methods.
+- More non-COVID or non-recovery shock replications would be needed before claiming broad event generalization.
 
 ## Required Upgrade Workstreams
 
-### W1. Stronger Baselines
+### W1. Stronger Baselines - mostly complete
 
-Add baselines that reviewers would expect:
+Completed baselines now include:
 
-- CatBoost / LightGBM GPU baseline.
-- Historical XGBoost with reweighting by 2022 covariate distribution.
-- Constrained global event-shift model.
-- Pre-COVID temporal trend and placebo event correction.
-- Optional foundation-model baseline only where the task is genuinely temporal.
+- Strong tabular baselines.
+- Transparent Poisson, Tweedie, negative-binomial, and zero-inflated count-model baselines.
+- Historical trend shift and global event-prior baselines.
+- Zero-shot LLM rule tree, pseudo-label tree, and small historical calibration variants.
+- Random pressure, irrelevant pseudo-event, and pre-COVID placebo controls.
 
-### W2. Causal Guardrails
+Still useful if time permits:
 
-Implement:
+- Add CatBoost or LightGBM GPU baselines if the local dependency stack supports them cleanly.
+- Add covariate-reweighted historical transfer as a domain-adaptation baseline.
 
-- Causal DAG figure.
+### W2. Causal Guardrails - complete for course and artifact gate
+
+Implemented:
+
+- Causal guardrail design and evidence pack.
 - Negative controls: random pressure, irrelevant pseudo-event prior, global pressure, pre-COVID placebo.
-- Subgroup robustness with confidence intervals.
+- Subgroup robustness and worst-subgroup reporting.
 - Claim discipline: use “causal plausibility” and “mechanism proxy,” not causal identification.
 
-### W3. Event-Context RAG
+### W3. Event-Context RAG - prompt provenance complete, replay pending
 
 Partly implemented as a frozen provenance package under `outputs/event_context_corpus/`. A full paper-grade RAG system would replace free-form LLM pandemic memory with a frozen external context:
 
@@ -96,9 +103,14 @@ Partly implemented as a frozen provenance package under `outputs/event_context_c
 
 Each LLM prior should be traceable to retrieved snippets. 2022 NHTS targets must not enter the corpus. The current artifact freezes source-level context and batch prompts, but it does not yet regenerate all priors from a stronger open-source model under retrieval-only constraints.
 
-### W4. Multi-Objective Mobility Evaluation
+Current execution blockers:
 
-The current Pareto script is the first implementation. Extend it with:
+- Batched API replay needs `CURSOR_API_AUTH_TOKEN`.
+- Local replay needs a cached or downloadable instruction model, because `Qwen/Qwen2.5-1.5B-Instruct` was not available offline.
+
+### W4. Multi-Objective Mobility Evaluation - complete for current scope
+
+Implemented:
 
 - Worst-subgroup MAE.
 - Transit/active mode preservation.
@@ -106,18 +118,18 @@ The current Pareto script is the first implementation. Extend it with:
 - LLM token/request cost.
 - Stakeholder profiles: accuracy-first, equity-first, transit-planning-first, low-cost deployment.
 
-### W5. Multi-Output Behavior System
+### W5. Multi-Output Behavior System - implemented with scoped claims
 
 Keep count, mode, purpose, and mode-specific volume under one behavior-system framing.
 
-Possible additional output:
+Implemented or available:
 
 - Active mobility share.
 - Transit/private mode ratio.
 - Work-trip share.
 - Low-carbon trip proxy.
 
-Only add outputs if they serve the event-adaptation story.
+Only foreground outputs that serve the event-adaptation story. Purpose composition should remain exploratory unless a stronger purpose-specific adapter is added.
 
 ### W6. Presentation and Paper Audit
 
@@ -141,8 +153,8 @@ Use the 4090 for all model experiments that support it:
 
 ## Immediate Next Actions
 
-1. Finish committing the Pareto experiment and PPT update.
-2. Add a formal adversarial audit file with severity-ranked issues.
-3. Implement stronger non-LLM baselines using GPU where possible.
-4. Add causal DAG + pseudo-event placebo plan and artifacts.
-5. Update PPT so the new story is: event shift -> label-free event priors -> guardrails -> Pareto planning choice -> behavior-system outputs.
+1. If an LLM endpoint or local model is available, run frozen-context prior replay and compare regenerated priors against current GPT-reference priors.
+2. If time permits, add covariate-reweighted historical transfer and/or CatBoost/LightGBM GPU baselines as reviewer-facing robustness baselines.
+3. Keep the PPT and report story focused on: event shift -> label-free event priors -> causal/leakage guardrails -> multi-objective planning choice -> behavior-system outputs.
+4. Do not upgrade the claim to broad causal identification or general mobility foundation modeling.
+5. For a real venue submission, move the LaTeX draft into the target template and get advisor feedback on the external validation scope.
