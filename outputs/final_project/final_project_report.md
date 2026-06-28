@@ -111,8 +111,8 @@ Purpose-composition results:
 
 Trip-level harmonized mode-choice transfer:
 
-- A 2017-trained XGBoost model on harmonized `MODE_GROUP` reaches 2022 accuracy `0.9373`, balanced accuracy `0.4309`, and macro F1 `0.4658`.
-- The class-balanced variant reaches higher balanced accuracy `0.6167` but lower macro F1 `0.3553`, so the result should be reported as a trade-off rather than a solved full mode-choice task.
+- A 2017-trained survey-weighted XGBoost model on harmonized `MODE_GROUP` reaches 2022 survey-weighted accuracy `0.9297`, weighted balanced accuracy `0.4343`, and weighted macro F1 `0.4663`; its unweighted accuracy is `0.9373`.
+- The class-balanced variant reaches higher weighted balanced accuracy `0.5501` but lower weighted macro F1 `0.3722`, so the result should be reported as a rare-mode trade-off rather than a solved full mode-choice task.
 - This extension uses 2022 mode labels only for evaluation, after year-specific `TRPTRANS` codes are mapped into comparable mode groups.
 
 ## Efficiency

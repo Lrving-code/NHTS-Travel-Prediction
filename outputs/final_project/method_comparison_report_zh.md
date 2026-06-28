@@ -72,8 +72,8 @@ Mode-composition 结论：
 
 ## Trip-level mode-choice transfer
 
-- 2017 训练的 harmonized `MODE_GROUP` XGBoost 在 2022 上 accuracy `0.9373`、balanced accuracy `0.4309`、macro F1 `0.4658`。
-- Class-balanced variant 的 balanced accuracy 是 `0.6167`，但 macro F1 是 `0.3553`，所以它是 rare-mode trade-off，不是主结论。
+- 2017 训练的 survey-weighted harmonized `MODE_GROUP` XGBoost 在 2022 上 weighted accuracy `0.9297`、weighted balanced accuracy `0.4343`、weighted macro F1 `0.4663`；unweighted accuracy 为 `0.9373`。
+- Class-balanced variant 的 weighted balanced accuracy 是 `0.5501`，但 weighted macro F1 是 `0.3722`，所以它是 rare-mode trade-off，不是主结论。
 
 ## 最终口径
 

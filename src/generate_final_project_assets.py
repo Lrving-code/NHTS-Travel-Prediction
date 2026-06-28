@@ -437,7 +437,7 @@ def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: di
     if MODE_CHOICE_TRANSFER_PATH.exists():
         mode_choice_rows = pd.read_csv(MODE_CHOICE_TRANSFER_PATH)
     mode_choice_test = mode_choice_rows.loc[
-        (mode_choice_rows["method"] == "xgboost_unweighted") & (mode_choice_rows["split"] == "test_2022")
+        (mode_choice_rows["method"] == "xgboost_survey_weighted") & (mode_choice_rows["split"] == "test_2022")
     ]
     mode_choice_balanced = mode_choice_rows.loc[
         (mode_choice_rows["method"] == "xgboost_class_balanced") & (mode_choice_rows["split"] == "test_2022")
@@ -593,12 +593,12 @@ def write_report(summary: pd.DataFrame, accuracy: pd.DataFrame, figure_paths: di
             "Trip-level harmonized mode-choice transfer:",
             "",
             (
-                f"- A 2017-trained XGBoost model on harmonized `MODE_GROUP` reaches 2022 accuracy `{mode_choice_test.iloc[0].accuracy:.4f}`, balanced accuracy `{mode_choice_test.iloc[0].balanced_accuracy:.4f}`, and macro F1 `{mode_choice_test.iloc[0].macro_f1:.4f}`."
+                f"- A 2017-trained survey-weighted XGBoost model on harmonized `MODE_GROUP` reaches 2022 survey-weighted accuracy `{mode_choice_test.iloc[0].weighted_accuracy:.4f}`, weighted balanced accuracy `{mode_choice_test.iloc[0].weighted_balanced_accuracy:.4f}`, and weighted macro F1 `{mode_choice_test.iloc[0].weighted_macro_f1:.4f}`; its unweighted accuracy is `{mode_choice_test.iloc[0].accuracy:.4f}`."
                 if not mode_choice_test.empty
                 else "- Mode-choice transfer metrics are not available; run `python src\\run_mode_choice_transfer_experiment.py --device cuda`."
             ),
             (
-                f"- The class-balanced variant reaches higher balanced accuracy `{mode_choice_balanced.iloc[0].balanced_accuracy:.4f}` but lower macro F1 `{mode_choice_balanced.iloc[0].macro_f1:.4f}`, so the result should be reported as a trade-off rather than a solved full mode-choice task."
+                f"- The class-balanced variant reaches higher weighted balanced accuracy `{mode_choice_balanced.iloc[0].weighted_balanced_accuracy:.4f}` but lower weighted macro F1 `{mode_choice_balanced.iloc[0].weighted_macro_f1:.4f}`, so the result should be reported as a rare-mode trade-off rather than a solved full mode-choice task."
                 if not mode_choice_balanced.empty
                 else ""
             ),

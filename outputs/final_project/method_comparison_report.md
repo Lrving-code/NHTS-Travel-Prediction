@@ -72,8 +72,8 @@ Mode-composition takeaway:
 
 ## Trip-Level Mode-Choice Transfer
 
-- 2017-trained harmonized `MODE_GROUP` XGBoost reaches 2022 accuracy `0.9373`, balanced accuracy `0.4309`, and macro F1 `0.4658`.
-- The class-balanced variant reaches balanced accuracy `0.6167` but macro F1 `0.3553`, so report it as a rare-mode trade-off.
+- 2017-trained survey-weighted harmonized `MODE_GROUP` XGBoost reaches 2022 weighted accuracy `0.9297`, weighted balanced accuracy `0.4343`, and weighted macro F1 `0.4663`; unweighted accuracy is `0.9373`.
+- The class-balanced variant reaches weighted balanced accuracy `0.5501` but weighted macro F1 `0.3722`, so report it as a rare-mode trade-off.
 
 ## Final Interpretation
 

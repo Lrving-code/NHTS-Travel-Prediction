@@ -550,11 +550,11 @@ def audit_multi_output_evaluation() -> list[Check]:
 
     mode_choice_transfer_path = PROJECT_ROOT / "outputs/mode_choice_transfer/mode_choice_transfer_metrics.csv"
     mode_choice_report_path = "outputs/mode_choice_transfer/mode_choice_transfer_report.md"
-    mode_choice_confusion_path = "outputs/mode_choice_transfer/xgboost_unweighted_test_confusion_matrix.png"
+    mode_choice_confusion_path = "outputs/mode_choice_transfer/xgboost_survey_weighted_test_confusion_matrix.png"
     if mode_choice_transfer_path.exists():
         mode_choice_metrics = pd.read_csv(mode_choice_transfer_path)
         selected = mode_choice_metrics.loc[
-            (mode_choice_metrics["method"] == "xgboost_unweighted")
+            (mode_choice_metrics["method"] == "xgboost_survey_weighted")
             & (mode_choice_metrics["split"] == "test_2022")
         ]
         balanced = mode_choice_metrics.loc[
@@ -564,9 +564,10 @@ def audit_multi_output_evaluation() -> list[Check]:
         if (
             not selected.empty
             and not balanced.empty
-            and float(selected["accuracy"].iloc[0]) >= 0.93
-            and float(selected["macro_f1"].iloc[0]) >= 0.45
-            and float(balanced["balanced_accuracy"].iloc[0]) >= 0.60
+            and float(selected["weighted_accuracy"].iloc[0]) >= 0.92
+            and float(selected["weighted_macro_f1"].iloc[0]) >= 0.45
+            and float(selected["weighted_balanced_accuracy"].iloc[0]) >= 0.43
+            and float(balanced["weighted_balanced_accuracy"].iloc[0]) >= 0.54
             and exists(mode_choice_report_path)
             and exists(mode_choice_confusion_path)
         ):
@@ -574,7 +575,7 @@ def audit_multi_output_evaluation() -> list[Check]:
                 pass_check(
                     category,
                     "Trip-level mode-choice transfer",
-                    "2017-trained harmonized MODE_GROUP XGBoost reaches 2022 accuracy >=0.93 and macro F1 >=0.45; class-balanced variant reaches balanced accuracy >=0.60.",
+                    "2017-trained survey-weighted harmonized MODE_GROUP XGBoost reaches 2022 weighted accuracy >=0.92, weighted macro F1 >=0.45, and weighted balanced accuracy >=0.43; class-balanced variant reaches weighted balanced accuracy >=0.54.",
                 )
             )
         else:

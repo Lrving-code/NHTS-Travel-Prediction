@@ -330,7 +330,7 @@ def write_method_report(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFram
     llm_only_best = mode[mode["method"] == "llm_only_2017_mean_transit_a1.25"].iloc[0]
     mode_choice = load_mode_choice_transfer_metrics()
     mode_choice_xgb = mode_choice.loc[
-        (mode_choice["method"] == "xgboost_unweighted") & (mode_choice["split"] == "test_2022")
+        (mode_choice["method"] == "xgboost_survey_weighted") & (mode_choice["split"] == "test_2022")
     ]
     mode_choice_balanced = mode_choice.loc[
         (mode_choice["method"] == "xgboost_class_balanced") & (mode_choice["split"] == "test_2022")
@@ -456,12 +456,12 @@ def write_method_report(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFram
             "## Trip-Level Mode-Choice Transfer",
             "",
             (
-                f"- 2017-trained harmonized `MODE_GROUP` XGBoost reaches 2022 accuracy `{mode_choice_xgb.iloc[0].accuracy:.4f}`, balanced accuracy `{mode_choice_xgb.iloc[0].balanced_accuracy:.4f}`, and macro F1 `{mode_choice_xgb.iloc[0].macro_f1:.4f}`."
+                f"- 2017-trained survey-weighted harmonized `MODE_GROUP` XGBoost reaches 2022 weighted accuracy `{mode_choice_xgb.iloc[0].weighted_accuracy:.4f}`, weighted balanced accuracy `{mode_choice_xgb.iloc[0].weighted_balanced_accuracy:.4f}`, and weighted macro F1 `{mode_choice_xgb.iloc[0].weighted_macro_f1:.4f}`; unweighted accuracy is `{mode_choice_xgb.iloc[0].accuracy:.4f}`."
                 if not mode_choice_xgb.empty
                 else "- Mode-choice transfer metrics are not available."
             ),
             (
-                f"- The class-balanced variant reaches balanced accuracy `{mode_choice_balanced.iloc[0].balanced_accuracy:.4f}` but macro F1 `{mode_choice_balanced.iloc[0].macro_f1:.4f}`, so report it as a rare-mode trade-off."
+                f"- The class-balanced variant reaches weighted balanced accuracy `{mode_choice_balanced.iloc[0].weighted_balanced_accuracy:.4f}` but weighted macro F1 `{mode_choice_balanced.iloc[0].weighted_macro_f1:.4f}`, so report it as a rare-mode trade-off."
                 if not mode_choice_balanced.empty
                 else ""
             ),
@@ -490,7 +490,7 @@ def write_method_report_zh(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataF
     llm_only_best = mode[mode["method"] == "llm_only_2017_mean_transit_a1.25"].iloc[0]
     mode_choice = load_mode_choice_transfer_metrics()
     mode_choice_xgb = mode_choice.loc[
-        (mode_choice["method"] == "xgboost_unweighted") & (mode_choice["split"] == "test_2022")
+        (mode_choice["method"] == "xgboost_survey_weighted") & (mode_choice["split"] == "test_2022")
     ]
     mode_choice_balanced = mode_choice.loc[
         (mode_choice["method"] == "xgboost_class_balanced") & (mode_choice["split"] == "test_2022")
@@ -610,12 +610,12 @@ def write_method_report_zh(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataF
             "## Trip-level mode-choice transfer",
             "",
             (
-                f"- 2017 训练的 harmonized `MODE_GROUP` XGBoost 在 2022 上 accuracy `{mode_choice_xgb.iloc[0].accuracy:.4f}`、balanced accuracy `{mode_choice_xgb.iloc[0].balanced_accuracy:.4f}`、macro F1 `{mode_choice_xgb.iloc[0].macro_f1:.4f}`。"
+                f"- 2017 训练的 survey-weighted harmonized `MODE_GROUP` XGBoost 在 2022 上 weighted accuracy `{mode_choice_xgb.iloc[0].weighted_accuracy:.4f}`、weighted balanced accuracy `{mode_choice_xgb.iloc[0].weighted_balanced_accuracy:.4f}`、weighted macro F1 `{mode_choice_xgb.iloc[0].weighted_macro_f1:.4f}`；unweighted accuracy 为 `{mode_choice_xgb.iloc[0].accuracy:.4f}`。"
                 if not mode_choice_xgb.empty
                 else "- Mode-choice transfer metrics 暂不可用。"
             ),
             (
-                f"- Class-balanced variant 的 balanced accuracy 是 `{mode_choice_balanced.iloc[0].balanced_accuracy:.4f}`，但 macro F1 是 `{mode_choice_balanced.iloc[0].macro_f1:.4f}`，所以它是 rare-mode trade-off，不是主结论。"
+                f"- Class-balanced variant 的 weighted balanced accuracy 是 `{mode_choice_balanced.iloc[0].weighted_balanced_accuracy:.4f}`，但 weighted macro F1 是 `{mode_choice_balanced.iloc[0].weighted_macro_f1:.4f}`，所以它是 rare-mode trade-off，不是主结论。"
                 if not mode_choice_balanced.empty
                 else ""
             ),
@@ -736,7 +736,7 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
     llm_only_best = mode[mode["method"] == "llm_only_2017_mean_transit_a1.25"].iloc[0]
     mode_choice = load_mode_choice_transfer_metrics()
     mode_choice_xgb = mode_choice.loc[
-        (mode_choice["method"] == "xgboost_unweighted") & (mode_choice["split"] == "test_2022")
+        (mode_choice["method"] == "xgboost_survey_weighted") & (mode_choice["split"] == "test_2022")
     ]
     mode_choice_balanced = mode_choice.loc[
         (mode_choice["method"] == "xgboost_class_balanced") & (mode_choice["split"] == "test_2022")
@@ -933,18 +933,18 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
         add_table(
             slide,
             [
-                ["Model", "Accuracy", "Balanced acc.", "Macro F1"],
+                ["Model", "Weighted acc.", "W-balanced acc.", "W-macro F1"],
                 [
-                    "XGBoost",
-                    f"{selected_mode.accuracy:.4f}",
-                    f"{selected_mode.balanced_accuracy:.4f}",
-                    f"{selected_mode.macro_f1:.4f}",
+                    "Survey-weighted XGB",
+                    f"{selected_mode.weighted_accuracy:.4f}",
+                    f"{selected_mode.weighted_balanced_accuracy:.4f}",
+                    f"{selected_mode.weighted_macro_f1:.4f}",
                 ],
                 [
                     "Class-balanced",
-                    f"{balanced_mode.accuracy:.4f}",
-                    f"{balanced_mode.balanced_accuracy:.4f}",
-                    f"{balanced_mode.macro_f1:.4f}",
+                    f"{balanced_mode.weighted_accuracy:.4f}",
+                    f"{balanced_mode.weighted_balanced_accuracy:.4f}",
+                    f"{balanced_mode.weighted_macro_f1:.4f}",
                 ],
             ],
             0.75,
@@ -966,7 +966,7 @@ def create_deck(trip: pd.DataFrame, acc: pd.DataFrame, mode: pd.DataFrame, llm_o
             2.4,
             16,
         )
-        confusion_path = MODE_CHOICE_TRANSFER_DIR / "xgboost_unweighted_test_confusion_matrix.png"
+        confusion_path = MODE_CHOICE_TRANSFER_DIR / "xgboost_survey_weighted_test_confusion_matrix.png"
         if confusion_path.exists():
             add_picture(slide, confusion_path, 6.85, 1.2, 5.75)
 
@@ -1065,10 +1065,10 @@ def write_speaker_notes(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
     mode_best = mode[mode["method"] == "llm_transit_avoidance_a1"].iloc[0]
     mode_choice = load_mode_choice_transfer_metrics()
     mode_choice_xgb = mode_choice.loc[
-        (mode_choice["method"] == "xgboost_unweighted") & (mode_choice["split"] == "test_2022")
+        (mode_choice["method"] == "xgboost_survey_weighted") & (mode_choice["split"] == "test_2022")
     ]
     mode_choice_sentence = (
-        f"The trip-level harmonized mode-choice transfer baseline reaches 2022 accuracy `{mode_choice_xgb.iloc[0].accuracy:.4f}`, balanced accuracy `{mode_choice_xgb.iloc[0].balanced_accuracy:.4f}`, and macro F1 `{mode_choice_xgb.iloc[0].macro_f1:.4f}`; it is useful behavior-system evidence, but rare modes remain hard."
+        f"The trip-level survey-weighted harmonized mode-choice transfer baseline reaches 2022 weighted accuracy `{mode_choice_xgb.iloc[0].weighted_accuracy:.4f}`, weighted balanced accuracy `{mode_choice_xgb.iloc[0].weighted_balanced_accuracy:.4f}`, and weighted macro F1 `{mode_choice_xgb.iloc[0].weighted_macro_f1:.4f}`; it is useful behavior-system evidence, but rare modes remain hard."
         if not mode_choice_xgb.empty
         else ""
     )
@@ -1139,10 +1139,10 @@ def write_speaker_notes_zh(trip: pd.DataFrame, mode: pd.DataFrame) -> Path:
     mode_best = mode[mode["method"] == "llm_transit_avoidance_a1"].iloc[0]
     mode_choice = load_mode_choice_transfer_metrics()
     mode_choice_xgb = mode_choice.loc[
-        (mode_choice["method"] == "xgboost_unweighted") & (mode_choice["split"] == "test_2022")
+        (mode_choice["method"] == "xgboost_survey_weighted") & (mode_choice["split"] == "test_2022")
     ]
     mode_choice_sentence = (
-        f"另外我们补了 trip-level harmonized mode-choice transfer baseline：2017 训练的 XGBoost 在 2022 `MODE_GROUP` 上 accuracy `{mode_choice_xgb.iloc[0].accuracy:.4f}`、balanced accuracy `{mode_choice_xgb.iloc[0].balanced_accuracy:.4f}`、macro F1 `{mode_choice_xgb.iloc[0].macro_f1:.4f}`。这个可以证明方式选择链路更完整，但 rare modes 仍然难，所以不能夸大成完整 mode-choice 已解决。"
+        f"另外我们补了 trip-level survey-weighted harmonized mode-choice transfer baseline：2017 训练的 XGBoost 在 2022 `MODE_GROUP` 上 weighted accuracy `{mode_choice_xgb.iloc[0].weighted_accuracy:.4f}`、weighted balanced accuracy `{mode_choice_xgb.iloc[0].weighted_balanced_accuracy:.4f}`、weighted macro F1 `{mode_choice_xgb.iloc[0].weighted_macro_f1:.4f}`。这个可以证明方式选择链路更完整，但 rare modes 仍然难，所以不能夸大成完整 mode-choice 已解决。"
         if not mode_choice_xgb.empty
         else ""
     )

@@ -34,7 +34,7 @@
 - XGBoost + LLM transit prior weighted total variation: `0.1985`
 - Transit-share weighted MAE: `0.0325 -> 0.0269`
 - 该目标用于补充“怎么出行”的方式结构维度，和 `CNTTDHH` 一起构成 household travel behavior prediction。
-- Trip-level harmonized mode-choice transfer 已补充为更强的方式选择检查：2017-trained XGBoost 在 2022 `MODE_GROUP` 上 accuracy `0.9373`、balanced accuracy `0.4309`、macro F1 `0.4658`；class-balanced variant 的 balanced accuracy 为 `0.6167`，但 macro F1 和 log-loss 更差，因此应作为 trade-off 报告，而不是宣称 full mode-choice 已解决。
+- Trip-level harmonized mode-choice transfer 已补充为更强的方式选择检查：2017-trained survey-weighted XGBoost 在 2022 `MODE_GROUP` 上 survey-weighted accuracy `0.9297`、weighted balanced accuracy `0.4343`、weighted macro F1 `0.4663`，对应 unweighted accuracy 为 `0.9373`；class-balanced variant 的 weighted balanced accuracy 为 `0.5501`，但 weighted macro F1 和 log-loss 更差，因此应作为 rare-mode trade-off 报告，而不是宣称 full mode-choice 已解决。
 
 行为目标 3 是 household-level purpose composition：
 
@@ -420,7 +420,7 @@ purpose-composition 扩展使用同一组 trip-level files，并额外依赖跨�
 - 本地/open-source LLM prior replication 已在 RTX 4090 上跑通 32 cohort Qwen sensitivity control；当前只能表述为可复现性与敏感性控制实验，不能表述为已完成的大规模开源模型替代方案。
 - 稳健性检验显示 global event pressure 是很强的 baseline；应把贡献表述为 event-level label-free adaptation + selective cohort refinement，cohort-specific LLM ranking 是增量证据，不是唯一或主导来源。
 - 外部验证现在包括 mechanism-level ACS/BTS 证据和 PSRC household-level direct pre/post microdata。PSRC 的结果支持 event-adaptation principle，但不要把它表述为 NHTS 2022 数值预测的直接外部验证。
-- mode-composition 是探索性扩展：总体 weighted TV 改善较小，最清楚的结果是 transit-share weighted MAE 和 mode-specific trip volume 改善；trip-level harmonized mode-choice baseline 已补充，但 rare-mode macro F1 仍是限制。
+- mode-composition 是探索性扩展：总体 weighted TV 改善较小，最清楚的结果是 transit-share weighted MAE 和 mode-specific trip volume 改善；trip-level survey-weighted harmonized mode-choice baseline 已补充，但 rare-mode weighted macro F1 仍是限制。
 - purpose-composition 是综合目标扩展和边界实验：它说明项目可以预测“为什么出行”，但当前 LLM purpose prior 还不是整体最优。
 - LLM 的核心价值应表述为 event-generalizable priors，而不是逐户直接预测；batch prompting 是工程加速，prospective event context 是防止 retrospective leakage 的论文级改进方向。
 - `TRPTRANS` 编码在 2017 和 2022 不能直接按数字对齐，mode-composition 和 trip-level mode-choice transfer 都必须使用 year-specific official codebook mapping 到 harmonized mode groups。

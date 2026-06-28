@@ -20,6 +20,8 @@ from .common import (
     MODE_GROUP_ORDER,
     MODE_CHOICE_FEATURES,
     PERSON_ID,
+    SAMPLE_WEIGHT_COLUMN,
+    SURVEY_WEIGHT_COLUMN,
     TABLE_SPECS,
     TARGET_COLUMN,
     map_trptrans_to_mode_group,
@@ -98,11 +100,20 @@ def normalize_target(series: pd.Series) -> pd.Series:
     return target
 
 
-def drop_invalid_targets(features: pd.DataFrame, target: pd.Series) -> tuple[pd.DataFrame, pd.Series]:
+def drop_invalid_targets(
+    features: pd.DataFrame,
+    target: pd.Series,
+    weights: pd.Series,
+) -> tuple[pd.DataFrame, pd.Series, pd.Series]:
     """Drop rows without a usable target value."""
     normalized = normalize_target(target)
     keep_mask = normalized.notna()
-    return features.loc[keep_mask].reset_index(drop=True), normalized.loc[keep_mask].reset_index(drop=True)
+    clean_weights = pd.to_numeric(weights, errors="coerce").fillna(0.0).clip(lower=0.0)
+    return (
+        features.loc[keep_mask].reset_index(drop=True),
+        normalized.loc[keep_mask].reset_index(drop=True),
+        clean_weights.loc[keep_mask].reset_index(drop=True).rename(SAMPLE_WEIGHT_COLUMN),
+    )
 
 
 def encode_feature_frames(
@@ -149,10 +160,13 @@ def save_dataset_files(
     features: tuple[str, ...],
     x_train: pd.DataFrame,
     y_train: pd.Series,
+    w_train: pd.Series,
     x_validation: pd.DataFrame,
     y_validation: pd.Series,
+    w_validation: pd.Series,
     x_test: pd.DataFrame,
     y_test: pd.Series,
+    w_test: pd.Series,
 ) -> Path:
     """Save combined and split feature/label files."""
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -160,17 +174,20 @@ def save_dataset_files(
     feature_path.write_text("\n".join(features) + "\n", encoding="utf-8")
 
     split_payloads = {
-        "train": (x_train, y_train),
-        "validation": (x_validation, y_validation),
-        "test": (x_test, y_test),
+        "train": (x_train, y_train, w_train),
+        "validation": (x_validation, y_validation, w_validation),
+        "test": (x_test, y_test, w_test),
     }
-    for split_name, (features_frame, target_series) in split_payloads.items():
+    for split_name, (features_frame, target_series, weight_series) in split_payloads.items():
         combined = features_frame.copy()
         named_target = target_series.rename(MODE_GROUP_COLUMN)
+        named_weights = weight_series.rename(SAMPLE_WEIGHT_COLUMN)
         combined[MODE_GROUP_COLUMN] = named_target.to_numpy()
+        combined[SAMPLE_WEIGHT_COLUMN] = named_weights.to_numpy()
         combined.to_csv(output_dir / f"{split_name}.csv", index=False)
         features_frame.to_csv(output_dir / f"X_{split_name}.csv", index=False)
         named_target.to_csv(output_dir / f"y_{split_name}.csv", index=False)
+        named_weights.to_csv(output_dir / f"w_{split_name}.csv", index=False)
 
     return feature_path
 
@@ -251,6 +268,7 @@ def write_dataset_report(
             "- `train.csv`, `validation.csv`, `test.csv`: features and target in one file.",
             "- `X_train.csv`, `X_validation.csv`, `X_test.csv`: feature matrices.",
             "- `y_train.csv`, `y_validation.csv`, `y_test.csv`: harmonized target vectors.",
+            "- `w_train.csv`, `w_validation.csv`, `w_test.csv`: trip-level NHTS survey weights for weighted evaluation.",
             "- `features.txt`: resolved post-merge feature columns.",
             "- `target_distribution.csv`: target distribution across splits.",
             "",
@@ -269,18 +287,29 @@ def build_mode_choice_datasets(
     data = load_preprocessed_tables(interim_dir)
     merged_2017 = merge_trip_person_household(data, 2017)
     merged_2022 = merge_trip_person_household(data, 2022)
+    if SURVEY_WEIGHT_COLUMN not in merged_2017.columns or SURVEY_WEIGHT_COLUMN not in merged_2022.columns:
+        raise ValueError(f"Merged trip data must include {SURVEY_WEIGHT_COLUMN} for survey-weighted evaluation.")
     features = resolve_feature_columns(merged_2017)
 
     y_2017_raw = map_trptrans_to_mode_group(merged_2017[TARGET_COLUMN], 2017)
     y_2022_raw = map_trptrans_to_mode_group(merged_2022[TARGET_COLUMN], 2022)
-    x_2017_raw, y_2017 = drop_invalid_targets(merged_2017.loc[:, features], y_2017_raw)
-    x_2022_raw, y_2022 = drop_invalid_targets(merged_2022.loc[:, features], y_2022_raw)
+    x_2017_raw, y_2017, w_2017 = drop_invalid_targets(
+        merged_2017.loc[:, features],
+        y_2017_raw,
+        merged_2017[SURVEY_WEIGHT_COLUMN],
+    )
+    x_2022_raw, y_2022, w_2022 = drop_invalid_targets(
+        merged_2022.loc[:, features],
+        y_2022_raw,
+        merged_2022[SURVEY_WEIGHT_COLUMN],
+    )
     x_2017, x_2022 = encode_feature_frames(x_2017_raw, x_2022_raw)
 
     stratify_target = stratify_or_none(y_2017, test_size)
-    x_train, x_validation, y_train, y_validation = train_test_split(
+    x_train, x_validation, y_train, y_validation, w_train, w_validation = train_test_split(
         x_2017,
         y_2017,
+        w_2017,
         test_size=test_size,
         random_state=random_state,
         stratify=stratify_target,
@@ -291,10 +320,13 @@ def build_mode_choice_datasets(
         features,
         x_train.reset_index(drop=True),
         y_train.reset_index(drop=True),
+        w_train.reset_index(drop=True),
         x_validation.reset_index(drop=True),
         y_validation.reset_index(drop=True),
+        w_validation.reset_index(drop=True),
         x_2022.reset_index(drop=True),
         y_2022.reset_index(drop=True),
+        w_2022.reset_index(drop=True),
     )
     report_path = output_dir / "dataset_report.md"
     write_dataset_report(output_dir, report_path, features, y_train, y_validation, y_2022)
