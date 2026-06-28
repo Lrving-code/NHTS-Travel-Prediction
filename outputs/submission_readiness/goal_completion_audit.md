@@ -19,7 +19,7 @@ Overall status: `ARTIFACT_GATE_PASS`
 | Top-venue adversarial audit is explicit | PASS | Round-2 audit records remaining top-tier risks and safe claims. | `outputs/paper_draft/top_venue_adversarial_audit_round2.md` |
 | Local open-source LLM GPU sensitivity control exists | PASS | Script, CUDA-ready audit, 32 successful local priors, and local-vs-reference comparison exist. | `outputs/local_llm_prior_replication/local_llm_prior_replication_report.md` |
 | Primary NHTS result is documented | PASS | Historical XGBoost to gated adapter improvement is in the audit. | `outputs/final_project/final_metrics_summary.csv` |
-| Strong baselines and LLM rule-tree ablations exist | PASS | Strong tabular, transparent Poisson/Tweedie/negative-binomial count-model, zero-shot rule tree, pseudo-label tree, and small-calibration evidence are present. | `outputs/strong_baselines/strong_tabular_baseline_metrics.csv` |
+| Strong baselines and LLM rule-tree ablations exist | PASS | Strong tabular, transparent Poisson/Tweedie/negative-binomial/zero-inflated count-model, zero-shot rule tree, pseudo-label tree, and small-calibration evidence are present. | `outputs/strong_baselines/strong_tabular_baseline_metrics.csv` |
 | Robustness and placebo controls exist | PASS | Permutation, irrelevant pseudo-event, and cohort-prior value controls are present. | `outputs/robustness_checks/permutation_pressure_controls.csv` |
 | Strong global-prior risk is quantified | PASS | Cohort-prior value analysis reports same-alpha global comparison and subgroup-cell win share. | `outputs/cohort_prior_value_analysis/cohort_prior_value_report.md` |
 | Causal/leakage guardrails are documented | PASS | Causal evidence pack and leakage audit exist. | `outputs/causal_guardrails/causal_guardrail_evidence_report.md` |
@@ -39,6 +39,7 @@ Overall status: `ARTIFACT_GATE_PASS`
 - Method comparison: `outputs/final_project/method_comparison_summary.csv`
 - Count-model baseline: `outputs/count_model_baselines/count_model_baseline_report.md`
 - Negative-binomial count baseline: `outputs/negative_binomial_baseline/negative_binomial_baseline_report.md`
+- Zero-inflated count baseline: `outputs/zero_inflated_count_baseline/zero_inflated_count_baseline_report.md`
 - Cohort-prior value analysis: `outputs/cohort_prior_value_analysis/cohort_prior_value_report.md`
 - Local/open-source LLM replication audit: `outputs/local_llm_prior_replication/local_llm_environment_audit.md`
 - Submission audit: `outputs/submission_readiness/submission_readiness_audit.md`

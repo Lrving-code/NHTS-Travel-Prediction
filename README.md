@@ -19,7 +19,7 @@
 - LLM rule + small historical calibration is implemented as a bridge baseline: 500 historical calibration rows give weighted MAE `2.7723`, and full-history rule calibration gives `2.7870`. This is useful for data-sparse/cold-start framing, but it is not the best setting for the 2022 event-shift task.
 - Gated household accuracy: exact `17.7%`, within 2 trips `54.5%`, within 3 trips `71.2%`
 - Stronger non-LLM baselines still overpredict 2022: best extra baseline is CatBoost GPU with weighted MAE `4.2196` and weighted bias `+3.4873`; the primary gated event adapter is `40.70%` lower in weighted MAE.
-- Transparent count-model baselines show the same transfer failure: Poisson GLM weighted MAE `4.3368` and weighted bias `+3.6178`; Tweedie GLM weighted MAE `4.3761` and weighted bias `+3.6677`. A stable negative-binomial GLM check reaches weighted MAE `6.1229` with solver diagnostics recorded. The primary gated event adapter is `42.30%` lower in weighted MAE than the best transparent count model and `59.13%` lower than the negative-binomial GLM.
+- Transparent count-model baselines show the same transfer failure: Poisson GLM weighted MAE `4.3368` and weighted bias `+3.6178`; Tweedie GLM weighted MAE `4.3761` and weighted bias `+3.6677`; zero-inflated Poisson weighted MAE `4.1742` and weighted bias `+3.4233`. A stable negative-binomial GLM check reaches weighted MAE `6.1229` with solver diagnostics recorded. The primary gated event adapter is `40.05%` lower in weighted MAE than the best zero-inflated count baseline, `42.30%` lower than the best transparent GLM count model, and `59.13%` lower than the negative-binomial GLM.
 - Irrelevant pseudo-event placebo controls do not reproduce the main result: the best ranked pseudo-event weighted MAE is `2.6274`, and the best gated pseudo-event weighted MAE is `2.5610`.
 - Cohort-prior value analysis: the primary gated adapter is `0.0508` weighted-MAE lower than a same-alpha global prior and `0.0201` lower than the reported low-cost `global_trip_suppression_a1p25`; it beats same-alpha global prior in `77.8%` of evaluated subgroup cells. The gate uses cohort-specific pressure for `17.5%` of survey-weighted households, so the paper-safe interpretation is "global event correction plus selective cohort refinement."
 - Equity-aware subgroup evaluation: worst-subgroup weighted MAE improves from `8.3778` under historical XGBoost to `4.7091` under the primary gated event adapter; all evaluated subgroups improve relative to historical XGBoost.
@@ -78,7 +78,7 @@
 - 对比 historical mean、ordinary historical XGBoost、historical trend shift、global event rule、random pressure、LLM-only pressure 和 hybrid LLM adapter，说明 hybrid 设计的必要性。
 - 额外实现 zero-shot LLM rule tree / pseudo-label tree baseline，回应“为什么不直接让 LLM 构建 2022 决策树”的审稿问题。
 - 实现 LLM rule + small historical calibration 中间 baseline，回应“先由 LLM 提取规则、再用少量历史数据校准”的合作方案。
-- 实现 Poisson/Tweedie count-model baseline，回应交通需求建模审稿人对透明计数模型的 baseline 要求。
+- 实现 Poisson/Tweedie、negative-binomial 和 zero-inflated Poisson count-model baselines，回应交通需求建模审稿人对透明计数模型的 baseline 要求。
 - 通过 irrelevant pseudo-event placebo 检验机制相关性：任意 distribution-matched cohort score 不能替代 post-pandemic event prior。
 - 通过 cohort-prior value analysis 解释 strong global prior 风险：global prior 是主要 event correction，cohort-specific LLM ranking 是选择性增量，而不是全部改进来源。
 
@@ -327,6 +327,7 @@ python src\run_stronger_tabular_baselines.py --device cuda --methods lightgbm --
 ```powershell
 python src\run_count_model_baselines.py --max-iter 1000 --alpha 0.01
 python src\run_negative_binomial_count_baseline.py
+python src\run_zero_inflated_count_baseline.py --methods zip --max-iter 80
 ```
 
 本地/open-source LLM prior replication 审计与小样本复刻：
@@ -385,7 +386,7 @@ purpose-composition 扩展使用同一组 trip-level files，并额外依赖跨�
 - 当前版本足够作为“大数据与城市规划”课程大作业汇报；如果要发展成论文，应按 `outputs/final_project/project_quality_assessment.md` 继续推进 LaTeX 化、advisor feedback、额外地区复刻和更强的 mode-choice 实验。
 - 主实验不使用 2022 `CNTTDHH` 标签训练或校准，2022 标签只用于最终 evaluation。
 - 汇报主口径使用固定 `gated_trip_suppression_a1_d0p15` no-label rule；参数扫描结果只放内部附录，不进入公开方法比较主表。
-- Count-model baseline 是 reviewer-facing transparent baseline，不是 exhaustively optimized zero-inflated/negative-binomial state of the art；Poisson/Tweedie solver warning 已记录在 `outputs/count_model_baselines/count_model_solver_diagnostics.csv`，negative-binomial GLM 的 alpha 失败和未收敛信息记录在 `outputs/negative_binomial_baseline/negative_binomial_diagnostics.csv`。
+- Count-model baseline 是 reviewer-facing transparent baseline，不是 exhaustively optimized zero-inflated/negative-binomial state of the art；Poisson/Tweedie solver warning 已记录在 `outputs/count_model_baselines/count_model_solver_diagnostics.csv`，negative-binomial GLM 的 alpha 失败和未收敛信息记录在 `outputs/negative_binomial_baseline/negative_binomial_diagnostics.csv`，zero-inflated Poisson 的未收敛状态记录在 `outputs/zero_inflated_count_baseline/zero_inflated_count_diagnostics.csv`。
 - 本地/open-source LLM prior replication 已在 RTX 4090 上跑通 32 cohort Qwen sensitivity control；当前只能表述为可复现性与敏感性控制实验，不能表述为已完成的大规模开源模型替代方案。
 - 稳健性检验显示 global event pressure 是很强的 baseline；应把贡献表述为 event-level label-free adaptation + selective cohort refinement，cohort-specific LLM ranking 是增量证据，不是唯一或主导来源。
 - 外部验证现在包括 mechanism-level ACS/BTS 证据和 PSRC household-level direct pre/post microdata。PSRC 的结果支持 event-adaptation principle，但不要把它表述为 NHTS 2022 数值预测的直接外部验证。

@@ -200,9 +200,11 @@ def build_requirements() -> list[RequirementEvidence]:
             and exists("outputs/count_model_baselines/count_model_solver_diagnostics.csv")
             and exists("outputs/negative_binomial_baseline/negative_binomial_2022_metrics.csv")
             and exists("outputs/negative_binomial_baseline/negative_binomial_diagnostics.csv")
+            and exists("outputs/zero_inflated_count_baseline/zero_inflated_count_metrics.csv")
+            and exists("outputs/zero_inflated_count_baseline/zero_inflated_count_diagnostics.csv")
             and exists("outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_metrics.csv"),
             "Strong baselines and LLM rule-tree ablations exist",
-            "Strong tabular, transparent Poisson/Tweedie/negative-binomial count-model, zero-shot rule tree, pseudo-label tree, and small-calibration evidence are present.",
+            "Strong tabular, transparent Poisson/Tweedie/negative-binomial/zero-inflated count-model, zero-shot rule tree, pseudo-label tree, and small-calibration evidence are present.",
             "outputs/strong_baselines/strong_tabular_baseline_metrics.csv",
         ),
         pass_if(
@@ -326,6 +328,7 @@ def write_report(rows: list[RequirementEvidence]) -> Path:
             "- Method comparison: `outputs/final_project/method_comparison_summary.csv`",
             "- Count-model baseline: `outputs/count_model_baselines/count_model_baseline_report.md`",
             "- Negative-binomial count baseline: `outputs/negative_binomial_baseline/negative_binomial_baseline_report.md`",
+            "- Zero-inflated count baseline: `outputs/zero_inflated_count_baseline/zero_inflated_count_baseline_report.md`",
             "- Cohort-prior value analysis: `outputs/cohort_prior_value_analysis/cohort_prior_value_report.md`",
             "- Local/open-source LLM replication audit: `outputs/local_llm_prior_replication/local_llm_environment_audit.md`",
             "- Submission audit: `outputs/submission_readiness/submission_readiness_audit.md`",

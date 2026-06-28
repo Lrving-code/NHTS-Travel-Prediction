@@ -37,6 +37,9 @@ No PARTIAL items were detected.
 | Baselines and controls | Negative-binomial count baseline | PASS | 1.0 | outputs/negative_binomial_baseline/negative_binomial_2022_metrics.csv |
 | Baselines and controls | Negative-binomial diagnostics | PASS | 1.0 | outputs/negative_binomial_baseline/negative_binomial_diagnostics.csv |
 | Baselines and controls | Negative-binomial report | PASS | 1.0 | outputs/negative_binomial_baseline/negative_binomial_baseline_report.md |
+| Baselines and controls | Zero-inflated count baseline | PASS | 1.0 | outputs/zero_inflated_count_baseline/zero_inflated_count_metrics.csv |
+| Baselines and controls | Zero-inflated diagnostics | PASS | 1.0 | outputs/zero_inflated_count_baseline/zero_inflated_count_diagnostics.csv |
+| Baselines and controls | Zero-inflated report | PASS | 1.0 | outputs/zero_inflated_count_baseline/zero_inflated_count_baseline_report.md |
 | Baselines and controls | Zero-shot rule tree | PASS | 1.0 | outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_metrics.csv |
 | Baselines and controls | Small historical calibration | PASS | 1.0 | outputs/llm_rule_small_data_calibration/method_spectrum_metrics.csv |
 | Baselines and controls | Irrelevant pseudo-event placebo | PASS | 1.0 | outputs/irrelevant_pseudo_event_placebo/irrelevant_pseudo_event_placebo_metrics.csv |
@@ -46,6 +49,7 @@ No PARTIAL items were detected.
 | Baselines and controls | Cohort-prior value figure | PASS | 1.0 | outputs/cohort_prior_value_analysis/cohort_prior_value_top_groups.png |
 | Baselines and controls | Count-model comparison | PASS | 1.0 | Poisson GLM wMAE 4.3368, wBias +3.6178; primary adapter is 42.30% lower in wMAE. |
 | Baselines and controls | Negative-binomial comparison | PASS | 1.0 | NB GLM wMAE 6.1229, wBias -1.1091; primary adapter is 59.13% lower in wMAE, with diagnostics recorded. |
+| Baselines and controls | Zero-inflated count comparison | PASS | 1.0 | ZIP wMAE 4.1742, wBias +3.4233; primary adapter is 40.05% lower in wMAE, with diagnostics recorded. |
 | Baselines and controls | Cohort-prior incremental value | PASS | 1.0 | Primary gated adapter beats same-alpha global prior by 0.0508 wMAE and wins in 77.8% of evaluated subgroup cells. |
 | Causal and leakage guardrails | Leakage audit | PASS | 1.0 | outputs/leakage_audit/llm_input_leakage_audit_report.md |
 | Causal and leakage guardrails | Causal evidence pack | PASS | 1.0 | outputs/causal_guardrails/causal_guardrail_evidence_report.md |

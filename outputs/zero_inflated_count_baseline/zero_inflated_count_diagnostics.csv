@@ -1,0 +1,2 @@
+method,status,max_iter,count_columns,inflation_columns,converged,n_iter,warning_message,error_message,warning_count,aic,llf,weighted_mae,weighted_bias
+zip,ok,80,57,32,False,-1,"Inverting hessian failed, no bse or cov_params available (x2) | Maximum Likelihood optimization failed to converge. Check mle_retvals (x1)",,3,2104182.990728033,-1052003.4953640164,4.174241445484265,3.4232510541555796

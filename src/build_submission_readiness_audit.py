@@ -186,6 +186,9 @@ def audit_baselines_and_controls() -> list[Check]:
         "Negative-binomial count baseline": "outputs/negative_binomial_baseline/negative_binomial_2022_metrics.csv",
         "Negative-binomial diagnostics": "outputs/negative_binomial_baseline/negative_binomial_diagnostics.csv",
         "Negative-binomial report": "outputs/negative_binomial_baseline/negative_binomial_baseline_report.md",
+        "Zero-inflated count baseline": "outputs/zero_inflated_count_baseline/zero_inflated_count_metrics.csv",
+        "Zero-inflated diagnostics": "outputs/zero_inflated_count_baseline/zero_inflated_count_diagnostics.csv",
+        "Zero-inflated report": "outputs/zero_inflated_count_baseline/zero_inflated_count_baseline_report.md",
         "Zero-shot rule tree": "outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_metrics.csv",
         "Small historical calibration": "outputs/llm_rule_small_data_calibration/method_spectrum_metrics.csv",
         "Irrelevant pseudo-event placebo": "outputs/irrelevant_pseudo_event_placebo/irrelevant_pseudo_event_placebo_metrics.csv",
@@ -278,6 +281,47 @@ def audit_baselines_and_controls() -> list[Check]:
                 "Negative-binomial comparison",
                 "Could not read NB GLM or primary adapter metrics.",
                 "Regenerate negative-binomial baseline and final metrics.",
+            )
+        )
+    zip_mae = metric_value(
+        "outputs/zero_inflated_count_baseline/zero_inflated_count_metrics.csv",
+        "zero_inflated_zip_compact",
+        "weighted_mae",
+    )
+    zip_bias = metric_value(
+        "outputs/zero_inflated_count_baseline/zero_inflated_count_metrics.csv",
+        "zero_inflated_zip_compact",
+        "weighted_bias",
+    )
+    if zip_mae is not None and zip_bias is not None and primary_mae is not None:
+        reduction = (zip_mae - primary_mae) / zip_mae
+        if reduction >= 0.35 and zip_bias >= 3.0:
+            checks.append(
+                pass_check(
+                    category,
+                    "Zero-inflated count comparison",
+                    (
+                        f"ZIP wMAE {zip_mae:.4f}, wBias {zip_bias:+.4f}; "
+                        f"primary adapter is {reduction:.2%} lower in wMAE, with diagnostics recorded."
+                    ),
+                )
+            )
+        else:
+            checks.append(
+                partial_check(
+                    category,
+                    "Zero-inflated count comparison",
+                    f"ZIP wMAE {zip_mae:.4f}, wBias {zip_bias:+.4f}; primary adapter reduction {reduction:.2%}.",
+                    "Review whether the zero-inflated count baseline supports the event-shift story.",
+                )
+            )
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Zero-inflated count comparison",
+                "Could not read ZIP or primary adapter metrics.",
+                "Regenerate zero-inflated baseline and final metrics.",
             )
         )
     cohort_value_path = PROJECT_ROOT / "outputs/cohort_prior_value_analysis/cohort_prior_value_summary.csv"

@@ -1,0 +1,2 @@
+method,seed,calibration_fraction,calibration_rows,test_rows,mae,rmse,bias,r2,weighted_mae,weighted_rmse,weighted_bias,weighted_r2,weighted_target_mean,weighted_prediction_mean,device
+zero_inflated_zip_compact,42,0.0,0,7893,3.883752951119483,4.905064907754595,3.0204319014780423,-0.4331367166234861,4.174241445484265,5.271861092252747,3.4232510541555796,-0.6091137758799265,3.831913682179956,7.255164736335535,cpu
