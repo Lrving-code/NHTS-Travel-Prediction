@@ -80,7 +80,7 @@ No PARTIAL items were detected.
 | Literature and paper story | Single paper spine | PASS | 1.0 | paper_logic_chain.md states the event-adaptation spine. |
 | Literature and paper story | Reviewer Q&A backup | PASS | 1.0 | Reviewer Q&A backup document exists. |
 | Literature and paper story | Paper draft and claim ledger | PASS | 1.0 | Paper draft and claim-evidence matrix exist. |
-| Literature and paper story | LaTeX manuscript and verified references | PASS | 1.0 | LaTeX skeleton, core figures, BibTeX, and citation verification log exist. |
+| Literature and paper story | LaTeX manuscript and verified references | PASS | 1.0 | LaTeX skeleton, core figures, BibTeX, citation verification log, and successful manual compile notes exist. |
 | Literature and paper story | Top-venue adversarial audit | PASS | 1.0 | Round-4 audit states remaining risks, safe claims, next experiment gates, and frozen-context replay blockers. |
 | Presentation readiness | Main deck plus backup | PASS | 1.0 | 0611 final PPT has 38 slides for a 15-minute course defense. |
 | Presentation readiness | Key defense content in deck | PASS | 1.0 | Final deck contains title framing, 2025-2026 literature anchors, selector/correction branches, method comparison, and behavior-system extensions. |
@@ -93,5 +93,5 @@ No PARTIAL items were detected.
 ## Interpretation
 
 - Course-project readiness is strong: the core result, baselines, guardrails, deck, Q&A material, and paper draft package are present.
-- No artifact-level FAIL or PARTIAL items remain in this audit; remaining work is advisor feedback, optional additional replications, and a full LaTeX/BibTeX compile in a normal non-elevated TeX environment.
+- No artifact-level FAIL or PARTIAL items remain in this audit; the paper source now has a successful manual LaTeX/BibTeX compile record. Remaining work is advisor feedback, optional additional replications, and final venue-template formatting.
 - The defensible paper claim should remain scoped to label-free event adaptation for survey-based household mobility under a post-pandemic shift.

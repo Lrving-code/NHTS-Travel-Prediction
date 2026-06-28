@@ -1,6 +1,6 @@
 # LaTeX Build Notes
 
-Last checked: 2026-06-10
+Last checked: 2026-06-29
 
 ## Files
 
@@ -23,7 +23,6 @@ Current status:
 Available TeX tools on this machine:
 
 - MiKTeX `pdflatex`
-- MiKTeX `xelatex`
 - MiKTeX `bibtex`
 - MiKTeX `latexmk`
 
@@ -32,20 +31,26 @@ Commands attempted:
 ```powershell
 latexmk -pdf -interaction=nonstopmode -halt-on-error main.tex
 pdflatex -interaction=nonstopmode -halt-on-error main.tex
-xelatex -interaction=nonstopmode -halt-on-error main.tex
 bibtex main
+pdflatex -interaction=nonstopmode -halt-on-error main.tex
+pdflatex -interaction=nonstopmode -halt-on-error main.tex
+pdflatex -interaction=nonstopmode -halt-on-error main.tex
 ```
 
-Observed issue:
+Observed result:
 
-- `latexmk`, `bibtex`, and the TeX engines return MiKTeX elevated-permission security-risk errors in this Codex shell.
-- `xelatex` can write a draft PDF, but BibTeX cannot run in this shell, so citations remain unresolved in that PDF.
+- `latexmk` still fails because MiKTeX cannot find the required Perl script engine.
+- The manual `pdflatex -> bibtex -> pdflatex -> pdflatex -> pdflatex` sequence succeeds in this Codex shell.
+- `main.pdf` is generated locally as a 10-page PDF.
+- `main.log` reports no undefined citation warnings after the final run.
+- Remaining TeX warnings are non-blocking: one underfull hbox and one overfull hbox around the compact results table.
+- MiKTeX still prints elevated-privilege and update-check warnings; these do not stop the manual compile.
 
 Decision:
 
 - Do not commit generated PDF or intermediate files from this environment.
-- Keep the verified source files and static citation-key check as the current reproducible gate.
-- Re-run the full compile in a normal, non-elevated PowerShell session or Overleaf before external submission.
+- Treat the manual compile sequence as the current reproducible source gate.
+- Before external submission, rerun the same sequence in a normal, non-elevated PowerShell session or Overleaf and inspect the overfull table warning.
 
 Suggested compile command in a normal TeX environment:
 
@@ -53,6 +58,7 @@ Suggested compile command in a normal TeX environment:
 cd outputs\paper_draft\latex
 pdflatex -interaction=nonstopmode main.tex
 bibtex main
+pdflatex -interaction=nonstopmode main.tex
 pdflatex -interaction=nonstopmode main.tex
 pdflatex -interaction=nonstopmode main.tex
 ```

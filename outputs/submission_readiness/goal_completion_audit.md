@@ -15,6 +15,7 @@ Overall status: `ARTIFACT_GATE_PASS`
 | 2025-2026 literature grounding is present | PASS | Literature note covers current LLM/mobility anchors. | `plan/literature_grounding_2026.md` |
 | Paper draft and claim-evidence ledger exist | PASS | Draft manuscript and claim matrix constrain paper-level wording. | `outputs/paper_draft/nhts_event_adaptation_paper_draft.md` |
 | LaTeX manuscript and citation verification package exist | PASS | LaTeX skeleton, core figures, BibTeX, and citation verification log are present. | `outputs/paper_draft/latex/main.tex` |
+| LaTeX/BibTeX manual compile record exists | PASS | Manual pdflatex/BibTeX build sequence succeeded and citation warnings were resolved. | `outputs/paper_draft/latex/latex_build_notes.md` |
 | Classical travel-demand and survey-weighting grounding is present | PASS | LaTeX cites verified discrete-choice, count-data, and NHTS weighting references. | `outputs/paper_draft/latex/references.bib` |
 | Top-venue adversarial audit is explicit | PASS | Latest top-venue audit records remaining risks, safe claims, and next experiment gates. | `outputs/paper_draft/top_venue_adversarial_audit_round4.md` |
 | Local open-source LLM GPU sensitivity control exists | PASS | Script, CUDA-ready audit, 32 successful local priors, and local-vs-reference comparison exist. | `outputs/local_llm_prior_replication/local_llm_prior_replication_report.md` |
@@ -55,4 +56,4 @@ Overall status: `ARTIFACT_GATE_PASS`
 
 ## Remaining Work
 
-No artifact-level blocker remains in the current audit. Future work is optional extension rather than required closure: full LaTeX/BibTeX compile in a normal non-elevated TeX environment, advisor feedback, and additional external regional replications.
+No artifact-level blocker remains in the current audit. Future work is optional extension rather than required closure: advisor feedback, final venue-template formatting, and additional external regional replications.

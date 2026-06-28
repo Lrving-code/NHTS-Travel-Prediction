@@ -50,7 +50,7 @@ Literature and paper story,2025-2026 literature grounding,PASS,1.0,Literature gr
 Literature and paper story,Single paper spine,PASS,1.0,paper_logic_chain.md states the event-adaptation spine.,Keep.
 Literature and paper story,Reviewer Q&A backup,PASS,1.0,Reviewer Q&A backup document exists.,Keep.
 Literature and paper story,Paper draft and claim ledger,PASS,1.0,Paper draft and claim-evidence matrix exist.,Keep.
-Literature and paper story,LaTeX manuscript and verified references,PASS,1.0,"LaTeX skeleton, core figures, BibTeX, and citation verification log exist.",Keep.
+Literature and paper story,LaTeX manuscript and verified references,PASS,1.0,"LaTeX skeleton, core figures, BibTeX, citation verification log, and successful manual compile notes exist.",Keep.
 Literature and paper story,Top-venue adversarial audit,PASS,1.0,"Round-4 audit states remaining risks, safe claims, next experiment gates, and frozen-context replay blockers.",Keep.
 Presentation readiness,Main deck plus backup,PASS,1.0,0611 final PPT has 38 slides for a 15-minute course defense.,Keep.
 Presentation readiness,Key defense content in deck,PASS,1.0,"Final deck contains title framing, 2025-2026 literature anchors, selector/correction branches, method comparison, and behavior-system extensions.",Keep.

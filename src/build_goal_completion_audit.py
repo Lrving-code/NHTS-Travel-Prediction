@@ -104,6 +104,7 @@ def build_requirements() -> list[RequirementEvidence]:
     latex_main = read_text("outputs/paper_draft/latex/main.tex")
     latex_bib = read_text("outputs/paper_draft/latex/references.bib")
     citation_log = read_text("outputs/paper_draft/latex/citation_verification_log.md")
+    latex_build_notes = read_text("outputs/paper_draft/latex/latex_build_notes.md")
     top_venue_audit_path = (
         "outputs/paper_draft/top_venue_adversarial_audit_round4.md"
         if exists("outputs/paper_draft/top_venue_adversarial_audit_round4.md")
@@ -162,6 +163,19 @@ def build_requirements() -> list[RequirementEvidence]:
             "LaTeX manuscript and citation verification package exist",
             "LaTeX skeleton, core figures, BibTeX, and citation verification log are present.",
             "outputs/paper_draft/latex/main.tex",
+        ),
+        pass_if(
+            all(
+                term in latex_build_notes
+                for term in [
+                    "manual `pdflatex -> bibtex -> pdflatex -> pdflatex -> pdflatex` sequence succeeds",
+                    "no undefined citation warnings",
+                    "10-page PDF",
+                ]
+            ),
+            "LaTeX/BibTeX manual compile record exists",
+            "Manual pdflatex/BibTeX build sequence succeeded and citation warnings were resolved.",
+            "outputs/paper_draft/latex/latex_build_notes.md",
         ),
         pass_if(
             all(
@@ -387,7 +401,7 @@ def write_report(rows: list[RequirementEvidence]) -> Path:
             "",
             "## Remaining Work",
             "",
-            "No artifact-level blocker remains in the current audit. Future work is optional extension rather than required closure: full LaTeX/BibTeX compile in a normal non-elevated TeX environment, advisor feedback, and additional external regional replications.",
+            "No artifact-level blocker remains in the current audit. Future work is optional extension rather than required closure: advisor feedback, final venue-template formatting, and additional external regional replications.",
         ]
     )
     report_path.write_text("\n".join(lines), encoding="utf-8")

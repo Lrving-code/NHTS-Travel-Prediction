@@ -808,16 +808,24 @@ def audit_literature_and_story() -> list[Check]:
                 "Survey-weighted metric protocol",
             ],
         )
+        and contains_text(
+            "outputs/paper_draft/latex/latex_build_notes.md",
+            [
+                "manual `pdflatex -> bibtex -> pdflatex -> pdflatex -> pdflatex` sequence succeeds",
+                "no undefined citation warnings",
+                "10-page PDF",
+            ],
+        )
     )
     if latex_ready:
-        checks.append(pass_check(category, "LaTeX manuscript and verified references", "LaTeX skeleton, core figures, BibTeX, and citation verification log exist."))
+        checks.append(pass_check(category, "LaTeX manuscript and verified references", "LaTeX skeleton, core figures, BibTeX, citation verification log, and successful manual compile notes exist."))
     else:
         checks.append(
             partial_check(
                 category,
                 "LaTeX manuscript and verified references",
-                "Missing LaTeX manuscript package or citation verification evidence.",
-                "Create outputs/paper_draft/latex/main.tex, references.bib, and citation_verification_log.md.",
+                "Missing LaTeX manuscript package, citation verification evidence, or manual compile notes.",
+                "Create outputs/paper_draft/latex/main.tex, references.bib, citation_verification_log.md, and latex_build_notes.md.",
             )
         )
     round4_path = "outputs/paper_draft/top_venue_adversarial_audit_round4.md"
@@ -1048,7 +1056,7 @@ def write_outputs(checks: list[Check]) -> tuple[Path, Path]:
     )
     if blockers.empty and partial.empty:
         lines.append(
-            "- No artifact-level FAIL or PARTIAL items remain in this audit; remaining work is advisor feedback, optional additional replications, and a full LaTeX/BibTeX compile in a normal non-elevated TeX environment."
+            "- No artifact-level FAIL or PARTIAL items remain in this audit; the paper source now has a successful manual LaTeX/BibTeX compile record. Remaining work is advisor feedback, optional additional replications, and final venue-template formatting."
         )
     elif blockers.empty:
         lines.append(
