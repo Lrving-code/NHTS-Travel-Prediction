@@ -1,0 +1,20 @@
+{
+  "name": "zero_shot_llm_semantic_rule_tree",
+  "label_usage": "No 2022 CNTTDHH labels are used for split selection, leaf values, or calibration.",
+  "allowed_inputs": [
+    "household size, vehicle ownership, worker count, adult count, driver count, urban/rail context",
+    "LLM event priors: trip suppression, remote work, transit avoidance, delivery substitution, recovery sensitivity"
+  ],
+  "forbidden_inputs": [
+    "2022 CNTTDHH for rule construction",
+    "2022 aggregate target outcomes",
+    "household ID as a predictor"
+  ],
+  "decision_logic": [
+    "Estimate household routine demand from household size, workers, vehicles, adults, and drivers.",
+    "Apply an event factor from LLM event priors without using 2022 labels.",
+    "Apply small context adjustments for urban rail exposure, weekend travel day, and seasonal activity.",
+    "Distill the resulting pseudo-labels into a shallow decision tree for interpretability."
+  ],
+  "caveat": "This is a qualitative belief-tree baseline. Its thresholds and leaf values are not optimized against true 2022 NHTS outcomes, so it should be read as an ablation rather than the main predictor."
+}

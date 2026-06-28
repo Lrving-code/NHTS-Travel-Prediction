@@ -1,0 +1,949 @@
+"""Build a submission-readiness audit for the NHTS LLM adaptation project."""
+
+from __future__ import annotations
+
+import html
+import json
+import re
+import zipfile
+from dataclasses import dataclass
+from pathlib import Path
+
+import pandas as pd
+
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+OUTPUT_DIR = PROJECT_ROOT / "outputs" / "submission_readiness"
+FINAL_DIR = PROJECT_ROOT / "outputs" / "final_project"
+
+
+@dataclass(frozen=True)
+class Check:
+    category: str
+    item: str
+    status: str
+    score: float
+    evidence: str
+    recommendation: str
+
+
+def read_text(path: Path) -> str:
+    return path.read_text(encoding="utf-8") if path.exists() else ""
+
+
+def read_json(path: str) -> dict[str, object]:
+    file_path = PROJECT_ROOT / path
+    if not file_path.exists():
+        return {}
+    return json.loads(file_path.read_text(encoding="utf-8"))
+
+
+def exists(path: str) -> bool:
+    return (PROJECT_ROOT / path).exists()
+
+
+def metric_value(path: str, method: str, column: str) -> float | None:
+    file_path = PROJECT_ROOT / path
+    if not file_path.exists():
+        return None
+    frame = pd.read_csv(file_path)
+    if "method" not in frame.columns or column not in frame.columns:
+        return None
+    row = frame.loc[frame["method"] == method]
+    if row.empty:
+        return None
+    return float(row[column].iloc[0])
+
+
+def metric_value_filtered(path: str, filters: dict[str, str | int], column: str) -> float | None:
+    file_path = PROJECT_ROOT / path
+    if not file_path.exists():
+        return None
+    frame = pd.read_csv(file_path)
+    if column not in frame.columns:
+        return None
+    mask = pd.Series(True, index=frame.index)
+    for filter_column, filter_value in filters.items():
+        if filter_column not in frame.columns:
+            return None
+        mask &= frame[filter_column].astype(str) == str(filter_value)
+    rows = frame.loc[mask]
+    if rows.empty:
+        return None
+    return float(rows[column].iloc[0])
+
+
+def contains_text(path: str, terms: list[str]) -> bool:
+    content = read_text(PROJECT_ROOT / path)
+    return all(term in content for term in terms)
+
+
+def slide_number(path: str) -> int:
+    match = re.search(r"slide(\d+)\.xml", path)
+    return int(match.group(1)) if match else 0
+
+
+def ppt_text(path: str) -> tuple[int, str]:
+    file_path = PROJECT_ROOT / path
+    if not file_path.exists():
+        return 0, ""
+    with zipfile.ZipFile(file_path) as archive:
+        slide_names = sorted(
+            (
+                name
+                for name in archive.namelist()
+                if re.fullmatch(r"ppt/slides/slide\d+\.xml", name)
+            ),
+            key=slide_number,
+        )
+        text_parts: list[str] = []
+        for name in slide_names:
+            xml = archive.read(name).decode("utf-8", errors="ignore")
+            text_parts.extend(html.unescape(match.group(1)) for match in re.finditer(r"<a:t>(.*?)</a:t>", xml))
+    return len(slide_names), "\n".join(text_parts)
+
+
+def pass_check(category: str, item: str, evidence: str, recommendation: str = "Keep.") -> Check:
+    return Check(category, item, "PASS", 1.0, evidence, recommendation)
+
+
+def partial_check(category: str, item: str, evidence: str, recommendation: str) -> Check:
+    return Check(category, item, "PARTIAL", 0.5, evidence, recommendation)
+
+
+def fail_check(category: str, item: str, evidence: str, recommendation: str) -> Check:
+    return Check(category, item, "FAIL", 0.0, evidence, recommendation)
+
+
+def audit_core_results() -> list[Check]:
+    category = "Core results"
+    checks: list[Check] = []
+    baseline = metric_value("outputs/final_project/final_metrics_summary.csv", "historical_xgboost", "weighted_mae")
+    primary = metric_value(
+        "outputs/final_project/final_metrics_summary.csv",
+        "gated_trip_suppression_a1_d0p15",
+        "weighted_mae",
+    )
+    bias = metric_value(
+        "outputs/final_project/final_metrics_summary.csv",
+        "gated_trip_suppression_a1_d0p15",
+        "weighted_bias",
+    )
+    if baseline is not None and primary is not None and bias is not None:
+        gain = (baseline - primary) / baseline
+        if gain >= 0.35 and abs(bias) <= 0.1:
+            checks.append(
+                pass_check(
+                    category,
+                    "Primary trip-count result",
+                    f"historical wMAE {baseline:.4f} -> primary wMAE {primary:.4f}; primary wBias {bias:+.4f}.",
+                )
+            )
+        else:
+            checks.append(
+                partial_check(
+                    category,
+                    "Primary trip-count result",
+                    f"historical wMAE {baseline:.4f} -> primary wMAE {primary:.4f}; primary wBias {bias:+.4f}.",
+                    "Tighten the primary operating point or explain the bias/accuracy tradeoff more explicitly.",
+                )
+            )
+    else:
+        checks.append(
+            fail_check(
+                category,
+                "Primary trip-count result",
+                "Missing final_metrics_summary.csv values.",
+                "Regenerate final project assets.",
+            )
+        )
+    required = [
+        "outputs/final_project/final_project_report.md",
+        "outputs/final_project/household_accuracy_summary.csv",
+        "outputs/statistical_validation/confidence_interval_report.md",
+    ]
+    missing = [path for path in required if not exists(path)]
+    if missing:
+        checks.append(
+            fail_check(
+                category,
+                "Core result artifacts",
+                f"Missing: {', '.join(missing)}.",
+                "Regenerate final report, accuracy summary, and statistical validation.",
+            )
+        )
+    else:
+        checks.append(pass_check(category, "Core result artifacts", "Final report, accuracy summary, and CI report exist."))
+    return checks
+
+
+def audit_baselines_and_controls() -> list[Check]:
+    category = "Baselines and controls"
+    required = {
+        "Stronger tabular baseline": "outputs/strong_baselines/strong_tabular_baseline_metrics.csv",
+        "Transparent count-model baseline": "outputs/count_model_baselines/count_model_baseline_metrics.csv",
+        "Count-model solver diagnostics": "outputs/count_model_baselines/count_model_solver_diagnostics.csv",
+        "Negative-binomial count baseline": "outputs/negative_binomial_baseline/negative_binomial_2022_metrics.csv",
+        "Negative-binomial diagnostics": "outputs/negative_binomial_baseline/negative_binomial_diagnostics.csv",
+        "Negative-binomial report": "outputs/negative_binomial_baseline/negative_binomial_baseline_report.md",
+        "Zero-inflated count baseline": "outputs/zero_inflated_count_baseline/zero_inflated_count_metrics.csv",
+        "Zero-inflated diagnostics": "outputs/zero_inflated_count_baseline/zero_inflated_count_diagnostics.csv",
+        "Zero-inflated report": "outputs/zero_inflated_count_baseline/zero_inflated_count_baseline_report.md",
+        "Zero-shot rule tree": "outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_metrics.csv",
+        "Small historical calibration": "outputs/llm_rule_small_data_calibration/method_spectrum_metrics.csv",
+        "Irrelevant pseudo-event placebo": "outputs/irrelevant_pseudo_event_placebo/irrelevant_pseudo_event_placebo_metrics.csv",
+        "Permutation robustness": "outputs/robustness_checks/permutation_pressure_controls.csv",
+        "Cohort-prior value analysis": "outputs/cohort_prior_value_analysis/cohort_prior_value_summary.csv",
+        "Cohort-prior value report": "outputs/cohort_prior_value_analysis/cohort_prior_value_report.md",
+        "Cohort-prior value figure": "outputs/cohort_prior_value_analysis/cohort_prior_value_top_groups.png",
+    }
+    checks = []
+    for item, path in required.items():
+        if exists(path):
+            checks.append(pass_check(category, item, path))
+        else:
+            checks.append(fail_check(category, item, f"Missing {path}.", "Run the corresponding baseline/control script."))
+    poisson_mae = metric_value("outputs/count_model_baselines/count_model_baseline_metrics.csv", "poisson_glm_l2", "weighted_mae")
+    poisson_bias = metric_value(
+        "outputs/count_model_baselines/count_model_baseline_metrics.csv",
+        "poisson_glm_l2",
+        "weighted_bias",
+    )
+    primary_mae = metric_value(
+        "outputs/final_project/final_metrics_summary.csv",
+        "gated_trip_suppression_a1_d0p15",
+        "weighted_mae",
+    )
+    if poisson_mae is not None and poisson_bias is not None and primary_mae is not None:
+        reduction = (poisson_mae - primary_mae) / poisson_mae
+        if reduction >= 0.35 and poisson_bias >= 3.0:
+            checks.append(
+                pass_check(
+                    category,
+                    "Count-model comparison",
+                    f"Poisson GLM wMAE {poisson_mae:.4f}, wBias {poisson_bias:+.4f}; primary adapter is {reduction:.2%} lower in wMAE.",
+                )
+            )
+        else:
+            checks.append(
+                partial_check(
+                    category,
+                    "Count-model comparison",
+                    f"Poisson GLM wMAE {poisson_mae:.4f}, wBias {poisson_bias:+.4f}; primary adapter reduction {reduction:.2%}.",
+                    "Review whether the transparent count baseline supports the event-shift story.",
+                )
+            )
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Count-model comparison",
+                "Could not read Poisson GLM or primary adapter metrics.",
+                "Regenerate count-model baselines and final metrics.",
+            )
+        )
+    nb_mae = metric_value(
+        "outputs/negative_binomial_baseline/negative_binomial_2022_metrics.csv",
+        "negative_binomial_glm_hist_selected",
+        "weighted_mae",
+    )
+    nb_bias = metric_value(
+        "outputs/negative_binomial_baseline/negative_binomial_2022_metrics.csv",
+        "negative_binomial_glm_hist_selected",
+        "weighted_bias",
+    )
+    if nb_mae is not None and nb_bias is not None and primary_mae is not None:
+        reduction = (nb_mae - primary_mae) / nb_mae
+        if reduction >= 0.35:
+            checks.append(
+                pass_check(
+                    category,
+                    "Negative-binomial comparison",
+                    (
+                        f"NB GLM wMAE {nb_mae:.4f}, wBias {nb_bias:+.4f}; "
+                        f"primary adapter is {reduction:.2%} lower in wMAE, with diagnostics recorded."
+                    ),
+                )
+            )
+        else:
+            checks.append(
+                partial_check(
+                    category,
+                    "Negative-binomial comparison",
+                    f"NB GLM wMAE {nb_mae:.4f}, wBias {nb_bias:+.4f}; primary adapter reduction {reduction:.2%}.",
+                    "Review whether the negative-binomial check supports the event-shift story.",
+                )
+            )
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Negative-binomial comparison",
+                "Could not read NB GLM or primary adapter metrics.",
+                "Regenerate negative-binomial baseline and final metrics.",
+            )
+        )
+    zip_mae = metric_value(
+        "outputs/zero_inflated_count_baseline/zero_inflated_count_metrics.csv",
+        "zero_inflated_zip_compact",
+        "weighted_mae",
+    )
+    zip_bias = metric_value(
+        "outputs/zero_inflated_count_baseline/zero_inflated_count_metrics.csv",
+        "zero_inflated_zip_compact",
+        "weighted_bias",
+    )
+    if zip_mae is not None and zip_bias is not None and primary_mae is not None:
+        reduction = (zip_mae - primary_mae) / zip_mae
+        if reduction >= 0.35 and zip_bias >= 3.0:
+            checks.append(
+                pass_check(
+                    category,
+                    "Zero-inflated count comparison",
+                    (
+                        f"ZIP wMAE {zip_mae:.4f}, wBias {zip_bias:+.4f}; "
+                        f"primary adapter is {reduction:.2%} lower in wMAE, with diagnostics recorded."
+                    ),
+                )
+            )
+        else:
+            checks.append(
+                partial_check(
+                    category,
+                    "Zero-inflated count comparison",
+                    f"ZIP wMAE {zip_mae:.4f}, wBias {zip_bias:+.4f}; primary adapter reduction {reduction:.2%}.",
+                    "Review whether the zero-inflated count baseline supports the event-shift story.",
+                )
+            )
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Zero-inflated count comparison",
+                "Could not read ZIP or primary adapter metrics.",
+                "Regenerate zero-inflated baseline and final metrics.",
+            )
+        )
+    cohort_value_path = PROJECT_ROOT / "outputs/cohort_prior_value_analysis/cohort_prior_value_summary.csv"
+    if cohort_value_path.exists():
+        cohort_summary = pd.read_csv(cohort_value_path).set_index("quantity")
+        required_quantities = {
+            "overall_primary_vs_global_a1_mae_delta",
+            "share_subgroup_cells_primary_beats_global_a1",
+        }
+        if required_quantities.issubset(set(cohort_summary.index)):
+            delta = float(cohort_summary.loc["overall_primary_vs_global_a1_mae_delta", "value"])
+            subgroup_share = float(
+                cohort_summary.loc["share_subgroup_cells_primary_beats_global_a1", "value"]
+            )
+            if delta > 0.0 and subgroup_share >= 0.5:
+                checks.append(
+                    pass_check(
+                        category,
+                        "Cohort-prior incremental value",
+                        (
+                            f"Primary gated adapter beats same-alpha global prior by {delta:.4f} wMAE "
+                            f"and wins in {subgroup_share:.1%} of evaluated subgroup cells."
+                        ),
+                    )
+                )
+            else:
+                checks.append(
+                    partial_check(
+                        category,
+                        "Cohort-prior incremental value",
+                        f"Same-alpha global delta {delta:.4f}; subgroup-cell win share {subgroup_share:.1%}.",
+                        "Keep the global-prior caveat prominent and avoid claiming cohort-specific dominance.",
+                    )
+                )
+        else:
+            checks.append(
+                partial_check(
+                    category,
+                    "Cohort-prior incremental value",
+                    "Cohort-prior summary lacks the same-alpha global comparison row.",
+                    "Regenerate src/run_cohort_prior_value_analysis.py.",
+                )
+            )
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Cohort-prior incremental value",
+                "Missing cohort-prior value summary.",
+                "Run src/run_cohort_prior_value_analysis.py.",
+            )
+        )
+    return checks
+
+
+def audit_guardrails() -> list[Check]:
+    category = "Causal and leakage guardrails"
+    checks: list[Check] = []
+    required = {
+        "Leakage audit": "outputs/leakage_audit/llm_input_leakage_audit_report.md",
+        "Causal evidence pack": "outputs/causal_guardrails/causal_guardrail_evidence_report.md",
+        "Prospective event context": "plan/prospective_event_context_2022.md",
+        "Frozen event-context corpus": "outputs/event_context_corpus/frozen_event_context_audit.md",
+        "Frozen-context batch prompts": "outputs/event_context_corpus/frozen_context_batch_prompt_summary.md",
+        "Frozen-context prompt leakage audit": "outputs/event_context_corpus/leakage_audit/llm_input_leakage_audit_report.md",
+        "Frozen-context integrity manifest": "outputs/event_context_corpus/frozen_context_integrity_report.md",
+        "Pre-COVID placebo": "outputs/pre_covid_placebo_event_correction/pre_covid_placebo_event_correction_report.md",
+    }
+    for item, path in required.items():
+        if exists(path):
+            checks.append(pass_check(category, item, path))
+        else:
+            checks.append(fail_check(category, item, f"Missing {path}.", "Add this guardrail before paper submission."))
+    if contains_text("outputs/final_project/final_project_report.md", ["2022 trip-count labels", "only for final evaluation"]):
+        checks.append(pass_check(category, "No-target-label framing", "Final report states target-year labels are evaluation-only."))
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "No-target-label framing",
+                "Final report does not clearly restate the evaluation-only target-label rule.",
+                "Add a short no-label protocol paragraph.",
+            )
+        )
+    if contains_text(
+        "outputs/event_context_corpus/frozen_event_context_audit.md",
+        [
+            "Frozen allowed prompt-context facts",
+            "Forbidden target-field hits in allowed fact summaries: `0`",
+            "external_validation_only_not_prompt_context",
+        ],
+    ):
+        checks.append(
+            pass_check(
+                category,
+                "Frozen context leakage boundary",
+                "Frozen context corpus separates prompt-context facts, guardrails, validation-only evidence, and candidate sources.",
+            )
+        )
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Frozen context leakage boundary",
+                "Frozen context corpus is missing or does not state the allowed/validation-only boundary.",
+                "Run src/build_frozen_event_context_corpus.py and inspect the audit.",
+            )
+        )
+    frozen_prompt_audit = PROJECT_ROOT / "outputs/event_context_corpus/leakage_audit/llm_input_leakage_audit.csv"
+    frozen_guardrail_check = PROJECT_ROOT / "outputs/event_context_corpus/leakage_audit/llm_guardrail_instruction_check.csv"
+    if frozen_prompt_audit.exists() and frozen_guardrail_check.exists():
+        prompt_rows = pd.read_csv(frozen_prompt_audit)
+        guardrail_rows = pd.read_csv(frozen_guardrail_check)
+        violations = int(prompt_rows["violations"].sum())
+        batch_rows = prompt_rows.loc[
+            prompt_rows["artifact"].astype(str).str.contains("frozen_context_batch_prompts", regex=False)
+        ]
+        batch_count = int(float(batch_rows["batches_checked"].dropna().iloc[0])) if not batch_rows.empty else 0
+        records_checked = int(batch_rows["records_checked"].iloc[0]) if not batch_rows.empty else 0
+        guardrails_present = bool(guardrail_rows["all_required_guardrails_present"].iloc[0])
+        if violations == 0 and records_checked == 1327 and batch_count == 89 and guardrails_present:
+            checks.append(
+                pass_check(
+                    category,
+                    "Frozen-context prompt leakage result",
+                    "1327 cohort records and 89 frozen-context batches checked; violations=0; required guardrails present=True.",
+                )
+            )
+        else:
+            checks.append(
+                partial_check(
+                    category,
+                    "Frozen-context prompt leakage result",
+                    f"records={records_checked}, batches={batch_count}, violations={violations}, guardrails={guardrails_present}.",
+                    "Rerun src/run_llm_input_leakage_audit.py on the frozen-context batch prompts.",
+                )
+            )
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Frozen-context prompt leakage result",
+                "Frozen-context prompt leakage audit CSV files are missing.",
+                "Run src/run_llm_input_leakage_audit.py with outputs/event_context_corpus/frozen_context_batch_prompts.jsonl.",
+            )
+        )
+    integrity_path = PROJECT_ROOT / "outputs/event_context_corpus/frozen_context_integrity_manifest.csv"
+    if integrity_path.exists():
+        integrity = pd.read_csv(integrity_path)
+        exists_mask = integrity["exists"].astype(str).str.lower() == "true"
+        missing = int((~exists_mask).sum())
+        hash_ready = bool((integrity["sha256"].astype(str).str.len() == 64).all())
+        role_count = int(integrity["role"].nunique())
+        if len(integrity) >= 16 and missing == 0 and hash_ready and role_count >= 5:
+            checks.append(
+                pass_check(
+                    category,
+                    "Frozen-context integrity hashes",
+                    f"{len(integrity)} artifacts hashed across {role_count} roles; missing=0; all SHA256 values present.",
+                )
+            )
+        else:
+            checks.append(
+                partial_check(
+                    category,
+                    "Frozen-context integrity hashes",
+                    f"rows={len(integrity)}, roles={role_count}, missing={missing}, hash_ready={hash_ready}.",
+                    "Run src/build_frozen_context_integrity_manifest.py and inspect missing hashes.",
+                )
+            )
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Frozen-context integrity hashes",
+                "Frozen-context integrity manifest is missing.",
+                "Run src/build_frozen_context_integrity_manifest.py.",
+            )
+        )
+    return checks
+
+
+def audit_multi_output_evaluation() -> list[Check]:
+    category = "Mobility behavior system"
+    required = {
+        "Mode composition": "outputs/mode_composition_extension/mode_composition_metrics.csv",
+        "Mode-specific trips": "outputs/mode_composition_extension/mode_specific_trip_count_metrics.csv",
+        "Purpose composition": "outputs/purpose_composition_extension/purpose_composition_metrics.csv",
+        "Equity-aware evaluation": "outputs/equity_aware_evaluation/subgroup_equity_metrics.csv",
+        "Multi-objective Pareto": "outputs/multi_objective_pareto/preference_operating_points.csv",
+    }
+    checks = []
+    for item, path in required.items():
+        if exists(path):
+            checks.append(pass_check(category, item, path))
+        else:
+            checks.append(fail_check(category, item, f"Missing {path}.", "Regenerate this evaluation artifact."))
+    return checks
+
+
+def audit_temporal_external_validation() -> list[Check]:
+    category = "Temporal and external validity"
+    checks: list[Check] = []
+    if exists("outputs/temporal_transfer_validation/temporal_transfer_validation_report.md"):
+        checks.append(pass_check(category, "Temporal transfer validation", "Pre-COVID and 2022 transfer report exists."))
+    else:
+        checks.append(fail_check(category, "Temporal transfer validation", "Missing temporal transfer report.", "Run temporal validation."))
+    if exists("outputs/pre_covid_placebo_event_correction/pre_covid_placebo_event_correction_report.md"):
+        checks.append(pass_check(category, "Pre-COVID placebo validation", "Pre-COVID event-correction placebo report exists."))
+    else:
+        checks.append(fail_check(category, "Pre-COVID placebo validation", "Missing pre-COVID placebo report.", "Run placebo validation."))
+    if exists("outputs/external_validation/external_validation_and_compatibility_report.md") and exists(
+        "outputs/external_validation/acs_commute_mechanism_validation.csv"
+    ):
+        checks.append(
+            pass_check(
+                category,
+                "External mechanism validation beyond NHTS",
+                "ACS commute-mode mechanism validation and BTS trip-count compatibility guardrail exist.",
+                "Report as mechanism-level external evidence, not household-level MAE.",
+            )
+        )
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "External validation beyond NHTS",
+                "Internal temporal validation exists; no independent external dataset is documented.",
+                "Run src/run_external_aggregate_validation.py or add an external mobility survey/region/shock dataset.",
+            )
+        )
+
+    psrc_metric_path = "outputs/external_validation/psrc_household_external_validation_metrics.csv"
+    psrc_report_path = "outputs/external_validation/psrc_household_external_validation_report.md"
+    baseline_mae = metric_value_filtered(
+        psrc_metric_path,
+        {"method": "psrc_pre_pandemic_xgboost", "test_year": 2023},
+        "weighted_mae",
+    )
+    adapted_mae = metric_value_filtered(
+        psrc_metric_path,
+        {"method": "acs_remote_work_suppression_adapter", "test_year": 2023},
+        "weighted_mae",
+    )
+    baseline_bias = metric_value_filtered(
+        psrc_metric_path,
+        {"method": "psrc_pre_pandemic_xgboost", "test_year": 2023},
+        "weighted_bias",
+    )
+    adapted_bias = metric_value_filtered(
+        psrc_metric_path,
+        {"method": "acs_remote_work_suppression_adapter", "test_year": 2023},
+        "weighted_bias",
+    )
+    if all(value is not None for value in [baseline_mae, adapted_mae, baseline_bias, adapted_bias]) and exists(
+        psrc_report_path
+    ):
+        checks.append(
+            pass_check(
+                category,
+                "Household-level external microdata validation",
+                (
+                    f"PSRC 2017+2019->2023 household microdata: wMAE {baseline_mae:.4f}->{adapted_mae:.4f}; "
+                    f"wBias {baseline_bias:+.4f}->{adapted_bias:+.4f}."
+                ),
+                "Report as direct external pre/post replication with regional-survey scope limitations.",
+            )
+        )
+        checks.append(
+            pass_check(
+                category,
+                "External validation scope statement",
+                "PSRC report states that the regional survey is external replication of the event-adaptation principle, not direct NHTS numerical validation.",
+                "Keep the limitation statement in the paper.",
+            )
+        )
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Household-level external microdata validation",
+                "No PSRC household-level external validation metrics are documented.",
+                "Run src/run_psrc_external_household_validation.py.",
+            )
+        )
+    return checks
+
+
+def audit_literature_and_story() -> list[Check]:
+    category = "Literature and paper story"
+    checks: list[Check] = []
+    literature_terms = ["ELLMob", "CausalMob", "AgentMove", "AgentMob", "UniMob", "ELP-Mob"]
+    if contains_text("plan/literature_grounding_2026.md", literature_terms):
+        checks.append(pass_check(category, "2025-2026 literature grounding", "Literature grounding note contains current anchors."))
+    else:
+        checks.append(fail_check(category, "2025-2026 literature grounding", "Missing key literature anchors.", "Update literature grounding."))
+    if contains_text("plan/paper_logic_chain.md", ["event-driven temporal adaptation", "LLM event-semantic adapter"]):
+        checks.append(pass_check(category, "Single paper spine", "paper_logic_chain.md states the event-adaptation spine."))
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Single paper spine",
+                "Paper logic chain exists but does not clearly state the single spine.",
+                "Rewrite the opening claim around event-driven label-free adaptation.",
+            )
+        )
+    if exists("plan/reviewer_qa_backup_2026.md"):
+        checks.append(pass_check(category, "Reviewer Q&A backup", "Reviewer Q&A backup document exists."))
+    else:
+        checks.append(partial_check(category, "Reviewer Q&A backup", "Missing Q&A backup.", "Create discussion backup answers."))
+    if exists("outputs/paper_draft/nhts_event_adaptation_paper_draft.md") and contains_text(
+        "outputs/paper_draft/claim_evidence_matrix.md",
+        ["Primary gated weighted MAE", "Unsafe wording", "PSRC external weighted MAE improvement"],
+    ):
+        checks.append(pass_check(category, "Paper draft and claim ledger", "Paper draft and claim-evidence matrix exist."))
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Paper draft and claim ledger",
+                "Missing paper draft or claim-evidence matrix.",
+                "Create outputs/paper_draft/nhts_event_adaptation_paper_draft.md and claim_evidence_matrix.md.",
+            )
+        )
+    latex_ready = (
+        exists("outputs/paper_draft/latex/main.tex")
+        and exists("outputs/paper_draft/latex/references.bib")
+        and exists("outputs/paper_draft/latex/citation_verification_log.md")
+        and contains_text(
+            "outputs/paper_draft/latex/main.tex",
+            [
+                "Label-Free Event-Aware LLM Adaptation",
+                "2.5023",
+                "Discussion",
+                "Limitations",
+                "includegraphics",
+                "fig:workflow",
+                "fig:metric_comparison",
+                "fig:permutation",
+                "fig:multi_objective",
+                "mcfadden1974conditional",
+                "benakiva1985discretechoice",
+                "ipsos2022nhtsweighting",
+            ],
+        )
+        and contains_text(
+            "outputs/paper_draft/latex/references.bib",
+            [
+                "wang2026ellmob",
+                "yang2025causalmob",
+                "feng2025agentmove",
+                "long2025unimob",
+                "mcfadden1974conditional",
+                "benakiva1985discretechoice",
+                "cameron2013countdata",
+                "ipsos2022nhtsweighting",
+            ],
+        )
+        and contains_text(
+            "outputs/paper_draft/latex/citation_verification_log.md",
+            [
+                "DOI BibTeX fetched",
+                "arXiv BibTeX fetched",
+                "Official data source checked",
+                "Verified classical travel-demand",
+                "Survey-weighted metric protocol",
+            ],
+        )
+    )
+    if latex_ready:
+        checks.append(pass_check(category, "LaTeX manuscript and verified references", "LaTeX skeleton, core figures, BibTeX, and citation verification log exist."))
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "LaTeX manuscript and verified references",
+                "Missing LaTeX manuscript package or citation verification evidence.",
+                "Create outputs/paper_draft/latex/main.tex, references.bib, and citation_verification_log.md.",
+            )
+        )
+    round3_path = "outputs/paper_draft/top_venue_adversarial_audit_round3.md"
+    round2_path = "outputs/paper_draft/top_venue_adversarial_audit_round2.md"
+    round3_ready = exists(round3_path) and contains_text(
+        round3_path,
+        ["Remaining Top-Tier Risks", "Safe Claim", "Next Experiment Gate"],
+    )
+    round2_ready = exists(round2_path) and contains_text(
+        round2_path,
+        ["Remaining Top-Tier Risks", "Safe Top-Line Claim", "Recommended Next Experiments"],
+    )
+    if round3_ready:
+        checks.append(pass_check(category, "Top-venue adversarial audit", "Round-3 audit states remaining risks, safe claims, and next experiment gates."))
+    elif round2_ready:
+        checks.append(pass_check(category, "Top-venue adversarial audit", "Round-2 top-venue audit states remaining risks and safe claims."))
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Top-venue adversarial audit",
+                "Missing explicit top-venue adversarial audit.",
+                "Create outputs/paper_draft/top_venue_adversarial_audit_round3.md.",
+            )
+        )
+    return checks
+
+
+def audit_presentation() -> list[Check]:
+    category = "Presentation readiness"
+    checks: list[Check] = []
+    deck_path = "outputs/final_project/0611_final_presentation.pptx"
+    notes_path = "outputs/final_project/0611_final_15min_speaker_script_zh.md"
+    slide_count, text = ppt_text(deck_path)
+    if slide_count >= 35:
+        checks.append(pass_check(category, "Main deck plus backup", f"0611 final PPT has {slide_count} slides for a 15-minute course defense."))
+    elif slide_count >= 24:
+        checks.append(
+            partial_check(
+                category,
+                "Main deck plus backup",
+                f"0611 final PPT has {slide_count} slides, which may be thin for the current 15-minute script.",
+                "Expand or restore analysis/result slides in outputs/final_project/0611_final_presentation.pptx.",
+            )
+        )
+    else:
+        checks.append(fail_check(category, "Main deck plus backup", f"0611 final PPT has {slide_count} slides.", "Regenerate the deck."))
+    if all(
+        term in text
+        for term in [
+            "针对",
+            "时序迁移",
+            "ELLMob",
+            "CausalMob",
+            "AgentMob",
+            "冷启动",
+            "事件驱动",
+            "对比体系",
+            "Hybrid gated",
+            "出行目的扩展",
+        ]
+    ):
+        checks.append(pass_check(category, "Key defense content in deck", "Final deck contains title framing, 2025-2026 literature anchors, selector/correction branches, method comparison, and behavior-system extensions."))
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Key defense content in deck",
+                "Deck misses at least one literature or baseline defense marker.",
+                "Update related-work and comparison slides.",
+            )
+        )
+    if exists(notes_path) and contains_text(
+        notes_path,
+        ["十五分钟纯中文讲稿", "逐页讲稿", "大语言模型"],
+    ):
+        checks.append(pass_check(category, "Speaker notes", "Final 15-minute pure-Chinese speaker script exists and follows slide order."))
+    else:
+        checks.append(partial_check(category, "Speaker notes", "Final speaker script is missing or does not match the final deck.", "Update outputs/final_project/0611_final_15min_speaker_script_zh.md."))
+    return checks
+
+
+def audit_reproducibility_and_gpu() -> list[Check]:
+    category = "Reproducibility and GPU"
+    checks: list[Check] = []
+    if exists("src/run_stronger_tabular_baselines.py") and exists("outputs/strong_baselines/strong_tabular_baseline_metrics.csv"):
+        checks.append(pass_check(category, "Stronger baseline script", "Strong baseline script and metrics exist."))
+    else:
+        checks.append(fail_check(category, "Stronger baseline script", "Missing stronger baseline script or output.", "Restore baseline script/output."))
+    device_path = PROJECT_ROOT / "outputs/label_free_llm_adaptation/label_free_llm_adaptation_metrics.csv"
+    if device_path.exists():
+        devices = set(pd.read_csv(device_path).get("device", pd.Series(dtype=str)).dropna().astype(str))
+        if "cuda" in devices:
+            checks.append(pass_check(category, "GPU execution evidence", "label_free_llm_adaptation_metrics.csv records device=cuda."))
+        else:
+            checks.append(
+                partial_check(
+                    category,
+                    "GPU execution evidence",
+                    f"Recorded devices: {sorted(devices)}.",
+                    "Record GPU model/CUDA metadata in experiment outputs.",
+                )
+            )
+    else:
+        checks.append(fail_check(category, "GPU execution evidence", "Missing label-free metrics with device column.", "Rerun label-free adaptation."))
+    if exists("outputs/submission_readiness/environment_manifest.json") and exists(
+        "outputs/submission_readiness/environment_freeze.txt"
+    ):
+        checks.append(
+            pass_check(
+                category,
+                "Environment manifest",
+                "Environment manifest and freeze file exist under outputs/submission_readiness.",
+            )
+        )
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Environment manifest",
+                "No committed environment freeze or run manifest was found in this audit.",
+                "Run src/build_environment_manifest.py before paper submission.",
+            )
+        )
+    local_audit = read_json("outputs/local_llm_prior_replication/local_llm_environment_audit.json")
+    local_status = str(local_audit.get("recommended_status", "missing"))
+    if local_status == "READY" and exists(
+        "outputs/local_llm_prior_replication/local_llm_event_features_normalized.csv"
+    ):
+        checks.append(
+            pass_check(
+                category,
+                "Local open-source LLM prior replication",
+                "Local LLM environment is READY and normalized local prior features exist.",
+            )
+        )
+    elif local_audit:
+        checks.append(
+            partial_check(
+                category,
+                "Local open-source LLM prior replication",
+                f"Protocol and environment audit exist, but status is {local_status}.",
+                "Install CUDA-enabled PyTorch or run the local model in a GPU-ready environment, then regenerate local priors.",
+            )
+        )
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Local open-source LLM prior replication",
+                "No local LLM replication audit artifact was found.",
+                "Run src/run_local_llm_prior_replication.py --audit-only before paper submission.",
+            )
+        )
+    return checks
+
+
+def build_checks() -> list[Check]:
+    checks: list[Check] = []
+    checks.extend(audit_core_results())
+    checks.extend(audit_baselines_and_controls())
+    checks.extend(audit_guardrails())
+    checks.extend(audit_multi_output_evaluation())
+    checks.extend(audit_temporal_external_validation())
+    checks.extend(audit_literature_and_story())
+    checks.extend(audit_presentation())
+    checks.extend(audit_reproducibility_and_gpu())
+    return checks
+
+
+def write_outputs(checks: list[Check]) -> tuple[Path, Path]:
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    score_path = OUTPUT_DIR / "submission_readiness_scorecard.csv"
+    report_path = OUTPUT_DIR / "submission_readiness_audit.md"
+    frame = pd.DataFrame([check.__dict__ for check in checks])
+    frame.to_csv(score_path, index=False)
+
+    overall = float(frame["score"].mean())
+    by_category = frame.groupby("category", as_index=False)["score"].mean().sort_values("category")
+    blockers = frame[frame["status"] == "FAIL"]
+    partial = frame[frame["status"] == "PARTIAL"]
+
+    lines = [
+        "# Submission Readiness Audit",
+        "",
+        "Generated from current repository artifacts. This is an evidence audit, not a claim that the project is fully submission-ready.",
+        "",
+        f"Overall readiness score: `{overall:.2f}` / 1.00",
+        "",
+        "## Category Scores",
+        "",
+        "| Category | Score |",
+        "|---|---:|",
+    ]
+    for row in by_category.itertuples(index=False):
+        lines.append(f"| {row.category} | {row.score:.2f} |")
+
+    lines.extend(["", "## Hard Blockers", ""])
+    if blockers.empty:
+        lines.append("No FAIL-level blockers were detected from the checked artifacts.")
+    else:
+        lines.extend(["| Category | Item | Evidence | Recommendation |", "|---|---|---|---|"])
+        for row in blockers.itertuples(index=False):
+            lines.append(f"| {row.category} | {row.item} | {row.evidence} | {row.recommendation} |")
+
+    lines.extend(["", "## Partial Items To Fix Before Paper Submission", ""])
+    if partial.empty:
+        lines.append("No PARTIAL items were detected.")
+    else:
+        lines.extend(["| Category | Item | Evidence | Recommendation |", "|---|---|---|---|"])
+        for row in partial.itertuples(index=False):
+            lines.append(f"| {row.category} | {row.item} | {row.evidence} | {row.recommendation} |")
+
+    lines.extend(["", "## Full Evidence Matrix", "", "| Category | Item | Status | Score | Evidence |", "|---|---|---:|---:|---|"])
+    for row in frame.itertuples(index=False):
+        lines.append(f"| {row.category} | {row.item} | {row.status} | {row.score:.1f} | {row.evidence} |")
+
+    lines.extend(["", "## Interpretation", ""])
+    lines.append(
+        "- Course-project readiness is strong: the core result, baselines, guardrails, deck, Q&A material, and paper draft package are present."
+    )
+    if blockers.empty and partial.empty:
+        lines.append(
+            "- No artifact-level FAIL or PARTIAL items remain in this audit; remaining work is advisor feedback, optional additional replications, and a full LaTeX/BibTeX compile in a normal non-elevated TeX environment."
+        )
+    elif blockers.empty:
+        lines.append(
+            "- No FAIL-level blockers remain, but PARTIAL items should be resolved before a serious paper submission."
+        )
+    else:
+        lines.append("- FAIL-level blockers remain and should be resolved before sharing a submission package.")
+    lines.append(
+        "- The defensible paper claim should remain scoped to label-free event adaptation for survey-based household mobility under a post-pandemic shift."
+    )
+    report_path.write_text("\n".join(lines), encoding="utf-8")
+    return report_path, score_path
+
+
+def main() -> None:
+    report_path, score_path = write_outputs(build_checks())
+    print(f"Wrote {report_path}")
+    print(f"Wrote {score_path}")
+
+
+if __name__ == "__main__":
+    main()

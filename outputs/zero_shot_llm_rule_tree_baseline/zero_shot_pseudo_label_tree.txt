@@ -1,0 +1,43 @@
+|--- HHSIZE <= 1.500
+|   |--- trip_suppression_risk <= 0.545
+|   |   |--- HHVEHCNT <= 1.500
+|   |   |   |--- WRKCOUNT <= 0.500
+|   |   |   |   |--- value: [1.843]
+|   |   |   |--- WRKCOUNT >  0.500
+|   |   |   |   |--- value: [2.451]
+|   |   |--- HHVEHCNT >  1.500
+|   |   |   |--- remote_work_substitution_likelihood <= 0.200
+|   |   |   |   |--- value: [2.466]
+|   |   |   |--- remote_work_substitution_likelihood >  0.200
+|   |   |   |   |--- value: [3.327]
+|   |--- trip_suppression_risk >  0.545
+|   |   |--- HHVEHCNT <= 0.500
+|   |   |   |--- HHFAMINC <= 3.500
+|   |   |   |   |--- value: [0.669]
+|   |   |   |--- HHFAMINC >  3.500
+|   |   |   |   |--- value: [0.818]
+|   |   |--- HHVEHCNT >  0.500
+|   |   |   |--- WRKCOUNT <= 0.500
+|   |   |   |   |--- value: [1.547]
+|   |   |   |--- WRKCOUNT >  0.500
+|   |   |   |   |--- value: [2.066]
+|--- HHSIZE >  1.500
+|   |--- HHSIZE <= 3.500
+|   |   |--- trip_suppression_risk <= 0.505
+|   |   |   |--- trip_suppression_risk <= 0.355
+|   |   |   |   |--- value: [5.772]
+|   |   |   |--- trip_suppression_risk >  0.355
+|   |   |   |   |--- value: [4.813]
+|   |   |--- trip_suppression_risk >  0.505
+|   |   |   |--- HHVEHCNT <= 0.500
+|   |   |   |   |--- value: [2.231]
+|   |   |   |--- HHVEHCNT >  0.500
+|   |   |   |   |--- value: [3.566]
+|   |--- HHSIZE >  3.500
+|   |   |--- trip_suppression_risk <= 0.500
+|   |   |   |--- remote_work_substitution_likelihood <= 0.615
+|   |   |   |   |--- value: [7.531]
+|   |   |   |--- remote_work_substitution_likelihood >  0.615
+|   |   |   |   |--- value: [6.049]
+|   |   |--- trip_suppression_risk >  0.500
+|   |   |   |--- value: [4.812]

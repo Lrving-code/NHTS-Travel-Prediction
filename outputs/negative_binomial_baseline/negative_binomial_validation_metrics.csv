@@ -1,0 +1,2 @@
+method,seed,calibration_fraction,calibration_rows,test_rows,mae,rmse,bias,r2,weighted_mae,weighted_rmse,weighted_bias,weighted_r2,weighted_target_mean,weighted_prediction_mean,device
+negative_binomial_glm_alpha_0.5_validate_2017,42,0.0,0,129696,4.222694579757725,7.397570107954006,1.5402950854147173,-0.6211992598886509,4.967580084162142,9.351674571056206,2.257597173309749,-1.1521963310693102,7.8003259145462005,10.057923087855952,cpu

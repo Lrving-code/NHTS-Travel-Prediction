@@ -1,0 +1,135 @@
+{
+  "created_at_utc": "2026-06-28T15:57:06.533762+00:00",
+  "artifact_count": 16,
+  "missing_count": 0,
+  "rows": [
+    {
+      "role": "source_input",
+      "relative_path": "outputs/external_validation/acs_commute_mechanism_validation.csv",
+      "exists": true,
+      "size_bytes": 529,
+      "line_count": 3,
+      "sha256": "b18b93dbe1d4d741d7a8369695614c3411226f5bd3bad7cd9974175edb5deeab"
+    },
+    {
+      "role": "source_input",
+      "relative_path": "outputs/external_validation/bts_annual_mobility_summary.csv",
+      "exists": true,
+      "size_bytes": 472,
+      "line_count": 5,
+      "sha256": "680bdbdac908f0f0c199953816c86243923c5d20671bebf1d765a23651b592ca"
+    },
+    {
+      "role": "source_input",
+      "relative_path": "outputs/external_validation/psrc_household_year_summary.csv",
+      "exists": true,
+      "size_bytes": 530,
+      "line_count": 6,
+      "sha256": "020c05458f76a80c2bdf868afdc341b22d50b53add92006b3b5dd3713b40ff83"
+    },
+    {
+      "role": "source_input",
+      "relative_path": "outputs/external_validation/psrc_household_external_validation_metrics.csv",
+      "exists": true,
+      "size_bytes": 1525,
+      "line_count": 7,
+      "sha256": "b2e867dcedbbb5b8f313efea04a9b88ee41176842e97f1acbbc7c26d333440ff"
+    },
+    {
+      "role": "source_input",
+      "relative_path": "outputs/external_validation/external_dataset_candidates.csv",
+      "exists": true,
+      "size_bytes": 1329,
+      "line_count": 5,
+      "sha256": "c46fc6cbdf9e9a820f5021d4c5586f59738644e2ea563e071731362d5ebe3861"
+    },
+    {
+      "role": "prompt_input",
+      "relative_path": "outputs/llm_event_features/household_cohort_profiles.csv",
+      "exists": true,
+      "size_bytes": 2708596,
+      "line_count": 1328,
+      "sha256": "398ed88c2132b728d90e61bd3c8dc99567e717b56f6c82cee5d80183944cfca5"
+    },
+    {
+      "role": "prompt_input",
+      "relative_path": "outputs/llm_event_features/event_feature_schema.json",
+      "exists": true,
+      "size_bytes": 1186,
+      "line_count": 52,
+      "sha256": "2048b8fd10c88e1bc658c35125eb2feff8443c69a0d6055f0f5c59401a0600b5"
+    },
+    {
+      "role": "frozen_corpus",
+      "relative_path": "outputs/event_context_corpus/frozen_event_context_sources.csv",
+      "exists": true,
+      "size_bytes": 3606,
+      "line_count": 6,
+      "sha256": "13bb4f8378d6d6d08022f25e7cf5c40b4730113c97ca7f15399c7dca4928e512"
+    },
+    {
+      "role": "frozen_corpus",
+      "relative_path": "outputs/event_context_corpus/frozen_event_context_facts.json",
+      "exists": true,
+      "size_bytes": 4858,
+      "line_count": 66,
+      "sha256": "fd4ca71d41753eaa99c9c1c4ab2c8dc674588066b72b588add4e65146f6ba40b"
+    },
+    {
+      "role": "frozen_corpus",
+      "relative_path": "outputs/event_context_corpus/frozen_event_context_prompt.md",
+      "exists": true,
+      "size_bytes": 3024,
+      "line_count": 46,
+      "sha256": "fdb69a7a598de62cd044f5d10e1641b53e468a6371aa58c1c3d85bed7a27f44a"
+    },
+    {
+      "role": "frozen_corpus",
+      "relative_path": "outputs/event_context_corpus/frozen_event_context_audit.md",
+      "exists": true,
+      "size_bytes": 1239,
+      "line_count": 29,
+      "sha256": "94d1e9160dce93e056d142e6da4830448721cda27ab070757afcb870d8de69a1"
+    },
+    {
+      "role": "frozen_prompt",
+      "relative_path": "outputs/event_context_corpus/frozen_context_batch_prompt_summary.md",
+      "exists": true,
+      "size_bytes": 1065,
+      "line_count": 22,
+      "sha256": "72214ca68832c8f36796e7a7a5e8f382a1584f15558094c6f7b2312b3ab9372d"
+    },
+    {
+      "role": "frozen_prompt",
+      "relative_path": "outputs/event_context_corpus/frozen_context_batch_prompts.jsonl",
+      "exists": true,
+      "size_bytes": 2990347,
+      "line_count": 89,
+      "sha256": "07c21e6c14bb703f479d52edb1c06acf9f681bd2a63d3faf1d26cc57f122b679"
+    },
+    {
+      "role": "frozen_prompt_leakage_audit",
+      "relative_path": "outputs/event_context_corpus/leakage_audit/llm_input_leakage_audit.csv",
+      "exists": true,
+      "size_bytes": 315,
+      "line_count": 4,
+      "sha256": "41226f4860f55e9209041542f96705ea696ca885d00b3763d0145202d026c67b"
+    },
+    {
+      "role": "frozen_prompt_leakage_audit",
+      "relative_path": "outputs/event_context_corpus/leakage_audit/llm_guardrail_instruction_check.csv",
+      "exists": true,
+      "size_bytes": 127,
+      "line_count": 2,
+      "sha256": "0f51d8415cb85ee2adf368f9d7f56a5b96294a18b2a70344f0714034f4d925af"
+    },
+    {
+      "role": "frozen_prompt_leakage_audit",
+      "relative_path": "outputs/event_context_corpus/leakage_audit/llm_input_leakage_audit_report.md",
+      "exists": true,
+      "size_bytes": 1301,
+      "line_count": 27,
+      "sha256": "8f63b015cef2497e6778b9113f37fc2790f35298d30a29c1ec8ee49588570797"
+    }
+  ]
+}

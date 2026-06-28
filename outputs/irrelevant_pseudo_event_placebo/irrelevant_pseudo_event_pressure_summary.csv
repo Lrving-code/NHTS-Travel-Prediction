@@ -1,0 +1,4 @@
+pseudo_event,score_column,description,pressure_weighted_mean,pressure_weighted_std,actual_pressure_weighted_mean,actual_pressure_weighted_std
+pseudo_media_upgrade,score_pseudo_media_upgrade,"A non-travel pseudo-event about household digital media upgrade adoption, built from household demographics and deterministic ID noise.",0.46823503,0.11112700,0.46823503,0.11744767
+pseudo_calendar_app,score_pseudo_calendar_app,"A non-travel pseudo-event about calendar-app adoption, built from travel-day timing waves and deterministic ID noise.",0.46823503,0.10381432,0.46823503,0.11744767
+pseudo_random_hash,score_pseudo_random_hash,A deterministic non-mechanistic pressure ranking from hashed household IDs.,0.46823503,0.10812333,0.46823503,0.11744767

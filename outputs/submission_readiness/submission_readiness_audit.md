@@ -1,0 +1,94 @@
+# Submission Readiness Audit
+
+Generated from current repository artifacts. This is an evidence audit, not a claim that the project is fully submission-ready.
+
+Overall readiness score: `1.00` / 1.00
+
+## Category Scores
+
+| Category | Score |
+|---|---:|
+| Baselines and controls | 1.00 |
+| Causal and leakage guardrails | 1.00 |
+| Core results | 1.00 |
+| Literature and paper story | 1.00 |
+| Mobility behavior system | 1.00 |
+| Presentation readiness | 1.00 |
+| Reproducibility and GPU | 1.00 |
+| Temporal and external validity | 1.00 |
+
+## Hard Blockers
+
+No FAIL-level blockers were detected from the checked artifacts.
+
+## Partial Items To Fix Before Paper Submission
+
+No PARTIAL items were detected.
+
+## Full Evidence Matrix
+
+| Category | Item | Status | Score | Evidence |
+|---|---|---:|---:|---|
+| Core results | Primary trip-count result | PASS | 1.0 | historical wMAE 4.3377 -> primary wMAE 2.5023; primary wBias -0.0230. |
+| Core results | Core result artifacts | PASS | 1.0 | Final report, accuracy summary, and CI report exist. |
+| Baselines and controls | Stronger tabular baseline | PASS | 1.0 | outputs/strong_baselines/strong_tabular_baseline_metrics.csv |
+| Baselines and controls | Transparent count-model baseline | PASS | 1.0 | outputs/count_model_baselines/count_model_baseline_metrics.csv |
+| Baselines and controls | Count-model solver diagnostics | PASS | 1.0 | outputs/count_model_baselines/count_model_solver_diagnostics.csv |
+| Baselines and controls | Negative-binomial count baseline | PASS | 1.0 | outputs/negative_binomial_baseline/negative_binomial_2022_metrics.csv |
+| Baselines and controls | Negative-binomial diagnostics | PASS | 1.0 | outputs/negative_binomial_baseline/negative_binomial_diagnostics.csv |
+| Baselines and controls | Negative-binomial report | PASS | 1.0 | outputs/negative_binomial_baseline/negative_binomial_baseline_report.md |
+| Baselines and controls | Zero-inflated count baseline | PASS | 1.0 | outputs/zero_inflated_count_baseline/zero_inflated_count_metrics.csv |
+| Baselines and controls | Zero-inflated diagnostics | PASS | 1.0 | outputs/zero_inflated_count_baseline/zero_inflated_count_diagnostics.csv |
+| Baselines and controls | Zero-inflated report | PASS | 1.0 | outputs/zero_inflated_count_baseline/zero_inflated_count_baseline_report.md |
+| Baselines and controls | Zero-shot rule tree | PASS | 1.0 | outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_metrics.csv |
+| Baselines and controls | Small historical calibration | PASS | 1.0 | outputs/llm_rule_small_data_calibration/method_spectrum_metrics.csv |
+| Baselines and controls | Irrelevant pseudo-event placebo | PASS | 1.0 | outputs/irrelevant_pseudo_event_placebo/irrelevant_pseudo_event_placebo_metrics.csv |
+| Baselines and controls | Permutation robustness | PASS | 1.0 | outputs/robustness_checks/permutation_pressure_controls.csv |
+| Baselines and controls | Cohort-prior value analysis | PASS | 1.0 | outputs/cohort_prior_value_analysis/cohort_prior_value_summary.csv |
+| Baselines and controls | Cohort-prior value report | PASS | 1.0 | outputs/cohort_prior_value_analysis/cohort_prior_value_report.md |
+| Baselines and controls | Cohort-prior value figure | PASS | 1.0 | outputs/cohort_prior_value_analysis/cohort_prior_value_top_groups.png |
+| Baselines and controls | Count-model comparison | PASS | 1.0 | Poisson GLM wMAE 4.3368, wBias +3.6178; primary adapter is 42.30% lower in wMAE. |
+| Baselines and controls | Negative-binomial comparison | PASS | 1.0 | NB GLM wMAE 6.1229, wBias -1.1091; primary adapter is 59.13% lower in wMAE, with diagnostics recorded. |
+| Baselines and controls | Zero-inflated count comparison | PASS | 1.0 | ZIP wMAE 4.1742, wBias +3.4233; primary adapter is 40.05% lower in wMAE, with diagnostics recorded. |
+| Baselines and controls | Cohort-prior incremental value | PASS | 1.0 | Primary gated adapter beats same-alpha global prior by 0.0508 wMAE and wins in 77.8% of evaluated subgroup cells. |
+| Causal and leakage guardrails | Leakage audit | PASS | 1.0 | outputs/leakage_audit/llm_input_leakage_audit_report.md |
+| Causal and leakage guardrails | Causal evidence pack | PASS | 1.0 | outputs/causal_guardrails/causal_guardrail_evidence_report.md |
+| Causal and leakage guardrails | Prospective event context | PASS | 1.0 | plan/prospective_event_context_2022.md |
+| Causal and leakage guardrails | Frozen event-context corpus | PASS | 1.0 | outputs/event_context_corpus/frozen_event_context_audit.md |
+| Causal and leakage guardrails | Frozen-context batch prompts | PASS | 1.0 | outputs/event_context_corpus/frozen_context_batch_prompt_summary.md |
+| Causal and leakage guardrails | Frozen-context prompt leakage audit | PASS | 1.0 | outputs/event_context_corpus/leakage_audit/llm_input_leakage_audit_report.md |
+| Causal and leakage guardrails | Frozen-context integrity manifest | PASS | 1.0 | outputs/event_context_corpus/frozen_context_integrity_report.md |
+| Causal and leakage guardrails | Pre-COVID placebo | PASS | 1.0 | outputs/pre_covid_placebo_event_correction/pre_covid_placebo_event_correction_report.md |
+| Causal and leakage guardrails | No-target-label framing | PASS | 1.0 | Final report states target-year labels are evaluation-only. |
+| Causal and leakage guardrails | Frozen context leakage boundary | PASS | 1.0 | Frozen context corpus separates prompt-context facts, guardrails, validation-only evidence, and candidate sources. |
+| Causal and leakage guardrails | Frozen-context prompt leakage result | PASS | 1.0 | 1327 cohort records and 89 frozen-context batches checked; violations=0; required guardrails present=True. |
+| Causal and leakage guardrails | Frozen-context integrity hashes | PASS | 1.0 | 16 artifacts hashed across 5 roles; missing=0; all SHA256 values present. |
+| Mobility behavior system | Mode composition | PASS | 1.0 | outputs/mode_composition_extension/mode_composition_metrics.csv |
+| Mobility behavior system | Mode-specific trips | PASS | 1.0 | outputs/mode_composition_extension/mode_specific_trip_count_metrics.csv |
+| Mobility behavior system | Purpose composition | PASS | 1.0 | outputs/purpose_composition_extension/purpose_composition_metrics.csv |
+| Mobility behavior system | Equity-aware evaluation | PASS | 1.0 | outputs/equity_aware_evaluation/subgroup_equity_metrics.csv |
+| Mobility behavior system | Multi-objective Pareto | PASS | 1.0 | outputs/multi_objective_pareto/preference_operating_points.csv |
+| Temporal and external validity | Temporal transfer validation | PASS | 1.0 | Pre-COVID and 2022 transfer report exists. |
+| Temporal and external validity | Pre-COVID placebo validation | PASS | 1.0 | Pre-COVID event-correction placebo report exists. |
+| Temporal and external validity | External mechanism validation beyond NHTS | PASS | 1.0 | ACS commute-mode mechanism validation and BTS trip-count compatibility guardrail exist. |
+| Temporal and external validity | Household-level external microdata validation | PASS | 1.0 | PSRC 2017+2019->2023 household microdata: wMAE 3.4271->3.2498; wBias +1.0532->+0.2605. |
+| Temporal and external validity | External validation scope statement | PASS | 1.0 | PSRC report states that the regional survey is external replication of the event-adaptation principle, not direct NHTS numerical validation. |
+| Literature and paper story | 2025-2026 literature grounding | PASS | 1.0 | Literature grounding note contains current anchors. |
+| Literature and paper story | Single paper spine | PASS | 1.0 | paper_logic_chain.md states the event-adaptation spine. |
+| Literature and paper story | Reviewer Q&A backup | PASS | 1.0 | Reviewer Q&A backup document exists. |
+| Literature and paper story | Paper draft and claim ledger | PASS | 1.0 | Paper draft and claim-evidence matrix exist. |
+| Literature and paper story | LaTeX manuscript and verified references | PASS | 1.0 | LaTeX skeleton, core figures, BibTeX, and citation verification log exist. |
+| Literature and paper story | Top-venue adversarial audit | PASS | 1.0 | Round-3 audit states remaining risks, safe claims, and next experiment gates. |
+| Presentation readiness | Main deck plus backup | PASS | 1.0 | 0611 final PPT has 38 slides for a 15-minute course defense. |
+| Presentation readiness | Key defense content in deck | PASS | 1.0 | Final deck contains title framing, 2025-2026 literature anchors, selector/correction branches, method comparison, and behavior-system extensions. |
+| Presentation readiness | Speaker notes | PASS | 1.0 | Final 15-minute pure-Chinese speaker script exists and follows slide order. |
+| Reproducibility and GPU | Stronger baseline script | PASS | 1.0 | Strong baseline script and metrics exist. |
+| Reproducibility and GPU | GPU execution evidence | PASS | 1.0 | label_free_llm_adaptation_metrics.csv records device=cuda. |
+| Reproducibility and GPU | Environment manifest | PASS | 1.0 | Environment manifest and freeze file exist under outputs/submission_readiness. |
+| Reproducibility and GPU | Local open-source LLM prior replication | PASS | 1.0 | Local LLM environment is READY and normalized local prior features exist. |
+
+## Interpretation
+
+- Course-project readiness is strong: the core result, baselines, guardrails, deck, Q&A material, and paper draft package are present.
+- No artifact-level FAIL or PARTIAL items remain in this audit; remaining work is advisor feedback, optional additional replications, and a full LaTeX/BibTeX compile in a normal non-elevated TeX environment.
+- The defensible paper claim should remain scoped to label-free event adaptation for survey-based household mobility under a post-pandemic shift.

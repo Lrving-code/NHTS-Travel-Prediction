@@ -1,0 +1,9 @@
+quantity,value,interpretation
+overall_primary_vs_global_a1_mae_delta,0.05081407880646216,positive means primary gated adapter beats same-alpha global prior
+overall_primary_vs_global_a1p25_mae_delta,0.020052018553940343,positive means primary gated adapter beats reported low-cost global baseline
+overall_primary_vs_global_a1_abs_bias_delta,0.09983614715534213,positive means primary gated adapter is better calibrated
+share_subgroup_cells_primary_beats_global_a1,0.7777777777777778,unweighted share across evaluated subgroup cells
+share_subgroup_cells_primary_beats_global_a1p25,0.6666666666666666,unweighted share across evaluated subgroup cells
+median_primary_vs_global_a1_mae_delta,0.03740964243866707,median subgroup-cell MAE gain over same-alpha global prior
+gated_uses_cohort_prior_share_rows,0.14139110604332952,share of households where the gate uses cohort-specific LLM pressure
+gated_uses_cohort_prior_share_weighted,0.17491371304710612,survey-weighted share where the gate uses cohort-specific LLM pressure

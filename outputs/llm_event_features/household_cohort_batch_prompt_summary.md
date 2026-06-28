@@ -1,0 +1,22 @@
+# Batched LLM Prompt Summary
+
+- Source cohort profiles: `outputs\llm_event_features\household_cohort_profiles.csv`
+- Cohorts: `1327`
+- Batches: `166`
+- Batch size target: `8`
+- Max cohorts in a batch: `8`
+- Max message chars: `19191`
+- Rough total input token estimate: `772616`
+- Request reduction vs one-cohort prompts: `87.49%`
+- Output JSONL: `outputs\llm_event_features\household_cohort_batch_prompts.jsonl`
+
+## Recommended Use
+
+Use this when the LLM endpoint supports long context and reliable JSON output. Run a small pilot first, validate every returned record, then scale batch size upward. For the current 1327 cohorts, batch size 8 reduces requests to about 166; batch size 15 reduces them to about 89 but increases validation risk.
+
+## Why This Is Better
+
+- Fewer API calls and less scheduling overhead.
+- Cohorts are still auditable and label-free.
+- The LLM can compare related cohorts inside a batch, which may improve ranking consistency.
+- The output remains a structured event-prior table, not direct trip-count prediction.
