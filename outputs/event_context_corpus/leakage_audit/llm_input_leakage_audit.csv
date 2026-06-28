@@ -1,0 +1,4 @@
+artifact,records_checked,violations,examples,batches_checked
+outputs\llm_event_features\household_cohort_profiles.csv,1327,0,,
+outputs\event_context_corpus\frozen_context_batch_prompts.jsonl,1327,0,,89.0
+outputs\llm_event_features\cursor_api_full_gpt55_low_c15\validated\llm_event_features_normalized.csv,1,0,,

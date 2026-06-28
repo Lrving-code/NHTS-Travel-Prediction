@@ -172,7 +172,7 @@ The strongest alternative explanation is that a global post-pandemic downscaling
 ## 7. Limitations
 
 1. The main NHTS evaluation focuses on one shock year, 2022.
-2. The LLM may contain broad post-pandemic mobility knowledge from pretraining; the prospective event-context file and frozen ACS/BTS context package reduce but do not fully eliminate retrospective knowledge concerns.
+2. The LLM may contain broad post-pandemic mobility knowledge from pretraining; the prospective event-context file, frozen ACS/BTS context package, and 89-batch prompt leakage audit reduce but do not fully eliminate retrospective knowledge concerns.
 3. The global event prior is strong, so cohort-specific LLM ranking should be described as incremental.
 4. Mode and purpose extensions are useful for planning relevance but are not yet full mode-choice or purpose-choice models.
 5. PSRC is a regional external survey with different sampling and diary protocols, so it validates transfer of the principle rather than exact NHTS numerical accuracy.

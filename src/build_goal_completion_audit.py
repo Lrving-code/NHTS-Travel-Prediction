@@ -238,9 +238,10 @@ def build_requirements() -> list[RequirementEvidence]:
             exists("outputs/event_context_corpus/frozen_event_context_sources.csv")
             and exists("outputs/event_context_corpus/frozen_event_context_prompt.md")
             and exists("outputs/event_context_corpus/frozen_context_batch_prompt_summary.md")
+            and exists("outputs/event_context_corpus/leakage_audit/llm_input_leakage_audit_report.md")
             and "Forbidden target-field hits in allowed fact summaries: `0`" in frozen_context_audit,
             "Frozen event-context corpus exists",
-            "ACS/BTS context facts, PSRC validation-only evidence, and 89 frozen-context batch prompts are documented.",
+            "ACS/BTS context facts, PSRC validation-only evidence, 89 frozen-context batch prompts, and prompt leakage audit are documented.",
             "outputs/event_context_corpus/frozen_event_context_audit.md",
         ),
         pass_if(

@@ -51,6 +51,12 @@ def parse_args() -> argparse.Namespace:
         ),
     )
     parser.add_argument("--output-dir", type=Path, default=Path("outputs/leakage_audit"))
+    parser.add_argument(
+        "--frozen-context-audit-path",
+        type=Path,
+        default=None,
+        help="Optional frozen event-context audit to cite in the leakage report.",
+    )
     return parser.parse_args()
 
 
@@ -157,7 +163,12 @@ def audit_llm_features(features_path: Path) -> dict[str, int | str]:
     }
 
 
-def write_report(rows: list[dict[str, int | str]], guardrail_row: dict[str, bool | str], output_dir: Path) -> Path:
+def write_report(
+    rows: list[dict[str, int | str]],
+    guardrail_row: dict[str, bool | str],
+    output_dir: Path,
+    frozen_context_audit_path: Path | None,
+) -> Path:
     path = output_dir / "llm_input_leakage_audit_report.md"
     lines = [
         "# LLM Input Leakage Audit",
@@ -185,10 +196,29 @@ def write_report(rows: list[dict[str, int | str]], guardrail_row: dict[str, bool
             "",
             "## Interpretation",
             "",
-            "A passing audit supports the label-free claim at the input-schema level: the LLM branch receives cohort covariates and event context, not 2022 target labels or evaluation outcomes. This does not eliminate retrospective world-knowledge risk; that remains a separate RAG/frozen-context requirement for a paper-grade version.",
+            "A passing audit supports the label-free claim at the input-schema level: the LLM branch receives cohort covariates and event context, not 2022 target labels or evaluation outcomes.",
             "",
         ]
     )
+    if frozen_context_audit_path is not None:
+        lines.extend(
+            [
+                "## Frozen Context Provenance",
+                "",
+                f"- Frozen context audit: `{frozen_context_audit_path}`",
+                "- This does not prove that all committed priors were regenerated under retrieval-only constraints, "
+                "but it verifies that the frozen-context prompt package can be audited separately from target labels.",
+                "",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                "Retrospective world-knowledge risk is not eliminated by this schema audit alone; pair it with the "
+                "frozen event-context corpus when making paper-level claims.",
+                "",
+            ]
+        )
     path.write_text("\n".join(lines), encoding="utf-8")
     return path
 
@@ -203,7 +233,7 @@ def main() -> None:
     rows = [profile_row, batch_row, feature_row]
     pd.DataFrame(rows).to_csv(args.output_dir / "llm_input_leakage_audit.csv", index=False, quoting=csv.QUOTE_MINIMAL)
     pd.DataFrame([guardrail_row]).to_csv(args.output_dir / "llm_guardrail_instruction_check.csv", index=False)
-    report_path = write_report(rows, guardrail_row, args.output_dir)
+    report_path = write_report(rows, guardrail_row, args.output_dir, args.frozen_context_audit_path)
     LOGGER.info("Wrote leakage audit report: %s", report_path)
 
 

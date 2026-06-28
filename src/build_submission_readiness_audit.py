@@ -386,6 +386,7 @@ def audit_guardrails() -> list[Check]:
         "Prospective event context": "plan/prospective_event_context_2022.md",
         "Frozen event-context corpus": "outputs/event_context_corpus/frozen_event_context_audit.md",
         "Frozen-context batch prompts": "outputs/event_context_corpus/frozen_context_batch_prompt_summary.md",
+        "Frozen-context prompt leakage audit": "outputs/event_context_corpus/leakage_audit/llm_input_leakage_audit_report.md",
         "Pre-COVID placebo": "outputs/pre_covid_placebo_event_correction/pre_covid_placebo_event_correction_report.md",
     }
     for item, path in required.items():
@@ -426,6 +427,44 @@ def audit_guardrails() -> list[Check]:
                 "Frozen context leakage boundary",
                 "Frozen context corpus is missing or does not state the allowed/validation-only boundary.",
                 "Run src/build_frozen_event_context_corpus.py and inspect the audit.",
+            )
+        )
+    frozen_prompt_audit = PROJECT_ROOT / "outputs/event_context_corpus/leakage_audit/llm_input_leakage_audit.csv"
+    frozen_guardrail_check = PROJECT_ROOT / "outputs/event_context_corpus/leakage_audit/llm_guardrail_instruction_check.csv"
+    if frozen_prompt_audit.exists() and frozen_guardrail_check.exists():
+        prompt_rows = pd.read_csv(frozen_prompt_audit)
+        guardrail_rows = pd.read_csv(frozen_guardrail_check)
+        violations = int(prompt_rows["violations"].sum())
+        batch_rows = prompt_rows.loc[
+            prompt_rows["artifact"].astype(str).str.contains("frozen_context_batch_prompts", regex=False)
+        ]
+        batch_count = int(float(batch_rows["batches_checked"].dropna().iloc[0])) if not batch_rows.empty else 0
+        records_checked = int(batch_rows["records_checked"].iloc[0]) if not batch_rows.empty else 0
+        guardrails_present = bool(guardrail_rows["all_required_guardrails_present"].iloc[0])
+        if violations == 0 and records_checked == 1327 and batch_count == 89 and guardrails_present:
+            checks.append(
+                pass_check(
+                    category,
+                    "Frozen-context prompt leakage result",
+                    "1327 cohort records and 89 frozen-context batches checked; violations=0; required guardrails present=True.",
+                )
+            )
+        else:
+            checks.append(
+                partial_check(
+                    category,
+                    "Frozen-context prompt leakage result",
+                    f"records={records_checked}, batches={batch_count}, violations={violations}, guardrails={guardrails_present}.",
+                    "Rerun src/run_llm_input_leakage_audit.py on the frozen-context batch prompts.",
+                )
+            )
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Frozen-context prompt leakage result",
+                "Frozen-context prompt leakage audit CSV files are missing.",
+                "Run src/run_llm_input_leakage_audit.py with outputs/event_context_corpus/frozen_context_batch_prompts.jsonl.",
             )
         )
     return checks

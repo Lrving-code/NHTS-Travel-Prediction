@@ -23,7 +23,7 @@ Overall status: `ARTIFACT_GATE_PASS`
 | Robustness and placebo controls exist | PASS | Permutation, irrelevant pseudo-event, and cohort-prior value controls are present. | `outputs/robustness_checks/permutation_pressure_controls.csv` |
 | Strong global-prior risk is quantified | PASS | Cohort-prior value analysis reports same-alpha global comparison and subgroup-cell win share. | `outputs/cohort_prior_value_analysis/cohort_prior_value_report.md` |
 | Causal/leakage guardrails are documented | PASS | Causal evidence pack and leakage audit exist. | `outputs/causal_guardrails/causal_guardrail_evidence_report.md` |
-| Frozen event-context corpus exists | PASS | ACS/BTS context facts, PSRC validation-only evidence, and 89 frozen-context batch prompts are documented. | `outputs/event_context_corpus/frozen_event_context_audit.md` |
+| Frozen event-context corpus exists | PASS | ACS/BTS context facts, PSRC validation-only evidence, 89 frozen-context batch prompts, and prompt leakage audit are documented. | `outputs/event_context_corpus/frozen_event_context_audit.md` |
 | Temporal validation is documented | PASS | Pre-COVID transfer and placebo event correction reports exist. | `outputs/temporal_transfer_validation/temporal_transfer_validation_report.md` |
 | External household microdata replication exists | PASS | PSRC 2017+2019->2023 direct pre/post replication is in the audit. | `outputs/external_validation/psrc_household_external_validation_report.md` |
 | Multi-objective mobility evaluation exists | PASS | Trip count, mode composition, purpose composition, equity, and Pareto evidence are present. | `outputs/multi_objective_pareto/preference_operating_points.csv` |
