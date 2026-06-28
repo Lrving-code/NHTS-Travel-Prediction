@@ -20,8 +20,8 @@
 | CatBoost GPU | 更强非 LLM baseline | 4.2196 | 5.2095 | +3.4873 | -0.5712 |
 | Historical trend shift | 简单趋势修正 | 4.1504 | 5.1463 | +3.3485 | -0.5334 |
 | Pure LLM pressure | 只用 LLM 事件压力 | 2.7175 | 3.9876 | -0.3732 | 0.0794 |
-| Zero-shot LLM rule tree | LLM 直接生成规则树 | 2.6019 | 3.8300 | -0.4072 | 0.1507 |
-| Zero-shot pseudo-label tree | LLM 规则标签蒸馏树 | 2.6040 | 3.8368 | -0.4072 | 0.1477 |
+| Zero-shot LLM rule tree | LLM 直接生成规则树 | 2.7508 | 3.7834 | +0.5000 | 0.1712 |
+| Zero-shot pseudo-label tree | LLM 规则标签蒸馏树 | 2.7767 | 3.8197 | +0.5000 | 0.1553 |
 | LLM rule + 500-history calibration | LLM 规则 + 少量历史校准 | 2.7723 | 3.8226 | +0.4627 | 0.1538 |
 | Global event prior | 全体家庭统一疫情折减 | 2.5531 | 3.6272 | +0.1229 | 0.2383 |
 | **Hybrid gated adapter** | **主方法** | **2.5023** | **3.6038** | **-0.0230** | **0.2480** |
@@ -71,8 +71,8 @@ Pure LLM pressure 能抓到疫情后出行下降方向，但缺少 household-lev
 
 结果是：
 
-- Zero-shot LLM rule tree weighted MAE `2.6019`，weighted bias `-0.4072`。
-- Zero-shot pseudo-label tree weighted MAE `2.6040`，weighted bias `-0.4072`。
+- Zero-shot LLM rule tree weighted MAE `2.7508`，weighted bias `+0.5000`。
+- Zero-shot pseudo-label tree weighted MAE `2.7767`，weighted bias `+0.5000`。
 - 主方法 weighted MAE `2.5023`，weighted bias `-0.0230`。
 
 这说明 LLM 直接构建 rule tree 可以表达疫情机制方向，但它更像 qualitative belief tree，数值校准仍不如 historical household model + LLM event adapter。
@@ -105,7 +105,7 @@ Global event prior 是所有家庭使用同一个疫情折减。它表现很强�
 
 这个方案已经作为补充 baseline 跑过，但不适合作为主方法。原因是决策树本质上需要标签来学习两个东西：第一，变量 split threshold；第二，叶节点的数值预测。如果没有 2022 `CNTTDHH` 标签，LLM 只能根据常识生成一个 belief tree，或者先生成 synthetic 2022 labels 再训练树。这样优化目标就会变成拟合 LLM 的假设，而不是拟合真实 NHTS 行为。
 
-我们当前设计更稳：历史 XGBoost/CatBoost 用真实 NHTS 学 household baseline，LLM 只提供疫情事件机制先验，adapter 再把事件先验转成有限、可审计的修正。实验上 zero-shot rule tree 的 wMAE 是 `2.6019`、wBias 是 `-0.4072`，LLM rule + 500-history calibration 的 wMAE 是 `2.7723`、wBias 是 `+0.4627`，pure LLM pressure 的 wMAE 是 `2.7175`、wBias 是 `-0.3732`，而主方法 wMAE 是 `2.5023`、wBias 是 `-0.0230`。这说明 LLM 单独能给方向，少量历史校准能构成 cold-start bridge，但当前主任务仍需要更强的 historical household grounding + event adapter。
+我们当前设计更稳：历史 XGBoost/CatBoost 用真实 NHTS 学 household baseline，LLM 只提供疫情事件机制先验，adapter 再把事件先验转成有限、可审计的修正。实验上 zero-shot rule tree 的 wMAE 是 `2.7508`、wBias 是 `+0.5000`，LLM rule + 500-history calibration 的 wMAE 是 `2.7723`、wBias 是 `+0.4627`，pure LLM pressure 的 wMAE 是 `2.7175`、wBias 是 `-0.3732`，而主方法 wMAE 是 `2.5023`、wBias 是 `-0.0230`。这说明 LLM 单独能给方向，少量历史校准能构成 cold-start bridge，但当前主任务仍需要更强的 historical household grounding + event adapter。
 
 ## 机制相关性负对照
 

@@ -69,8 +69,8 @@ Already available:
   - Interpretation: LLM event priors are useful only after being grounded by a routine household predictor.
 - Zero-shot LLM rule-tree ablation:
   - `outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_report_zh.md`
-  - Direct LLM-style rule tree weighted MAE `2.6019`, weighted bias `-0.4072`.
-  - Pseudo-label tree distilled from that rule tree weighted MAE `2.6040`, weighted bias `-0.4072`.
+  - Direct LLM-style rule tree weighted MAE `2.7508`, weighted bias `+0.5000`.
+  - Pseudo-label tree distilled from that rule tree weighted MAE `2.7767`, weighted bias `+0.5000`.
   - Primary hybrid gated adapter remains better: weighted MAE `2.5023`, weighted bias `-0.0230`.
   - Interpretation: direct LLM-authored trees are useful cold-start baselines, but they behave like qualitative belief trees without empirical leaf calibration.
 - LLM rule + small historical calibration:

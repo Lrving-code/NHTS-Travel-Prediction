@@ -14,8 +14,8 @@
 - Primary gated weighted MAE reduction: `42.31%`
 - LLM-only pressure weighted MAE: `2.7175`
 - Compared with LLM-only pressure, the primary hybrid gated adapter reduces weighted MAE from `2.7175` to `2.5023` and reduces absolute weighted bias from `0.3732` to `0.0230`.
-- Zero-shot LLM-authored rule tree weighted MAE: `2.6019`; pseudo-label DecisionTree distilled from that rule tree weighted MAE: `2.6040`.
-- Compared with the zero-shot LLM rule tree, the primary hybrid gated adapter is lower by `0.0997` weighted MAE and has much smaller weighted bias (`-0.4072 -> -0.0230`).
+- Zero-shot LLM-authored rule tree weighted MAE: `2.7508`; pseudo-label DecisionTree distilled from that rule tree weighted MAE: `2.7767`.
+- Compared with the zero-shot LLM rule tree, the primary hybrid gated adapter is lower by `0.2485` weighted MAE and has much smaller absolute weighted bias (`+0.5000 -> -0.0230`).
 - LLM rule + small historical calibration is implemented as a bridge baseline: 500 historical calibration rows give weighted MAE `2.7723`, and full-history rule calibration gives `2.7870`. This is useful for data-sparse/cold-start framing, but it is not the best setting for the 2022 event-shift task.
 - Gated household accuracy: exact `17.7%`, within 2 trips `54.5%`, within 3 trips `71.2%`
 - Stronger non-LLM baselines still overpredict 2022: best extra baseline is CatBoost GPU with weighted MAE `4.2196` and weighted bias `+3.4873`; the primary gated event adapter is `40.70%` lower in weighted MAE.
@@ -58,7 +58,7 @@
 
 和 pure LLM pressure 相比，hybrid gated 方法更稳：pure LLM 能抓到目标年出行下降方向，但缺少 household-level routine baseline，容易把总量压得过低；hybrid 方法保留传统模型学到的家庭基础出行需求，再用 LLM context/event priors 做机制修正。
 
-为什么不直接让 LLM 零样本构建 2022 决策树：决策树需要标签来学习 split threshold 和叶节点数值。没有 2022 `CNTTDHH` 标签时，LLM 只能生成 belief tree 或 synthetic labels，优化目标会变成拟合 LLM 自己的假设，而不是拟合真实 NHTS 行为。仓库已经把这个问题做成补充 ablation：zero-shot LLM rule tree 的 weighted MAE 是 `2.6019`，pseudo-label tree 是 `2.6040`，均弱于 primary hybrid gated adapter 的 `2.5023`，尤其 weighted bias 更不稳。因此本项目把 LLM 限定为 event-prior generator，把数值预测锚定在真实历史 NHTS 训练出的 household model 上。
+为什么不直接让 LLM 零样本构建 2022 决策树：决策树需要标签来学习 split threshold 和叶节点数值。没有 2022 `CNTTDHH` 标签时，LLM 只能生成 belief tree 或 synthetic labels，优化目标会变成拟合 LLM 自己的假设，而不是拟合真实 NHTS 行为。仓库已经把这个问题做成补充 ablation：zero-shot LLM rule tree 的 weighted MAE 是 `2.7508`，pseudo-label tree 是 `2.7767`，均弱于 primary hybrid gated adapter 的 `2.5023`，且 weighted bias 从 LLM-only 的低估转为 `+0.5000` 的高估。因此本项目把 LLM 限定为 event-prior generator，把数值预测锚定在真实历史 NHTS 训练出的 household model 上。
 
 ## 学术问题与贡献
 

@@ -10,8 +10,8 @@ Short answer: we implemented this baseline, and it is useful but less calibrated
 
 Evidence:
 
-- Zero-shot LLM rule tree weighted MAE: `2.6019`, weighted bias: `-0.4072`.
-- Pseudo-label tree distilled from that rule tree weighted MAE: `2.6040`.
+- Zero-shot LLM rule tree weighted MAE: `2.7508`, weighted bias: `+0.5000`.
+- Pseudo-label tree distilled from that rule tree weighted MAE: `2.7767`.
 - Primary hybrid gated adapter weighted MAE: `2.5023`, weighted bias: `-0.0230`.
 
 Response:

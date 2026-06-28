@@ -2,21 +2,19 @@
   "name": "zero_shot_llm_semantic_rule_tree",
   "label_usage": "No 2022 CNTTDHH labels are used for split selection, leaf values, or calibration.",
   "allowed_inputs": [
-    "household size, vehicle ownership, worker count, adult count, urban/rural context",
+    "household size, vehicle ownership, worker count, adult count, driver count, urban/rail context",
     "LLM event priors: trip suppression, remote work, transit avoidance, delivery substitution, recovery sensitivity"
   ],
   "forbidden_inputs": [
-    "2022 CNTTDHH",
-    "2022 survey weights for fitting leaf values",
-    "household ID as a predictor",
-    "aggregate 2022 target outcomes"
+    "2022 CNTTDHH for rule construction",
+    "2022 aggregate target outcomes",
+    "household ID as a predictor"
   ],
   "decision_logic": [
-    "Root split: high, medium, or low LLM trip-suppression pressure.",
-    "High-suppression branch lowers leaves further for no-worker or high-remote-work households.",
-    "Medium-suppression branch separates carless households, large households, and worker households.",
-    "Low-suppression branch allows higher leaves for large, multi-vehicle, or multi-worker households.",
-    "Small leaf adjustments encode delivery substitution and recovery sensitivity, without using labels."
+    "Estimate household routine demand from household size, workers, vehicles, adults, and drivers.",
+    "Apply an event factor from LLM event priors without using 2022 labels.",
+    "Apply small context adjustments for urban rail exposure, weekend travel day, and seasonal activity.",
+    "Distill the resulting pseudo-labels into a shallow decision tree for interpretability."
   ],
-  "caveat": "This is a deliberately direct LLM-style baseline. It represents a qualitative belief tree rather than a statistically trained decision tree, because true decision-tree thresholds and leaf values require labels."
+  "caveat": "This is a qualitative belief-tree baseline. Its thresholds and leaf values are not optimized against true 2022 NHTS outcomes, so it should be read as an ablation rather than the main predictor."
 }

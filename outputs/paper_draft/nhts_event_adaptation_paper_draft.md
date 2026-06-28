@@ -112,7 +112,8 @@ The comparison includes:
 | LLM-only pressure | 2.7175 | 3.9876 | -0.3732 | 0.0794 |
 | Global event prior | 2.5223 | 3.7432 | -0.7477 | 0.1888 |
 | Random prior control | 2.6466 | 3.8807 | -0.6368 | 0.1280 |
-| Zero-shot LLM rule tree | 2.6019 | 3.8300 | -0.4072 | 0.1507 |
+| Zero-shot LLM rule tree | 2.7508 | 3.7834 | +0.5000 | 0.1712 |
+| Zero-shot pseudo-label tree | 2.7767 | 3.8197 | +0.5000 | 0.1553 |
 | LLM rule + 500-history calibration | 2.7723 | 3.8226 | +0.4627 | 0.1538 |
 | Primary gated adapter | 2.5023 | 3.6038 | -0.0230 | 0.2480 |
 
@@ -135,7 +136,7 @@ The global event prior is strong, so the correct interpretation is event-level a
 
 - 500-run permutation control for the primary gated rule: actual weighted MAE `2.5023`, random-permutation mean `2.5808`, empirical p-value `0.0020`.
 - Irrelevant pseudo-event controls are weaker: best ranked pseudo-event weighted MAE `2.6274`, best gated pseudo-event weighted MAE `2.5610`.
-- Zero-shot LLM rule tree reaches weighted MAE `2.6019`, and a pseudo-label tree distilled from it reaches `2.6040`; both are weaker and more biased than the primary adapter.
+- Zero-shot LLM rule tree reaches weighted MAE `2.7508`, and a pseudo-label tree distilled from it reaches `2.7767`; both are weaker and more biased than the primary adapter.
 - LLM rule plus 500 historical calibration reaches weighted MAE `2.7723`, showing that rule distillation plus small historical calibration is coherent but not the best solution for the 2022 event-shift task.
 - CatBoost GPU is the strongest extra non-LLM baseline with weighted MAE `4.2196` and weighted bias `+3.4873`, still far from the primary adapter.
 - Poisson GLM reaches weighted MAE `4.3368`, Tweedie GLM reaches `4.3761`, and zero-inflated Poisson reaches `4.1742` but still overpredicts with weighted bias `+3.4233`; a stable negative-binomial GLM check reaches weighted MAE `6.1229` with alpha `0.5`, while alpha `1.0` is solver-infeasible during historical validation. These are grounded in standard count-data regression practice, and solver diagnostics are recorded so they should be read as transparent count-model baselines rather than exhaustively optimized count-model state of the art.

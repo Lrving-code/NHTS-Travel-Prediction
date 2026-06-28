@@ -58,8 +58,7 @@ The main numerical results should still use the measured project metrics:
 
 - ordinary XGBoost weighted MAE: `4.3377`;
 - pure LLM pressure weighted MAE: `2.7175`;
-- zero-shot LLM rule tree weighted MAE: `2.6019`;
+- zero-shot LLM rule tree weighted MAE: `2.7508`;
 - LLM rule + 500 history weighted MAE: `2.7723`;
 - primary hybrid gated adapter weighted MAE: `2.5023`;
 - primary hybrid gated adapter weighted bias: `-0.0230`.
-

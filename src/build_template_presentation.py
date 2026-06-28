@@ -1390,7 +1390,7 @@ def add_backup_qa_slides(prs: Presentation, logo: bytes | None, values: dict[str
         "已经实现为 baseline；方向有用，但数值校准弱于 hybrid adapter。",
         [
             ["Zero-shot LLM rule tree", f"wMAE {values['zero_rule']:.4f}; wBias {values['zero_rule_bias']:+.4f}"],
-            ["Pseudo-label tree", "wMAE 2.6040; still follows LLM belief labels"],
+            ["Pseudo-label tree", f"wMAE {metric(trip, 'zero_shot_pseudo_label_tree', 'weighted_mae'):.4f}; still follows LLM belief labels"],
             ["Primary hybrid gated", f"wMAE {values['gated']:.4f}; wBias {values['gated_bias']:+.4f}"],
             ["Key issue", "No target labels for split thresholds and leaf values"],
         ],

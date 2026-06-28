@@ -15,7 +15,7 @@
 - Ordinary historical XGBoost weighted bias: `+3.6052`.
 - Primary hybrid gated weighted bias: `-0.0230`, almost removing systematic overprediction.
 - LLM-only pressure weighted MAE: `2.7175`, weaker than hybrid. This supports the claim that LLM should be an event-prior adapter, not a standalone predictor.
-- Zero-shot LLM rule tree weighted MAE: `2.6019`; pseudo-label tree distilled from it: `2.6040`. These baselines answer the direct "why not let the LLM build a 2022 tree" question and remain weaker than the hybrid adapter.
+- Zero-shot LLM rule tree weighted MAE: `2.7508`; pseudo-label tree distilled from it: `2.7767`. These baselines answer the direct "why not let the LLM build a 2022 tree" question and remain weaker than the hybrid adapter.
 - LLM rule + 500 historical calibration weighted MAE: `2.7723`; full-history rule calibration: `2.7870`. This integrates the collaborator's rule-distillation + small-data calibration idea, but it is not the strongest setting for the 2022 event-shift task.
 - Irrelevant pseudo-event controls do not reproduce the main method: best ranked pseudo-event weighted MAE `2.6274`, best gated pseudo-event weighted MAE `2.5610`.
 - Transit-share weighted MAE improves from `0.0325` to `0.0269`, but full mode composition improves only modestly.

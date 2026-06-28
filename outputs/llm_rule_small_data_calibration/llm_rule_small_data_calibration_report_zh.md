@@ -23,7 +23,7 @@ data-only fitting -> LLM-only -> zero-shot LLM rule -> LLM rule + small historic
 |---|---:|---:|---:|---:|
 | historical_xgboost | 4.3377 | +3.6052 | -0.6367 | +1.8354 |
 | llm_only_pressure | 2.7175 | -0.3732 | 0.0794 | +0.2152 |
-| zero_shot_llm_rule_tree | 2.6019 | -0.4072 | 0.1507 | +0.0997 |
+| zero_shot_llm_rule_tree | 2.7508 | +0.5000 | 0.1712 | +0.2485 |
 | llm_rule_small_hist_calibrated_n100 | 3.0012 | +0.7405 | 0.0551 | +0.4989 |
 | llm_rule_small_hist_calibrated_n500 | 2.7723 | +0.4627 | 0.1538 | +0.2700 |
 | llm_rule_small_hist_calibrated_n1000 | 2.7905 | +0.5725 | 0.1445 | +0.2882 |
@@ -32,7 +32,7 @@ data-only fitting -> LLM-only -> zero-shot LLM rule -> LLM rule + small historic
 
 ## 结论
 
-- Zero-shot LLM rule tree wMAE `2.6019`，主方法 `2.5023`。
+- Zero-shot LLM rule tree wMAE `2.7508`，主方法 `2.5023`。
 - Rule + 500 historical samples wMAE `2.7723`，比 zero-shot rule tree 更弱。
 - Rule + 1000 historical samples wMAE `2.7905`。
 - Full historical calibration wMAE `2.7870`。

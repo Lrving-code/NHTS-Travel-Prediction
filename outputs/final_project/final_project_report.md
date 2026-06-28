@@ -27,8 +27,8 @@ Our gap is survey-based household mobility under a post-pandemic event shift: mo
 | Global event prior | 2.5223 | 3.7432 | -0.7477 | 0.1888 |
 | Random prior control | 2.6466 | 3.8807 | -0.6368 | 0.1280 |
 | Gated LLM correction | 2.5023 | 3.6038 | -0.0230 | 0.2480 |
-| Zero-shot LLM rule tree | 2.6019 | 3.8300 | -0.4072 | 0.1507 |
-| Zero-shot pseudo-label tree | 2.6040 | 3.8368 | -0.4072 | 0.1477 |
+| Zero-shot LLM rule tree | 2.7508 | 3.7834 | 0.5000 | 0.1712 |
+| Zero-shot pseudo-label tree | 2.7767 | 3.8197 | 0.5000 | 0.1553 |
 | LLM rule + 500-history calibration | 2.7723 | 3.8226 | 0.4627 | 0.1538 |
 
 ## Temporal Transfer Validation
@@ -54,7 +54,7 @@ We added an external validation and compatibility audit in `outputs/external_val
 | BTS/UMD daily mobility | BTS trips/person changes only `-1.95%` from 2019 to 2022, while NHTS diary `CNTTDHH` has a much larger 2017-to-2022 shift. | Shows BTS device mobility is not a direct numeric label for NHTS household trips. |
 | PSRC household travel survey | 2017+2019->2023 household/day pre/post replication wMAE changes `3.4271 -> 3.2498`; wBias changes `+1.0532 -> +0.2605` using an ACS-derived remote-work suppression factor. | Provides household-level external microdata evidence that event-scale suppression improves transfer on an independent travel survey. |
 
-Interpretation: external data supports the event semantics used by the LLM adapter and now includes a household-level external pre/post replication. The PSRC result is not direct numerical validation of NHTS 2022 household predictions because PSRC is a regional survey with different sampling and diary protocols, but it strengthens the paper claim that fixed event priors can improve label-free transfer under post-pandemic survey shifts. The external adapter is also no-label: it is specified from ACS event context, without target-year PSRC label calibration.
+Interpretation: external data supports the event semantics used by the LLM adapter and includes a household-level external pre/post replication. The PSRC result is not direct numerical validation of NHTS 2022 household predictions because PSRC is a regional survey with different sampling and diary protocols, but it strengthens the paper claim that fixed event priors can improve label-free transfer under post-pandemic survey shifts. The external adapter is also no-label: it is specified from ACS event context, without target-year PSRC label calibration.
 
 ## Improvement Over Historical Predictor
 
@@ -63,7 +63,7 @@ Interpretation: external data supports the event semantics used by the LLM adapt
 - Primary weighted RMSE drops from `5.3169` to `3.6038` (32.22% reduction).
 - Primary absolute weighted bias drops by `99.36%`.
 - LLM-only pressure improves over naive historical baselines but remains weaker than the hybrid adapter, supporting the design choice that LLMs provide event semantics rather than standalone household predictions.
-- Zero-shot LLM rule tree reaches weighted MAE `2.6019`, and the pseudo-label tree distilled from it reaches `2.6040`; both are weaker and more biased than the primary hybrid adapter.
+- Zero-shot LLM rule tree reaches weighted MAE `2.7508`, and the pseudo-label tree distilled from it reaches `2.7767`; both are weaker and more biased than the primary hybrid adapter.
 - LLM rule + 500 historical calibration reaches weighted MAE `2.7723`; it is a useful bridge baseline for data-sparse settings, but it reintroduces positive 2022 bias.
 
 ## Household-Level Accuracy
@@ -119,7 +119,7 @@ The LLM should be framed as an event-generalization module, not as a direct pred
 ## Why Not a Zero-Shot LLM Decision Tree
 
 A decision tree needs labels to learn split thresholds and leaf-level numerical predictions. Without 2022 `CNTTDHH` labels, an LLM-generated tree would be a belief tree or a synthetic-label model rather than a data-fitted 2022 tree. This is why the project uses the LLM as an event-prior generator and keeps numerical prediction grounded in a historical household model trained on real NHTS data.
-We now include this as an explicit ablation. A zero-shot LLM-style semantic rule tree reaches weighted MAE `2.6019`, while a pseudo-label tree reaches `2.6040`. The primary hybrid adapter remains better at weighted MAE `2.5023`.
+We now include this as an explicit ablation. A zero-shot LLM-style semantic rule tree reaches weighted MAE `2.7508`, while a pseudo-label tree reaches `2.7767`. The primary hybrid adapter remains better at weighted MAE `2.5023`.
 
 ## LLM Rules Plus Small Historical Calibration
 
@@ -131,12 +131,11 @@ We ran additional robustness checks in `outputs/robustness_checks/`.
 
 - 500-run permutation control for the primary gated rule: actual weighted MAE `2.5023`, random-permutation mean `2.5808`, empirical p-value `0.0020`.
 - Same-alpha global pressure remains strong: primary gated weighted MAE `2.5023` vs global-a1 weighted MAE `2.5531`.
-- Cohort-prior value analysis: primary gated is `0.0508` weighted-MAE lower than same-alpha global pressure and `0.0201` lower than the reported global-a1.25 baseline. It beats same-alpha global pressure in `77.8%` of evaluated subgroup cells, while the gate uses cohort-specific pressure for only `17.5%` of survey-weighted households.
 - LLM rule + small historical calibration is a coherent bridge baseline but not a replacement: 500-row calibration weighted MAE `2.7723`.
 - Irrelevant pseudo-event placebo controls are weaker than the primary method: best ranked pseudo-event weighted MAE `2.6274`, best gated pseudo-event weighted MAE `2.5610`.
 - Leakage scan passes for LLM-facing profile/feature files: they exclude `HOUSEID`, `CNTTDHH`, and `WTHHFIN`.
 
-Interpretation for the course report: the dominant contribution is event-level label-free adaptation. Cohort-specific LLM ranking provides measurable selective refinement, especially for subgroup cells such as lower-income, zero-vehicle, and no-worker households, but it should not be described as the sole source of improvement.
+Interpretation for the course report: the dominant contribution is event-level label-free adaptation. Cohort-specific LLM ranking provides measurable incremental signal, but it should not be described as the sole source of improvement.
 
 ## Figures
 

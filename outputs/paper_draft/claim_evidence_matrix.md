@@ -31,7 +31,8 @@ This file constrains paper and presentation claims to evidence that exists in th
 | Absolute weighted-bias reduction | `99.36%` | `outputs/final_project/final_metrics_summary.csv` |
 | LLM-only pressure weighted MAE | `2.7175` | `outputs/final_project/final_metrics_summary.csv` |
 | Global event prior weighted MAE | `2.5223` | `outputs/final_project/final_metrics_summary.csv` |
-| Zero-shot LLM rule tree weighted MAE | `2.6019` | `outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_metrics.csv` |
+| Zero-shot LLM rule tree weighted MAE | `2.7508` | `outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_metrics.csv` |
+| Zero-shot pseudo-label tree weighted MAE | `2.7767` | `outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_metrics.csv` |
 | LLM rule + 500 historical calibration weighted MAE | `2.7723` | `outputs/llm_rule_small_data_calibration/method_spectrum_metrics.csv` |
 | CatBoost GPU weighted MAE | `4.2196` | `outputs/strong_baselines/strong_tabular_baseline_metrics.csv` |
 | Poisson GLM weighted MAE | `4.3368` | `outputs/count_model_baselines/count_model_baseline_metrics.csv` |
