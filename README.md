@@ -219,6 +219,8 @@ data/
 
 src/
   build_household_dataset.py
+  run_mode_choice_branch.py
+  mode_choice_branch/              # 从 refs 中 data_processing 副本整理来的出行方式预测数据处理分支
   build_llm_household_profiles.py
   generate_llm_event_features.py
   run_household_baseline.py
@@ -287,6 +289,23 @@ mode-composition 实验：
 ```powershell
 python src\run_mode_composition_extension.py --device cuda
 ```
+
+从 `refs/data_processing - 副本.rar` 整理出的出行方式预测数据处理分支：
+
+```powershell
+python src\run_mode_choice_branch.py field-diff
+python src\run_mode_choice_branch.py preprocess
+python src\run_mode_choice_branch.py build-datasets
+python src\run_mode_choice_branch.py trptrans-report
+```
+
+也可以一次性运行完整流程：
+
+```powershell
+python src\run_mode_choice_branch.py all
+```
+
+该分支保留原压缩包中的共同字段筛选、缺失值处理、2017 训练/验证划分、2022 迁移测试集构建和 `TRPTRANS` 分布诊断逻辑，并将原脚本中的个人机器路径改为仓库相对路径。生成的中间文件默认写入 `data/interim/mode_choice_branch/`，报告和建模数据集默认写入 `outputs/mode_choice_branch/`，两者均不提交到 git。
 
 purpose-composition 与统计验证：
 

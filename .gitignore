@@ -19,6 +19,7 @@ credentials.json
 # Local raw data and archives
 data/raw/
 data/processed/*.csv
+data/interim/mode_choice_branch/
 
 # Temporary files
 temp/
@@ -32,6 +33,7 @@ outputs/figures/
 outputs/cache/
 outputs/external_validation/cache/
 outputs/share_package/
+outputs/mode_choice_branch/
 outputs/mode_composition_extension/household_mode_composition.csv
 outputs/mode_composition_extension/mode_composition_predictions.csv
 outputs/purpose_composition_extension/household_purpose_composition.csv
