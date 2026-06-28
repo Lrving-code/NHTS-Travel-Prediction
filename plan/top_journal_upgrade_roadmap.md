@@ -72,6 +72,8 @@ Remaining top-tier risks:
 Completed baselines now include:
 
 - Strong tabular baselines.
+- Covariate-shift reweighted XGBoost using 2022 covariates without 2022 trip-count labels.
+- CatBoost GPU and LightGBM CPU fallback baselines.
 - Transparent Poisson, Tweedie, negative-binomial, and zero-inflated count-model baselines.
 - Historical trend shift and global event-prior baselines.
 - Zero-shot LLM rule tree, pseudo-label tree, and small historical calibration variants.
@@ -79,8 +81,8 @@ Completed baselines now include:
 
 Still useful if time permits:
 
-- Add CatBoost or LightGBM GPU baselines if the local dependency stack supports them cleanly.
-- Add covariate-reweighted historical transfer as a domain-adaptation baseline.
+- Add a difference-in-differences-style correction or external-feature-only model if a defensible external event feature panel is available.
+- Re-run LightGBM with GPU only if the local build can support it cleanly; the current artifact records CPU fallback.
 
 ### W2. Causal Guardrails - complete for course and artifact gate
 
@@ -154,7 +156,7 @@ Use the 4090 for all model experiments that support it:
 ## Immediate Next Actions
 
 1. If an LLM endpoint or local model is available, run frozen-context prior replay and compare regenerated priors against current GPT-reference priors.
-2. If time permits, add covariate-reweighted historical transfer and/or CatBoost/LightGBM GPU baselines as reviewer-facing robustness baselines.
+2. If time permits, add a difference-in-differences-style or external-feature-only robustness baseline; covariate reweighting, CatBoost, and LightGBM have already been checked.
 3. Keep the PPT and report story focused on: event shift -> label-free event priors -> causal/leakage guardrails -> multi-objective planning choice -> behavior-system outputs.
 4. Do not upgrade the claim to broad causal identification or general mobility foundation modeling.
 5. For a real venue submission, move the LaTeX draft into the target template and get advisor feedback on the external validation scope.

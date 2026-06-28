@@ -17,6 +17,7 @@ Baselines and controls,Permutation robustness,PASS,1.0,outputs/robustness_checks
 Baselines and controls,Cohort-prior value analysis,PASS,1.0,outputs/cohort_prior_value_analysis/cohort_prior_value_summary.csv,Keep.
 Baselines and controls,Cohort-prior value report,PASS,1.0,outputs/cohort_prior_value_analysis/cohort_prior_value_report.md,Keep.
 Baselines and controls,Cohort-prior value figure,PASS,1.0,outputs/cohort_prior_value_analysis/cohort_prior_value_top_groups.png,Keep.
+Baselines and controls,Covariate-shift reweighted baseline,PASS,1.0,"Reweighted XGBoost wMAE 4.4304, wBias +3.7523; primary adapter is 43.52% lower in wMAE.",Keep.
 Baselines and controls,Count-model comparison,PASS,1.0,"Poisson GLM wMAE 4.3368, wBias +3.6178; primary adapter is 42.30% lower in wMAE.",Keep.
 Baselines and controls,Negative-binomial comparison,PASS,1.0,"NB GLM wMAE 6.1229, wBias -1.1091; primary adapter is 59.13% lower in wMAE, with diagnostics recorded.",Keep.
 Baselines and controls,Zero-inflated count comparison,PASS,1.0,"ZIP wMAE 4.1742, wBias +3.4233; primary adapter is 40.05% lower in wMAE, with diagnostics recorded.",Keep.

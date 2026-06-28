@@ -119,6 +119,7 @@ def build_requirements() -> list[RequirementEvidence]:
     local_llm_audit = read_text("outputs/local_llm_prior_replication/local_llm_environment_audit.md")
     local_llm_report = read_text("outputs/local_llm_prior_replication/local_llm_prior_replication_report.md")
     frozen_context_audit = read_text("outputs/event_context_corpus/frozen_event_context_audit.md")
+    strong_baseline_metrics = read_text("outputs/strong_baselines/strong_tabular_baseline_metrics.csv")
     mode_common = read_text("src/mode_choice_branch/common.py")
     mode_datasets = read_text("src/mode_choice_branch/datasets.py")
     mode_choice_harmonized = (
@@ -235,9 +236,10 @@ def build_requirements() -> list[RequirementEvidence]:
             and exists("outputs/negative_binomial_baseline/negative_binomial_diagnostics.csv")
             and exists("outputs/zero_inflated_count_baseline/zero_inflated_count_metrics.csv")
             and exists("outputs/zero_inflated_count_baseline/zero_inflated_count_diagnostics.csv")
-            and exists("outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_metrics.csv"),
+            and exists("outputs/zero_shot_llm_rule_tree_baseline/zero_shot_llm_rule_tree_metrics.csv")
+            and "xgboost_covariate_shift_reweighted_cuda" in strong_baseline_metrics,
             "Strong baselines and LLM rule-tree ablations exist",
-            "Strong tabular, transparent Poisson/Tweedie/negative-binomial/zero-inflated count-model, zero-shot rule tree, pseudo-label tree, and small-calibration evidence are present.",
+            "Strong tabular, covariate-shift reweighted, transparent Poisson/Tweedie/negative-binomial/zero-inflated count-model, zero-shot rule tree, pseudo-label tree, and small-calibration evidence are present.",
             "outputs/strong_baselines/strong_tabular_baseline_metrics.csv",
         ),
         pass_if(

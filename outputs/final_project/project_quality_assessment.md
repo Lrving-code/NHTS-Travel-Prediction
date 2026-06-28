@@ -69,7 +69,7 @@ To make it paper-ready, the next experiments should be:
 1. Prospective event-context freezing: use only documents/data available before 2022 NHTS release.
 2. Additional external replication: add another compatible post-pandemic household travel survey or region if accessible.
 3. Cross-region or multi-shock validation: at least one additional event or held-out region.
-4. Stronger baselines: calibrated global shock model, difference-in-differences style correction, CatBoost/LightGBM, and a simple external-feature model.
+4. Additional robustness baselines: CatBoost, LightGBM, and covariate-shift reweighting have been checked; a future paper could still add a difference-in-differences-style correction or a simple external-feature-only model if a defensible external event panel is available.
 5. Mode-choice strengthening: move from transit-share correction toward a complete mode/purpose event adapter.
 
 ## Presentation Recommendation

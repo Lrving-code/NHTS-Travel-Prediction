@@ -214,6 +214,50 @@ def audit_baselines_and_controls() -> list[Check]:
         "gated_trip_suppression_a1_d0p15",
         "weighted_mae",
     )
+    covariate_mae = metric_value(
+        "outputs/strong_baselines/strong_tabular_baseline_metrics.csv",
+        "xgboost_covariate_shift_reweighted_cuda",
+        "weighted_mae",
+    )
+    covariate_bias = metric_value(
+        "outputs/strong_baselines/strong_tabular_baseline_metrics.csv",
+        "xgboost_covariate_shift_reweighted_cuda",
+        "weighted_bias",
+    )
+    if covariate_mae is not None and covariate_bias is not None and primary_mae is not None:
+        reduction = (covariate_mae - primary_mae) / covariate_mae
+        if reduction >= 0.30 and covariate_bias >= 3.0:
+            checks.append(
+                pass_check(
+                    category,
+                    "Covariate-shift reweighted baseline",
+                    (
+                        f"Reweighted XGBoost wMAE {covariate_mae:.4f}, wBias {covariate_bias:+.4f}; "
+                        f"primary adapter is {reduction:.2%} lower in wMAE."
+                    ),
+                )
+            )
+        else:
+            checks.append(
+                partial_check(
+                    category,
+                    "Covariate-shift reweighted baseline",
+                    (
+                        f"Reweighted XGBoost wMAE {covariate_mae:.4f}, "
+                        f"wBias {covariate_bias:+.4f}; primary adapter reduction {reduction:.2%}."
+                    ),
+                    "Review whether covariate reweighting weakens the event-adaptation claim.",
+                )
+            )
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Covariate-shift reweighted baseline",
+                "Could not read covariate-reweighted XGBoost or primary adapter metrics.",
+                "Run src/run_stronger_tabular_baselines.py with --methods reweighted_xgboost.",
+            )
+        )
     if poisson_mae is not None and poisson_bias is not None and primary_mae is not None:
         reduction = (poisson_mae - primary_mae) / poisson_mae
         if reduction >= 0.35 and poisson_bias >= 3.0:
