@@ -519,6 +519,35 @@ def audit_multi_output_evaluation() -> list[Check]:
             checks.append(pass_check(category, item, path))
         else:
             checks.append(fail_check(category, item, f"Missing {path}.", "Regenerate this evaluation artifact."))
+
+    mode_common = read_text(PROJECT_ROOT / "src/mode_choice_branch/common.py")
+    mode_datasets = read_text(PROJECT_ROOT / "src/mode_choice_branch/datasets.py")
+    readme = read_text(PROJECT_ROOT / "README.md")
+    mode_harmonized = (
+        "TRPTRANS_LABELS_BY_YEAR" in mode_common
+        and "MODE_GROUP_MAPPINGS" in mode_common
+        and "MODE_GROUP_COLUMN" in mode_datasets
+        and "map_trptrans_to_mode_group" in mode_datasets
+        and "raw `TRPTRANS` 编码含义不同" in readme
+    )
+    if mode_harmonized:
+        checks.append(
+            pass_check(
+                category,
+                "Harmonized mode-choice branch",
+                "2017/2022 raw TRPTRANS codes are mapped into comparable MODE_GROUP targets before mode-choice dataset construction.",
+            )
+        )
+    else:
+        checks.append(
+            partial_check(
+                category,
+                "Harmonized mode-choice branch",
+                "Mode-choice branch does not fully document or implement cross-year TRPTRANS-to-MODE_GROUP harmonization.",
+                "Inspect src/mode_choice_branch and README before reporting mode-choice transfer results.",
+            )
+        )
+
     operating_points_path = PROJECT_ROOT / "outputs/multi_objective_pareto/preference_operating_points.csv"
     uncertainty_plot_path = "outputs/multi_objective_pareto/trip_uncertainty_tradeoff.png"
     if operating_points_path.exists():

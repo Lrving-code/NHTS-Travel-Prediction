@@ -114,6 +114,15 @@ def build_requirements() -> list[RequirementEvidence]:
     local_llm_audit = read_text("outputs/local_llm_prior_replication/local_llm_environment_audit.md")
     local_llm_report = read_text("outputs/local_llm_prior_replication/local_llm_prior_replication_report.md")
     frozen_context_audit = read_text("outputs/event_context_corpus/frozen_event_context_audit.md")
+    mode_common = read_text("src/mode_choice_branch/common.py")
+    mode_datasets = read_text("src/mode_choice_branch/datasets.py")
+    mode_choice_harmonized = (
+        "TRPTRANS_LABELS_BY_YEAR" in mode_common
+        and "MODE_GROUP_MAPPINGS" in mode_common
+        and "MODE_GROUP_COLUMN" in mode_datasets
+        and "map_trptrans_to_mode_group" in mode_datasets
+        and "raw `TRPTRANS` 编码含义不同" in readme
+    )
 
     return [
         pass_if(
@@ -270,6 +279,12 @@ def build_requirements() -> list[RequirementEvidence]:
             "Multi-objective mobility evaluation exists",
             "Trip count, mode composition, purpose composition, equity, uncertainty-aware Pareto, and planning trade-off evidence are present.",
             "outputs/multi_objective_pareto/preference_operating_points.csv",
+        ),
+        pass_if(
+            mode_choice_harmonized,
+            "Harmonized mode-choice branch is guarded",
+            "Mode-choice code maps year-specific raw TRPTRANS codes into comparable MODE_GROUP targets before transfer evaluation.",
+            "src/mode_choice_branch/common.py",
         ),
         pass_if(
             "device=cuda" in read_text("outputs/submission_readiness/submission_readiness_audit.md")

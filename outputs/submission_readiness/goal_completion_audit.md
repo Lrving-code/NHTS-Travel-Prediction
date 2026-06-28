@@ -27,6 +27,7 @@ Overall status: `ARTIFACT_GATE_PASS`
 | Temporal validation is documented | PASS | Pre-COVID transfer and placebo event correction reports exist. | `outputs/temporal_transfer_validation/temporal_transfer_validation_report.md` |
 | External household microdata replication exists | PASS | PSRC 2017+2019->2023 direct pre/post replication is in the audit. | `outputs/external_validation/psrc_household_external_validation_report.md` |
 | Multi-objective mobility evaluation exists | PASS | Trip count, mode composition, purpose composition, equity, uncertainty-aware Pareto, and planning trade-off evidence are present. | `outputs/multi_objective_pareto/preference_operating_points.csv` |
+| Harmonized mode-choice branch is guarded | PASS | Mode-choice code maps year-specific raw TRPTRANS codes into comparable MODE_GROUP targets before transfer evaluation. | `src/mode_choice_branch/common.py` |
 | GPU and reproducibility evidence exist | PASS | CUDA execution and environment manifest are recorded. | `outputs/submission_readiness/environment_manifest.json` |
 | Final PPT and defense script are current | PASS | 0611 final deck has 38 slides and includes title framing, literature, selector/correction branches, method comparison, and behavior-system extensions. | `outputs/final_project/0611_final_presentation.pptx` |
 | No-label external validation wording is explicit | PASS | README/final report state that target-year external labels are not used for calibration. | `outputs/final_project/final_project_report.md` |

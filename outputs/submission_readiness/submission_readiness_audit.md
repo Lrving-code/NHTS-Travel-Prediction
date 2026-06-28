@@ -68,6 +68,7 @@ No PARTIAL items were detected.
 | Mobility behavior system | Purpose composition | PASS | 1.0 | outputs/purpose_composition_extension/purpose_composition_metrics.csv |
 | Mobility behavior system | Equity-aware evaluation | PASS | 1.0 | outputs/equity_aware_evaluation/subgroup_equity_metrics.csv |
 | Mobility behavior system | Multi-objective Pareto | PASS | 1.0 | outputs/multi_objective_pareto/preference_operating_points.csv |
+| Mobility behavior system | Harmonized mode-choice branch | PASS | 1.0 | 2017/2022 raw TRPTRANS codes are mapped into comparable MODE_GROUP targets before mode-choice dataset construction. |
 | Mobility behavior system | Uncertainty-aware Pareto profile | PASS | 1.0 | uncertainty_aware_reporting selects the primary gated adapter with bootstrap coverage; uncertainty trade-off figure exists. |
 | Temporal and external validity | Temporal transfer validation | PASS | 1.0 | Pre-COVID and 2022 transfer report exists. |
 | Temporal and external validity | Pre-COVID placebo validation | PASS | 1.0 | Pre-COVID event-correction placebo report exists. |
