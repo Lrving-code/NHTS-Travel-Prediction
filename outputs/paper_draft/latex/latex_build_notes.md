@@ -43,14 +43,15 @@ Observed result:
 - The manual `pdflatex -> bibtex -> pdflatex -> pdflatex -> pdflatex` sequence succeeds in this Codex shell.
 - `main.pdf` is generated locally as a 10-page PDF.
 - `main.log` reports no undefined citation warnings after the final run.
-- Remaining TeX warnings are non-blocking: one underfull hbox and one overfull hbox around the compact results table.
+- Remaining TeX warning is non-blocking: one underfull hbox in the baseline-description paragraph.
+- The previous overfull hbox around the main results table has been resolved by compacting metric headers and long method labels.
 - MiKTeX still prints elevated-privilege and update-check warnings; these do not stop the manual compile.
 
 Decision:
 
 - Do not commit generated PDF or intermediate files from this environment.
 - Treat the manual compile sequence as the current reproducible source gate.
-- Before external submission, rerun the same sequence in a normal, non-elevated PowerShell session or Overleaf and inspect the overfull table warning.
+- Before external submission, rerun the same sequence in a normal, non-elevated PowerShell session or Overleaf and inspect the final log.
 
 Suggested compile command in a normal TeX environment:
 

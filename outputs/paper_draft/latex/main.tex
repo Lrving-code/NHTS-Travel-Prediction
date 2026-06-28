@@ -166,21 +166,23 @@ The comparison includes historical mean, ordinary historical XGBoost, historical
 \centering
 \caption{Household trip-generation results on the 2022 \nhts{} target wave. Lower \whmae{}, RMSE, and absolute bias are better.}
 \label{tab:main_results}
+\small
+\setlength{\tabcolsep}{3.6pt}
 \begin{tabular}{lrrrr}
 \toprule
-Method & \whmae{} & weighted RMSE & \whbias{} & weighted $R^2$ \\
+Method & \whmae{} & wRMSE & \whbias{} & w$R^2$ \\
 \midrule
 Historical mean & 5.5116 & 6.1251 & +4.4995 & -1.1722 \\
 Ordinary XGBoost & 4.3377 & 5.3169 & +3.6052 & -0.6367 \\
 Poisson GLM & 4.3368 & 5.4383 & +3.6178 & -0.7123 \\
 Tweedie GLM ($p=1.5$) & 4.3761 & 5.5757 & +3.6677 & -0.7999 \\
-Negative-binomial GLM ($\alpha=0.5$) & 6.1229 & 15.3423 & -1.1091 & -12.6282 \\
+Neg-bin GLM ($\alpha=0.5$) & 6.1229 & 15.3423 & -1.1091 & -12.6282 \\
 Historical trend shift & 4.1504 & 5.1463 & +3.3485 & -0.5334 \\
 LLM-only pressure & 2.7175 & 3.9876 & -0.3732 & 0.0794 \\
 Global event prior & 2.5223 & 3.7432 & -0.7477 & 0.1888 \\
 Random prior control & 2.6466 & 3.8807 & -0.6368 & 0.1280 \\
 Zero-shot LLM rule tree & 2.6019 & 3.8300 & -0.4072 & 0.1507 \\
-LLM rule + 500-history calibration & 2.7723 & 3.8226 & +0.4627 & 0.1538 \\
+LLM rule + 500-history calib. & 2.7723 & 3.8226 & +0.4627 & 0.1538 \\
 \method{} gated adapter & \textbf{2.5023} & \textbf{3.6038} & \textbf{-0.0230} & \textbf{0.2480} \\
 \bottomrule
 \end{tabular}
